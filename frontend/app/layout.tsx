@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "sonner"; // Thêm dòng này
 import "./globals.css";
 
 const geistSans = Geist({
@@ -46,6 +47,9 @@ export default function RootLayout({
 
           {/* Bạn có thể thêm Footer chung ở đây */}
           <Footer />
+
+          {/* Thêm Toaster ở đây để hiển thị thông báo toàn hệ thống */}
+          <Toaster position="top-right" richColors closeButton />
         </ThemeProvider>
       </body>
     </html>
