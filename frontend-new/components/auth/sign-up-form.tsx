@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { toast } from "sonner"; // 1. Import thư viện thông báo
 import {
   Mail,
   Lock,
@@ -13,21 +15,72 @@ import {
   ArrowRight,
   Github,
   Loader2,
-  ShieldCheck,
   CheckCircle2,
+  UserCircle,
 } from "lucide-react";
 
 export const SignUpForm = () => {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fullnameRef = useRef<HTMLInputElement>(null);
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreed) return;
+
     setIsLoading(true);
-    // Giả lập xử lý đăng ký cho đồ án
-    setTimeout(() => setIsLoading(false), 2000);
+    setError(null);
+
+    const signupData = {
+      fullname: fullnameRef.current?.value,
+      username: usernameRef.current?.value,
+      email: emailRef.current?.value,
+      password: passwordRef.current?.value,
+    };
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(signupData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+
+        // 2. Thông báo đăng ký thành công
+        toast.success("Tạo tài khoản thành công!", {
+          description: "Chào mừng bạn đến với SmartVideo.",
+        });
+
+        router.push("/");
+      } else {
+        const msg = data.message || "Đăng ký thất bại";
+        setError(msg);
+        // 3. Thông báo lỗi từ server (ví dụ: email đã tồn tại)
+        toast.error("Lỗi đăng ký", {
+          description: msg,
+        });
+      }
+    } catch (err) {
+      const errMsg = "Không thể kết nối đến máy chủ backend.";
+      setError(errMsg);
+      // 4. Thông báo lỗi kết nối
+      toast.error("Lỗi hệ thống", {
+        description: errMsg,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -40,7 +93,7 @@ export const SignUpForm = () => {
       {/* Header Form */}
       <div className="flex flex-col items-center mb-8">
         <Link href="/" className="group flex flex-col items-center gap-3">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(37,99,235,0.4)] group-hover:rotate-6 transition-transform duration-500 overflow-hidden p-2">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(37,99,235,0.4)] group-hover:rotate-6 transition-transform duration-500 overflow-hidden p-2 bg-blue-600">
             <Image
               src="/assets/image/logo/logo-smart-video.png"
               alt="Logo"
@@ -62,6 +115,12 @@ export const SignUpForm = () => {
 
       {/* Main Card */}
       <div className="bg-card/80 dark:bg-zinc-900/90 border border-border/50 rounded-[32px] p-8 shadow-2xl backdrop-blur-xl">
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs text-center">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Full Name */}
           <div className="space-y-2">
@@ -74,10 +133,30 @@ export const SignUpForm = () => {
                 size={18}
               />
               <input
+                ref={fullnameRef}
                 type="text"
                 required
                 placeholder="Vo Cong Thuong"
-                className="w-full bg-secondary/30 dark:bg-zinc-800/50 border border-border/50 rounded-2xl py-3.5 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-muted-foreground/40"
+                className="w-full bg-secondary/30 dark:bg-zinc-800/50 border border-border/50 rounded-2xl py-3.5 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-muted-foreground/40 text-foreground"
+              />
+            </div>
+          </div>
+
+          {/* Username */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-wider ml-1 text-muted-foreground">
+              Username
+            </label>
+            <div className="relative group">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-blue-500 transition-colors">
+                <span className="text-[14px] font-bold">@</span>
+              </div>
+              <input
+                ref={usernameRef}
+                type="text"
+                required
+                placeholder="vothuong123"
+                className="w-full bg-secondary/30 dark:bg-zinc-800/50 border border-border/50 rounded-2xl py-3.5 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-muted-foreground/40 text-foreground"
               />
             </div>
           </div>
@@ -93,10 +172,11 @@ export const SignUpForm = () => {
                 size={18}
               />
               <input
+                ref={emailRef}
                 type="email"
                 required
                 placeholder="thuong@example.com"
-                className="w-full bg-secondary/30 dark:bg-zinc-800/50 border border-border/50 rounded-2xl py-3.5 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-muted-foreground/40"
+                className="w-full bg-secondary/30 dark:bg-zinc-800/50 border border-border/50 rounded-2xl py-3.5 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-muted-foreground/40 text-foreground"
               />
             </div>
           </div>
@@ -112,10 +192,11 @@ export const SignUpForm = () => {
                 size={18}
               />
               <input
+                ref={passwordRef}
                 type={showPassword ? "text" : "password"}
                 required
                 placeholder="••••••••"
-                className="w-full bg-secondary/30 dark:bg-zinc-800/50 border border-border/50 rounded-2xl py-3.5 pl-11 pr-12 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-muted-foreground/40"
+                className="w-full bg-secondary/30 dark:bg-zinc-800/50 border border-border/50 rounded-2xl py-3.5 pl-11 pr-12 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-muted-foreground/40 text-foreground"
               />
               <button
                 type="button"
@@ -160,6 +241,7 @@ export const SignUpForm = () => {
 
           {/* Submit Button */}
           <button
+            type="submit"
             disabled={isLoading || !agreed}
             className="w-full bg-blue-600 text-white rounded-2xl py-4 font-bold hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-blue-600/20 mt-4"
           >
@@ -192,14 +274,14 @@ export const SignUpForm = () => {
               height={20}
               alt="Google"
             />
-            <span className="text-sm font-bold">Google</span>
+            <span className="text-sm font-bold text-foreground">Google</span>
           </button>
           <button className="flex items-center justify-center gap-3 border border-border/60 rounded-2xl py-3 hover:bg-secondary/80 dark:hover:bg-zinc-800 transition-all active:scale-95 group">
             <Github
               size={20}
-              className="group-hover:text-blue-500 transition-colors"
+              className="group-hover:text-blue-500 transition-colors text-foreground"
             />
-            <span className="text-sm font-bold">Github</span>
+            <span className="text-sm font-bold text-foreground">Github</span>
           </button>
         </div>
       </div>
