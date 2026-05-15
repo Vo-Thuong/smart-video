@@ -7,7 +7,7 @@ export function Sidebar() {
         {/* Logo Placeholder */}
         <div className="flex items-center gap-3 mb-10">
           <div className="w-10 h-10 bg-gray-400 rounded-md"></div>
-          <span className="font-bold text-xl tracking-wider">EasyBilly</span>
+          <span className="font-bold text-xl tracking-wider">Smart-video</span>
         </div>
 
         {/* Navigation */}
