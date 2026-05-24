@@ -53,7 +53,12 @@ export const SignInForm = () => {
           description: "Đăng nhập vào SmartVideo thành công.",
         });
 
-        router.push("/dashboard"); // Chuyển hướng sang trang dashboard
+        // Redirect to onboarding if not completed yet
+        if (data.user?.onboardingCompleted === false) {
+          router.push("/onboarding");
+        } else {
+          router.push("/dashboard");
+        }
       } else {
         const msg = data.message || "Email hoặc mật khẩu không chính xác";
         setError(msg);

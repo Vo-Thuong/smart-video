@@ -62,7 +62,8 @@ export const SignUpForm = () => {
           description: "Chào mừng bạn đến với SmartVideo.",
         });
 
-        router.push("/");
+        localStorage.setItem("user", JSON.stringify(data.user));
+        router.push("/onboarding");
       } else {
         const msg = data.message || "Đăng ký thất bại";
         setError(msg);

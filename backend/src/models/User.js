@@ -39,6 +39,26 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    study_streak: {
+      type: Number,
+      default: 0,
+    },
+    last_study_date: {
+      type: String,   // "YYYY-MM-DD"
+      default: null,
+    },
+    onboardingCompleted: {
+      type: Boolean,
+      default: false,
+    },
+    survey: {
+      age: { type: Number, default: null },
+      englishLevel: { type: String, default: null }, // beginner/elementary/intermediate/upper-intermediate/advanced
+      goals: [{ type: String }],          // communication, ielts, toeic, listening, pronunciation, travel, job, it, office
+      interests: [{ type: String }],      // music, sports, tech, movies, food, travel, gaming, news
+      learningStyle: [{ type: String }],  // short-video, podcast, movie, series, documentary, music
+      studyTimeMinutes: { type: Number, default: null }, // minutes per day
+    },
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },

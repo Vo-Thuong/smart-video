@@ -34,7 +34,7 @@ export const Navbar = () => {
         >
           <div className="w-9 h-9 bg-black-600 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.4)] group-hover:rotate-6 transition-transform overflow-hidden">
             <Image
-              src="/assets/image/logo/logo-smart-video.png"
+              src="/public/assets/image/logo/logo-smart-video.png"
               alt="Smart Video Logo"
               width={60}
               height={60}
