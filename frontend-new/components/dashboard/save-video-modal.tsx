@@ -217,7 +217,7 @@ export function SaveVideoModal({ videoInfo, onClose, onSaved }: Props) {
           <Button
             variant="outline"
             onClick={onClose}
-            className="flex-1 rounded-full border-white/20 text-white hover:bg-white/10"
+            className="flex-1 rounded-full border-white/20 bg-transparent text-white hover:bg-white/10"
           >
             Hủy
           </Button>

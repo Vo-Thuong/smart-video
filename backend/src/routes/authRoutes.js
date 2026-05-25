@@ -35,5 +35,6 @@ router.patch("/profile", authMiddleware, updateProfile);
 router.patch("/password", authMiddleware, changePassword);
 router.post("/avatar", authMiddleware, upload.single("avatar"), uploadAvatar);
 router.post("/survey", authMiddleware, saveSurvey);
+router.patch("/survey", authMiddleware, saveSurvey);
 
 module.exports = router;

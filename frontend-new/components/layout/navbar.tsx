@@ -3,8 +3,31 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ModeToggle } from "@/components/mode-toggle";
 import Image from "next/image";
+import { useLang } from "@/lib/i18n";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export const Navbar = () => {
+  const { lang, setLang, t } = useLang();
+  const router = useRouter();
+  const [user, setUser] = useState<{ name?: string; avatar?: string } | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const raw = localStorage.getItem("user");
+    if (raw) {
+      try { setUser(JSON.parse(raw)); } catch { /* ignore */ }
+    }
+  }, []);
+
+  function handleLogout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    router.push("/");
+  }
+
   // Hàm xử lý cuộn mượt (Optional - nếu bạn muốn kiểm soát bằng JS)
   const scrollToSection = (
     e: React.MouseEvent<HTMLAnchorElement>,
@@ -53,46 +76,79 @@ export const Navbar = () => {
             onClick={(e) => scrollToSection(e, "product-preview")}
             className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
-            How it works
+            {t.nav.howItWorks}
           </a>
           <a
             href="#features"
             onClick={(e) => scrollToSection(e, "features")}
             className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
-            Features
+            {t.nav.features}
           </a>
-
           <a
             href="#pricing"
             onClick={(e) => scrollToSection(e, "pricing")}
             className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
-            Pricing
+            {t.nav.pricing}
           </a>
         </div>
 
         {/* 3. Action Buttons & Theme Toggle */}
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
           <ModeToggle />
-          <div className="h-5 w-[1px] bg-border mx-1 hidden sm:block" />
-          <Link href="./auth/signin">
-            <Button
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground hover:bg-accent hidden sm:flex font-medium"
-            >
-              Sign In
-            </Button>
-          </Link>
-          <Button
-            onClick={() => {
-              const element = document.getElementById("pricing");
-              element?.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6 shadow-md shadow-blue-600/10 transition-all active:scale-95 font-semibold"
+
+          {/* Language toggle */}
+          <button
+            onClick={() => setLang(lang === "en" ? "vi" : "en")}
+            aria-label="Toggle language"
+            className="w-9 h-9 rounded-xl border border-border bg-background hover:bg-accent flex items-center justify-center text-xs font-bold text-foreground transition-colors"
           >
-            Get Started
-          </Button>
+            {lang === "en" ? "VI" : "EN"}
+          </button>
+
+          <div className="h-5 w-[1px] bg-border mx-1 hidden sm:block" />
+
+          {mounted && user ? (
+            <>
+              <Button
+                variant="ghost"
+                onClick={handleLogout}
+                className="text-muted-foreground hover:text-red-500 hover:bg-red-500/10 hidden sm:flex font-medium"
+              >
+                Sign Out
+              </Button>
+              <Link href="/dashboard">
+                <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-blue-500 cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all flex items-center justify-center bg-blue-600 text-white font-bold text-sm">
+                  {user.avatar ? (
+                    <img src={`http://localhost:5000${user.avatar}`} alt="avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{user.name ? user.name.charAt(0).toUpperCase() : "U"}</span>
+                  )}
+                </div>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="./auth/signin">
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent hidden sm:flex font-medium"
+                >
+                  {t.nav.signIn}
+                </Button>
+              </Link>
+              <Button
+                onClick={() => {
+                  const element = document.getElementById("pricing");
+                  element?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6 shadow-md shadow-blue-600/10 transition-all active:scale-95 font-semibold"
+              >
+                {t.nav.getStarted}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </nav>

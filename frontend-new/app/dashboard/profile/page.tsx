@@ -23,9 +23,118 @@ import {
   Edit3,
   Loader2,
   PlayCircle,
+  GraduationCap,
+  Check,
 } from "lucide-react";
 
+// ─── Survey constants ─────────────────────────────────────────────────────────
+
+const ENGLISH_LEVELS = [
+  { value: "beginner", label: "Mới bắt đầu", desc: "Chưa biết gì hoặc biết rất ít" },
+  { value: "elementary", label: "Cơ bản", desc: "Biết một số từ và câu đơn giản" },
+  { value: "intermediate", label: "Trung cấp", desc: "Có thể giao tiếp thông thường" },
+  { value: "upper-intermediate", label: "Trên trung cấp", desc: "Khá tự tin khi giao tiếp" },
+  { value: "advanced", label: "Nâng cao", desc: "Giao tiếp tốt, muốn hoàn thiện hơn" },
+];
+
+const GOALS = [
+  { value: "communication", label: "💬 Giao tiếp hàng ngày" },
+  { value: "ielts", label: "📝 Luyện thi IELTS" },
+  { value: "toeic", label: "📋 Luyện thi TOEIC" },
+  { value: "listening", label: "👂 Nghe hiểu" },
+  { value: "pronunciation", label: "🗣️ Cải thiện phát âm" },
+  { value: "travel", label: "✈️ Du lịch nước ngoài" },
+  { value: "job", label: "💼 Phỏng vấn xin việc" },
+  { value: "it", label: "💻 Tiếng Anh IT" },
+  { value: "office", label: "🏢 Tiếng Anh văn phòng" },
+  { value: "academic", label: "🎓 Tiếng Anh học thuật" },
+];
+
+const INTERESTS = [
+  { value: "music", label: "🎵 Âm nhạc" },
+  { value: "sports", label: "⚽ Thể thao" },
+  { value: "tech", label: "🔬 Công nghệ" },
+  { value: "movies", label: "🎬 Phim ảnh" },
+  { value: "food", label: "🍜 Ẩm thực" },
+  { value: "travel", label: "🗺️ Du lịch" },
+  { value: "gaming", label: "🎮 Game" },
+  { value: "news", label: "📰 Thời sự" },
+  { value: "business", label: "📊 Kinh doanh" },
+  { value: "science", label: "🔭 Khoa học" },
+  { value: "fashion", label: "👗 Thời trang" },
+  { value: "health", label: "🏃 Sức khoẻ" },
+];
+
+const LEARNING_STYLES = [
+  { value: "short-video", label: "📱 Video ngắn (YouTube Shorts, Reels)" },
+  { value: "podcast", label: "🎙️ Podcast" },
+  { value: "movie", label: "🎥 Phim điện ảnh" },
+  { value: "series", label: "📺 Series / Phim bộ" },
+  { value: "documentary", label: "🌍 Phim tài liệu" },
+  { value: "music", label: "🎶 Học qua âm nhạc" },
+  { value: "news-video", label: "📡 Video tin tức" },
+  { value: "talk-show", label: "🎤 Talk show / Phỏng vấn" },
+];
+
+const STUDY_TIMES = [
+  { value: 10, label: "10 phút" },
+  { value: 20, label: "20 phút" },
+  { value: 30, label: "30 phút" },
+  { value: 45, label: "45 phút" },
+  { value: 60, label: "1 giờ" },
+  { value: 90, label: "1.5 giờ" },
+  { value: 120, label: "2 giờ+" },
+];
+
+// ─── Multi-select helper ──────────────────────────────────────────────────────
+
+function MultiSelect({
+  options,
+  selected,
+  onChange,
+}: {
+  options: { value: string; label: string }[];
+  selected: string[];
+  onChange: (v: string[]) => void;
+}) {
+  const toggle = (v: string) => {
+    if (selected.includes(v)) onChange(selected.filter((s) => s !== v));
+    else onChange([...selected, v]);
+  };
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((o) => {
+        const active = selected.includes(o.value);
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => toggle(o.value)}
+            className={`px-3 py-2 rounded-xl text-sm border transition-all ${
+              active
+                ? "bg-[#00E5FF]/15 border-[#00E5FF] text-[#00E5FF] font-medium"
+                : "bg-white/5 border-white/10 text-gray-300 hover:border-white/30 hover:text-white"
+            }`}
+          >
+            {active && <Check className="inline w-3 h-3 mr-1 -mt-0.5" />}
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+interface SurveyData {
+  age: number | null;
+  englishLevel: string | null;
+  goals: string[];
+  interests: string[];
+  learningStyle: string[];
+  studyTimeMinutes: number | null;
+}
 
 interface UserProfile {
   _id: string;
@@ -37,6 +146,7 @@ interface UserProfile {
   total_points: number;
   total_study_time: number;
   created_at: string;
+  survey?: SurveyData;
 }
 
 interface UserStats {
@@ -114,6 +224,18 @@ export default function ProfilePage() {
   const [pwSaving, setPwSaving] = useState(false);
   const [pwSaved, setPwSaved] = useState(false);
 
+  // Survey
+  const [surveyAge, setSurveyAge] = useState<string>("");
+  const [surveyLevel, setSurveyLevel] = useState<string>("");
+  const [surveyGoals, setSurveyGoals] = useState<string[]>([]);
+  const [surveyInterests, setSurveyInterests] = useState<string[]>([]);
+  const [surveyStyle, setSurveyStyle] = useState<string[]>([]);
+  const [surveyTime, setSurveyTime] = useState<number | null>(null);
+  const [surveySaving, setSurveySaving] = useState(false);
+  const [surveySaved, setSurveySaved] = useState(false);
+  const [surveyError, setSurveyError] = useState("");
+  const [surveyEditing, setSurveyEditing] = useState(false);
+
   // Notifications
   const [emailNotif, setEmailNotif] = useState(true);
   const [streakReminder, setStreakReminder] = useState(true);
@@ -139,6 +261,16 @@ export default function ProfilePage() {
           setUser(data.user);
           setName(data.user.fullname);
           setEmail(data.user.email);
+          // Load survey
+          const s = data.user.survey;
+          if (s) {
+            setSurveyAge(s.age != null ? String(s.age) : "");
+            setSurveyLevel(s.englishLevel ?? "");
+            setSurveyGoals(s.goals ?? []);
+            setSurveyInterests(s.interests ?? []);
+            setSurveyStyle(s.learningStyle ?? []);
+            setSurveyTime(s.studyTimeMinutes ?? null);
+          }
         } else {
           setFetchError(data.message || "Không thể tải thông tin.");
         }
@@ -221,6 +353,50 @@ export default function ProfilePage() {
       setPwError("Không thể kết nối đến server.");
     } finally {
       setPwSaving(false);
+    }
+  }
+
+  function handleCancelSurvey() {
+    const s = user?.survey;
+    setSurveyAge(s?.age != null ? String(s.age) : "");
+    setSurveyLevel(s?.englishLevel ?? "");
+    setSurveyGoals(s?.goals ?? []);
+    setSurveyInterests(s?.interests ?? []);
+    setSurveyStyle(s?.learningStyle ?? []);
+    setSurveyTime(s?.studyTimeMinutes ?? null);
+    setSurveyError("");
+    setSurveyEditing(false);
+  }
+
+  async function handleSaveSurvey(e: React.FormEvent) {
+    e.preventDefault();
+    setSurveyError("");
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    setSurveySaving(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/survey", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          age: surveyAge ? Number(surveyAge) : null,
+          englishLevel: surveyLevel || null,
+          goals: surveyGoals,
+          interests: surveyInterests,
+          learningStyle: surveyStyle,
+          studyTimeMinutes: surveyTime,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) { setSurveyError(data.message); return; }
+      setUser(data.user);
+      setSurveySaved(true);
+      setSurveyEditing(false);
+      setTimeout(() => setSurveySaved(false), 3000);
+    } catch {
+      setSurveyError("Không thể kết nối đến server.");
+    } finally {
+      setSurveySaving(false);
     }
   }
 
@@ -468,6 +644,203 @@ export default function ProfilePage() {
             )}
           </div>
         </form>
+      </section>
+
+      {/* ── Survey / Learning preferences ─────────────── */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-[#00E5FF]" />
+            Thông tin học tập
+          </h2>
+          {!surveyEditing && (
+            <button
+              onClick={() => setSurveyEditing(true)}
+              className="inline-flex items-center gap-1.5 text-sm text-[#00E5FF] hover:text-white bg-[#00E5FF]/10 hover:bg-[#00E5FF]/20 px-4 py-2 rounded-xl transition"
+            >
+              <Edit3 className="w-4 h-4" />
+              Chỉnh sửa
+            </button>
+          )}
+          {surveySaved && !surveyEditing && (
+            <span className="flex items-center gap-1.5 text-emerald-400 text-sm">
+              <CheckCircle2 className="w-4 h-4" /> Đã lưu!
+            </span>
+          )}
+        </div>
+
+        {/* ── Read-only summary ── */}
+        {!surveyEditing && (
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
+            {/* Age + Level */}
+            <div className="flex flex-wrap gap-6">
+              <div className="space-y-1">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Tuổi</p>
+                <p className="text-white font-medium">{surveyAge || <span className="text-gray-500 italic">Chưa điền</span>}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Trình độ tiếng Anh</p>
+                <p className="text-white font-medium">
+                  {ENGLISH_LEVELS.find((l) => l.value === surveyLevel)?.label ?? <span className="text-gray-500 italic">Chưa chọn</span>}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Thời gian học / ngày</p>
+                <p className="text-white font-medium">
+                  {STUDY_TIMES.find((t) => t.value === surveyTime)?.label ?? <span className="text-gray-500 italic">Chưa chọn</span>}
+                </p>
+              </div>
+            </div>
+
+            {/* Goals */}
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Mục tiêu học</p>
+              {surveyGoals.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {surveyGoals.map((v) => (
+                    <span key={v} className="px-3 py-1 rounded-full text-xs bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/30">
+                      {GOALS.find((g) => g.value === v)?.label ?? v}
+                    </span>
+                  ))}
+                </div>
+              ) : <p className="text-gray-500 italic text-sm">Chưa chọn</p>}
+            </div>
+
+            {/* Interests */}
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Sở thích</p>
+              {surveyInterests.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {surveyInterests.map((v) => (
+                    <span key={v} className="px-3 py-1 rounded-full text-xs bg-purple-500/10 text-purple-300 border border-purple-500/30">
+                      {INTERESTS.find((i) => i.value === v)?.label ?? v}
+                    </span>
+                  ))}
+                </div>
+              ) : <p className="text-gray-500 italic text-sm">Chưa chọn</p>}
+            </div>
+
+            {/* Learning style */}
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Phong cách học</p>
+              {surveyStyle.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {surveyStyle.map((v) => (
+                    <span key={v} className="px-3 py-1 rounded-full text-xs bg-blue-500/10 text-blue-300 border border-blue-500/30">
+                      {LEARNING_STYLES.find((s) => s.value === v)?.label ?? v}
+                    </span>
+                  ))}
+                </div>
+              ) : <p className="text-gray-500 italic text-sm">Chưa chọn</p>}
+            </div>
+          </div>
+        )}
+
+        {/* ── Edit form ── */}
+        {surveyEditing && (
+          <form onSubmit={handleSaveSurvey} className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-6">
+
+            {/* Age */}
+            <div className="space-y-1.5">
+              <label className="text-sm text-gray-400">Tuổi của bạn</label>
+              <input
+                type="number"
+                min={5}
+                max={100}
+                value={surveyAge}
+                onChange={(e) => setSurveyAge(e.target.value)}
+                placeholder="Ví dụ: 22"
+                className="w-32 bg-white/5 border border-white/15 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#00E5FF]/60 focus:ring-1 focus:ring-[#00E5FF]/30 transition"
+              />
+            </div>
+
+            {/* English level */}
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Trình độ tiếng Anh</label>
+              <div className="flex flex-wrap gap-2">
+                {ENGLISH_LEVELS.map((lvl) => (
+                  <button
+                    key={lvl.value}
+                    type="button"
+                    onClick={() => setSurveyLevel(lvl.value)}
+                    className={`flex flex-col px-4 py-2.5 rounded-xl text-sm border transition-all text-left ${
+                      surveyLevel === lvl.value
+                        ? "bg-[#00E5FF]/15 border-[#00E5FF] text-[#00E5FF] font-medium"
+                        : "bg-white/5 border-white/10 text-gray-300 hover:border-white/30 hover:text-white"
+                    }`}
+                  >
+                    <span>{lvl.label}</span>
+                    <span className="text-xs opacity-60 mt-0.5">{lvl.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Goals */}
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Mục tiêu học tiếng Anh</label>
+              <MultiSelect options={GOALS} selected={surveyGoals} onChange={setSurveyGoals} />
+            </div>
+
+            {/* Interests */}
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Sở thích cá nhân</label>
+              <MultiSelect options={INTERESTS} selected={surveyInterests} onChange={setSurveyInterests} />
+            </div>
+
+            {/* Learning style */}
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Phong cách học tập</label>
+              <MultiSelect options={LEARNING_STYLES} selected={surveyStyle} onChange={setSurveyStyle} />
+            </div>
+
+            {/* Study time */}
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Thời gian học mỗi ngày</label>
+              <div className="flex flex-wrap gap-2">
+                {STUDY_TIMES.map((t) => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setSurveyTime(t.value)}
+                    className={`px-4 py-2 rounded-xl text-sm border transition-all ${
+                      surveyTime === t.value
+                        ? "bg-[#00E5FF]/15 border-[#00E5FF] text-[#00E5FF] font-medium"
+                        : "bg-white/5 border-white/10 text-gray-300 hover:border-white/30 hover:text-white"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {surveyError && (
+              <p className="flex items-center gap-1.5 text-red-400 text-sm">
+                <AlertTriangle className="w-4 h-4" /> {surveyError}
+              </p>
+            )}
+
+            <div className="flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={surveySaving}
+                className="inline-flex items-center gap-2 bg-[#00E5FF] hover:bg-[#00E5FF]/90 disabled:opacity-60 text-black font-semibold text-sm px-5 py-2.5 rounded-xl transition"
+              >
+                {surveySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {surveySaving ? "Đang lưu..." : "Lưu thông tin"}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelSurvey}
+                disabled={surveySaving}
+                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 disabled:opacity-60 text-white text-sm px-5 py-2.5 rounded-xl transition"
+              >
+                Hủy
+              </button>
+            </div>
+          </form>
+        )}
       </section>
 
       {/* ── Change password ──────────────────────────── */}
