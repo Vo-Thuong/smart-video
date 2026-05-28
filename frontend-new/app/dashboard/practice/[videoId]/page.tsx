@@ -659,6 +659,56 @@ export default function PracticePage() {
   const title = searchParams.get("title") || "Video";
   const router = useRouter();
 
+  // ── Saved progress (restored on load) ──
+  const [savedProgress, setSavedProgress] = useState<number>(0);
+  const savedProgressRef = useRef<number>(0);   // always up-to-date, safe inside closures
+  const playerReadyRef = useRef<boolean>(false); // true once onReady fired
+  const progressSavedRef = useRef(false);
+  const durationRef = useRef<number>(0); // total video duration in seconds
+
+  // Load saved progress from backend when page mounts
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    fetch(`http://localhost:5000/api/saved-video/${videoId}/progress-get`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.progressTime > 0) {
+          savedProgressRef.current = d.progressTime;
+          setSavedProgress(d.progressTime);
+        }
+      })
+      .catch(() => {});
+  }, [videoId]);
+
+  // If progress-get finishes AFTER player is already ready → seek now
+  useEffect(() => {
+    if (savedProgress > 3 && playerReadyRef.current && playerRef.current?.seekTo) {
+      playerRef.current.seekTo(savedProgress, true);
+    }
+  }, [savedProgress]);
+
+  // Save progress to backend (called on unmount & periodically)
+  const saveProgressToBackend = useCallback((time: number, segment: string) => {
+    if (time < 3) return; // don't save if barely started
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    const payload = JSON.stringify({
+      progressTime: Math.floor(time),
+      progressSegment: segment,
+      duration: durationRef.current,
+    });
+    // Always use fetch + keepalive — sendBeacon cannot send Authorization headers
+    fetch(`http://localhost:5000/api/saved-video/${videoId}/progress`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: payload,
+      keepalive: true,
+    }).catch(() => {});
+  }, [videoId]);
+
   // ── Transcript ──
   const [transcript, setTranscript] = useState<TranscriptItem[]>([]);
   const [transcriptLoading, setTranscriptLoading] = useState(true);
@@ -698,9 +748,28 @@ export default function PracticePage() {
   const [studyIndex, setStudyIndex] = useState(-1);
   const [completedSegments, setCompletedSegments] = useState<Set<number>>(new Set());
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoSaveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevActiveRef = useRef(-1);
   const transcriptRef = useRef<TranscriptItem[]>([]);
   transcriptRef.current = transcript;
+
+  // Auto-save progress every 10s while playing
+  useEffect(() => {
+    autoSaveIntervalRef.current = setInterval(() => {
+      const ct = playerRef.current?.getCurrentTime?.() ?? 0;
+      if (ct > 3) {
+        const tr = transcriptRef.current;
+        let seg = "";
+        for (let i = tr.length - 1; i >= 0; i--) {
+          if (parseTime(tr[i].time) <= ct) { seg = tr[i].text; break; }
+        }
+        saveProgressToBackend(ct, seg);
+      }
+    }, 10000);
+    return () => {
+      if (autoSaveIntervalRef.current) clearInterval(autoSaveIntervalRef.current);
+    };
+  }, [saveProgressToBackend]);
 
   useEffect(() => {
     const startPolling = () => {
@@ -747,6 +816,16 @@ export default function PracticePage() {
         videoId,
         playerVars: { autoplay: 1, rel: 0, modestbranding: 1 },
         events: {
+          onReady: () => {
+            playerReadyRef.current = true;
+            // Capture total duration
+            const dur = playerRef.current?.getDuration?.() ?? 0;
+            if (dur > 0) durationRef.current = dur;
+            // Read from ref — always has the latest value regardless of fetch timing
+            if (savedProgressRef.current > 3) {
+              playerRef.current?.seekTo?.(savedProgressRef.current, true);
+            }
+          },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onStateChange: (e: any) => {
             const playing = e.data === window.YT.PlayerState.PLAYING;
@@ -771,8 +850,18 @@ export default function PracticePage() {
 
     return () => {
       stopPolling();
+      // Save progress on unmount
+      const ct = playerRef.current?.getCurrentTime?.() ?? 0;
+      if (ct > 3) {
+        const tr = transcriptRef.current;
+        let seg = "";
+        for (let i = tr.length - 1; i >= 0; i--) {
+          if (parseTime(tr[i].time) <= ct) { seg = tr[i].text; break; }
+        }
+        saveProgressToBackend(ct, seg);
+      }
     };
-  }, [videoId]);
+  }, [videoId, saveProgressToBackend]);
 
   // Active transcript index (last item whose start time ≤ current playback time)
   const activeIndex = transcript.reduce<number>((best, item, i) => {

@@ -35,12 +35,17 @@ interface Author {
 interface Post {
   _id: string;
   userId: Author;
+  postType?: "video" | "vocab";
   caption: string;
+  // video post fields
   youtubeId: string;
   youtubeUrl: string;
   title: string;
   thumbnail: string;
   sourceType: "saved" | "favorite" | "practiced";
+  // vocab post fields
+  vocabWords?: { word: string; phonetic?: string; translation: string; example?: string }[];
+  visibility?: "public" | "friends";
   likesCount: number;
   likedByMe: boolean;
   commentsCount: number;
@@ -259,7 +264,10 @@ function PostCard({
   const [showComments, setShowComments] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const badge = sourceLabel(post.sourceType);
+  const isVocab = post.postType === "vocab";
+  const badge = isVocab
+    ? { text: "📚 Từ vựng", cls: "bg-purple-500/15 text-purple-400 border-purple-500/30" }
+    : sourceLabel(post.sourceType);
 
   async function toggleLike() {
     // Optimistic update
@@ -356,35 +364,62 @@ function PostCard({
         </p>
       )}
 
-      {/* Video thumbnail */}
-      <div
-        className="relative mx-4 mb-4 rounded-xl overflow-hidden cursor-pointer group"
-        onClick={() =>
-          router.push(`/dashboard/practice/${post.youtubeId}?title=${encodeURIComponent(post.title)}`)
-        }
-      >
-        {post.thumbnail ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={post.thumbnail}
-            alt={post.title}
-            className="w-full aspect-video object-cover"
-          />
-        ) : (
-          <div className="w-full aspect-video bg-[#2D1B4E] flex items-center justify-center">
-            <VideoIcon className="w-12 h-12 text-gray-600" />
+      {/* ── Vocab card ── */}
+      {isVocab && post.vocabWords && post.vocabWords.length > 0 && (
+        <div className="mx-4 mb-4 rounded-2xl border border-purple-500/20 bg-purple-500/5 overflow-hidden">
+          <div className="px-4 py-2.5 bg-purple-500/10 border-b border-purple-500/15 flex items-center gap-2">
+            <span className="text-purple-400 text-xs font-semibold uppercase tracking-wider">📚 Bộ từ vựng · {post.vocabWords.length} từ</span>
           </div>
-        )}
-        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-          <div className="bg-[#00E5FF] rounded-full px-5 py-2.5 flex items-center gap-2 text-black font-semibold text-sm shadow-lg">
-            <PlayCircle className="w-5 h-5" />
-            Luyện tập ngay
+          <div className="divide-y divide-white/5 max-h-72 overflow-y-auto">
+            {post.vocabWords.map((w, i) => (
+              <div key={i} className="flex items-start gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className="text-white font-semibold text-sm">{w.word}</span>
+                    {w.phonetic && <span className="text-gray-500 text-xs">{w.phonetic}</span>}
+                  </div>
+                  <p className="text-purple-300 text-xs mt-0.5">{w.translation}</p>
+                  {w.example && (
+                    <p className="text-gray-500 text-xs mt-0.5 italic line-clamp-1">&ldquo;{w.example}&rdquo;</p>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-2">
-          <p className="text-white text-sm font-medium line-clamp-2">{post.title}</p>
+      )}
+
+      {/* ── Video thumbnail (video posts only) ── */}
+      {!isVocab && (
+        <div
+          className="relative mx-4 mb-4 rounded-xl overflow-hidden cursor-pointer group"
+          onClick={() =>
+            router.push(`/dashboard/practice/${post.youtubeId}?title=${encodeURIComponent(post.title)}`)
+          }
+        >
+          {post.thumbnail ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={post.thumbnail}
+              alt={post.title}
+              className="w-full aspect-video object-cover"
+            />
+          ) : (
+            <div className="w-full aspect-video bg-[#2D1B4E] flex items-center justify-center">
+              <VideoIcon className="w-12 h-12 text-gray-600" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+            <div className="bg-[#00E5FF] rounded-full px-5 py-2.5 flex items-center gap-2 text-black font-semibold text-sm shadow-lg">
+              <PlayCircle className="w-5 h-5" />
+              Luyện tập ngay
+            </div>
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-2">
+            <p className="text-white text-sm font-medium line-clamp-2">{post.title}</p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Action bar */}
       <div className="flex items-center gap-1 px-4 pb-3 border-b border-white/10">
@@ -419,15 +454,16 @@ function PostCard({
 
         <div className="flex-1" />
 
-        <button
-          onClick={saveVideo}
-          disabled={saving || saved}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition disabled:opacity-60 ${
-            saved
-              ? "text-emerald-400 bg-emerald-400/10"
-              : "text-gray-400 hover:text-[#00E5FF] hover:bg-[#00E5FF]/10"
-          }`}
-          title="Lưu video vào thư viện"
+        {!isVocab && (
+          <button
+            onClick={saveVideo}
+            disabled={saving || saved}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition disabled:opacity-60 ${
+              saved
+                ? "text-emerald-400 bg-emerald-400/10"
+                : "text-gray-400 hover:text-[#00E5FF] hover:bg-[#00E5FF]/10"
+            }`}
+            title="Lưu video vào thư viện"
         >
           {saving ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -437,7 +473,8 @@ function PostCard({
             <Bookmark className="w-4 h-4" />
           )}
           <span className="hidden sm:inline">{saved ? "Đã lưu" : "Lưu video"}</span>
-        </button>
+          </button>
+        )}
       </div>
 
       {/* Comments */}

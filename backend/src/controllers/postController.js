@@ -34,18 +34,27 @@ exports.getFeed = async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(20, parseInt(req.query.limit) || 10);
     const skip = (page - 1) * limit;
+    const me = req.userId;
+
+    // Include: all public posts + posts sharedWith current user
+    const query = {
+      $or: [
+        { visibility: "public" },
+        { sharedWith: me },
+        { userId: me },
+      ],
+    };
 
     const [posts, total] = await Promise.all([
-      Post.find()
+      Post.find(query)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate("userId", "username fullname avatar"),
-      Post.countDocuments(),
+      Post.countDocuments(query),
     ]);
 
-    // Attach liked flag for the current user
-    const currentUserId = req.userId?.toString();
+    const currentUserId = me?.toString();
     const enriched = posts.map((p) => {
       const obj = p.toObject();
       obj.likedByMe = currentUserId
@@ -104,6 +113,28 @@ exports.saveVideoFromPost = async (req, res) => {
     });
 
     res.status(201).json({ success: true, video });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/posts/vocab  — share a vocab set to feed or friend
+exports.createVocabPost = async (req, res) => {
+  try {
+    const { caption, vocabWords, visibility, sharedWith } = req.body;
+    if (!vocabWords || vocabWords.length === 0) {
+      return res.status(400).json({ success: false, message: "Chọn ít nhất 1 từ để chia sẻ." });
+    }
+    const post = await Post.create({
+      userId: req.userId,
+      postType: "vocab",
+      caption: caption?.trim() ?? "",
+      vocabWords,
+      visibility: visibility ?? "public",
+      sharedWith: visibility === "friends" ? (sharedWith ?? []) : [],
+    });
+    const populated = await Post.findById(post._id).populate("userId", "username fullname avatar");
+    res.status(201).json({ success: true, post: populated });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

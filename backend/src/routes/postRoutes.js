@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require("../middleware/authMiddleware");
 const {
   createPost,
+  createVocabPost,
   getFeed,
   toggleLike,
   saveVideoFromPost,
@@ -12,6 +13,7 @@ const { addComment, getComments } = require("../controllers/commentController");
 
 router.get("/", auth, getFeed);
 router.post("/", auth, createPost);
+router.post("/vocab", auth, createVocabPost);
 router.delete("/:id", auth, deletePost);
 router.post("/:id/like", auth, toggleLike);
 router.post("/:id/save", auth, saveVideoFromPost);

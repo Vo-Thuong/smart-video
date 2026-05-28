@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Heart, Trash2, BookOpen, Play, FolderPlus, Check, Plus, X } from "lucide-react";
+import { Heart, Trash2, BookOpen, Play, FolderPlus, Check, Plus, X, Clock, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { VideoToolbar } from "@/components/my-video/video-toolbar";
@@ -21,6 +21,9 @@ interface SavedVideo {
   isFavorite: boolean;
   categoryId: Category | null;
   createdAt: string;
+  progressTime?: number;
+  progressSegment?: string;
+  lastPracticed?: string | null;
 }
 
 const PRESET_COLORS = [
@@ -194,7 +197,58 @@ export default function MyVideoPage() {
           <p className="text-sm mt-1">Paste URL YouTube ở Dashboard để lưu video đầu tiên</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <>
+          {/* ── Continue Watching ── */}
+          {filter === "all" && (() => {
+            const inProgress = videos.filter((v) => (v.progressTime ?? 0) > 3);
+            if (inProgress.length === 0) return null;
+            return (
+              <div className="mb-6">
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#00E5FF]" /> Tiếp tục luyện tập
+                </h2>
+                <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
+                  {inProgress.map((video) => {
+                    const pct = Math.min(100, Math.round(((video.progressTime ?? 0) / 600) * 100)); // rough estimate
+                    const mins = Math.floor((video.progressTime ?? 0) / 60);
+                    const secs = Math.floor((video.progressTime ?? 0) % 60);
+                    return (
+                      <div
+                        key={video._id}
+                        className="flex-shrink-0 w-56 bg-[#1C1132] border border-white/10 rounded-xl overflow-hidden cursor-pointer hover:border-[#00E5FF]/40 transition-all group"
+                        onClick={() =>
+                          router.push(`/dashboard/practice/${video.youtubeId}?title=${encodeURIComponent(video.title)}`)
+                        }
+                      >
+                        <div className="relative aspect-video">
+                          <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <PlayCircle className="w-10 h-10 text-white" />
+                          </div>
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                            <div
+                              className="h-full bg-[#00E5FF] transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div className="px-3 py-2">
+                          <p className="text-white text-xs font-medium line-clamp-1">{video.title}</p>
+                          <p className="text-gray-500 text-xs mt-0.5">
+                            Đến: {mins}:{secs.toString().padStart(2, "0")}
+                            {video.progressSegment && (
+                              <span className="block truncate italic mt-0.5 text-gray-600">&ldquo;{video.progressSegment}&rdquo;</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {videos.map((video) => (
             <div
               key={video._id}
@@ -380,7 +434,8 @@ export default function MyVideoPage() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+          </>
       )}
     </div>
   );

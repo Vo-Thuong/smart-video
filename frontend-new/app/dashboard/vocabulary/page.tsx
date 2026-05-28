@@ -21,6 +21,10 @@ import {
   Eye,
   Headphones,
   Video,
+  Share2,
+  Users,
+  Globe,
+  Check,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1447,11 +1451,13 @@ function VideoSection({
   onOpenCards,
   onPracticeVocab,
   onPracticeListening,
+  onShare,
 }: {
   group: VideoGroup;
   onOpenCards: () => void;
   onPracticeVocab: () => void;
   onPracticeListening: () => void;
+  onShare: () => void;
 }) {
   const learnedCount = group.items.filter((v) => v.learned).length;
 
@@ -1503,11 +1509,255 @@ function VideoSection({
           Luyện tập lại
         </button>
       )}
+      {/* Share button */}
+      <button
+        onClick={onShare}
+        title="Chia sẻ bộ từ vựng"
+        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#7C3AED]/40 text-[#a78bfa] hover:bg-[#7C3AED]/15 hover:border-[#7C3AED] text-sm font-medium transition-all flex-shrink-0"
+      >
+        <Share2 className="w-4 h-4" />
+        <span className="hidden sm:inline">Chia sẻ</span>
+      </button>
     </div>
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Share Vocab Modal ───────────────────────────────────────────────────────
+
+interface Friend { _id: string; fullname: string; username: string; avatar?: string; }
+
+function ShareVocabModal({
+  group,
+  onClose,
+}: {
+  group: VideoGroup;
+  onClose: () => void;
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set(group.items.map((i) => i._id)));
+  const [caption, setCaption] = useState("");
+  const [visibility, setVisibility] = useState<"public" | "friends">("public");
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [selectedFriends, setSelectedFriends] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(false);
+  const [posted, setPosted] = useState(false);
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
+
+  useEffect(() => {
+    if (visibility === "friends") {
+      fetch("http://localhost:5000/api/friends/list", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => r.json())
+        .then((d) => setFriends(Array.isArray(d) ? d : []))
+        .catch(() => {});
+    }
+  }, [visibility, token]);
+
+  function toggleWord(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleFriend(id: string) {
+    setSelectedFriends((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleShare() {
+    if (selected.size === 0) return;
+    if (visibility === "friends" && selectedFriends.size === 0) return;
+    setLoading(true);
+    try {
+      const vocabWords = group.items
+        .filter((i) => selected.has(i._id))
+        .map(({ word, phonetic, translation, example }) => ({ word, phonetic, translation, example }));
+
+      const body: Record<string, unknown> = {
+        caption,
+        vocabWords,
+        visibility,
+        sharedWith: visibility === "friends" ? [...selectedFriends] : [],
+      };
+
+      const res = await fetch("http://localhost:5000/api/posts/vocab", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) setPosted(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (posted) {
+    return createPortal(
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div className="bg-[#1C1132] border border-white/15 rounded-3xl p-10 max-w-sm w-full text-center shadow-2xl">
+          <div className="w-14 h-14 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-5">
+            <Check className="w-7 h-7 text-green-400" />
+          </div>
+          <h3 className="text-white font-bold text-lg mb-2">Đã chia sẻ!</h3>
+          <p className="text-gray-400 text-sm mb-6">
+            {visibility === "public" ? "Bộ từ vựng đã được đăng lên Feed." : "Đã gửi cho bạn bè được chọn."}
+          </p>
+          <button onClick={onClose} className="w-full py-2.5 rounded-xl bg-[#7C3AED] text-white font-semibold text-sm hover:bg-[#6D28D9] transition-colors">
+            Đóng
+          </button>
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-[#1C1132] border border-white/15 rounded-3xl w-full max-w-lg shadow-2xl my-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+          <div className="flex items-center gap-2.5">
+            <Share2 className="w-5 h-5 text-[#a78bfa]" />
+            <span className="text-white font-bold">Chia sẻ bộ từ vựng</span>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Visibility toggle */}
+          <div>
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-2.5 font-semibold">Chia sẻ với</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setVisibility("public")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                  visibility === "public"
+                    ? "border-[#7C3AED] bg-[#7C3AED]/15 text-[#c4b5fd]"
+                    : "border-white/10 text-gray-400 hover:border-white/20"
+                }`}
+              >
+                <Globe className="w-4 h-4" /> Feed công khai
+              </button>
+              <button
+                onClick={() => setVisibility("friends")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                  visibility === "friends"
+                    ? "border-[#7C3AED] bg-[#7C3AED]/15 text-[#c4b5fd]"
+                    : "border-white/10 text-gray-400 hover:border-white/20"
+                }`}
+              >
+                <Users className="w-4 h-4" /> Bạn bè
+              </button>
+            </div>
+          </div>
+
+          {/* Friend selector */}
+          {visibility === "friends" && (
+            <div>
+              <p className="text-xs text-gray-400 uppercase tracking-widest mb-2.5 font-semibold">Chọn bạn bè</p>
+              {friends.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">Chưa có bạn bè nào. Hãy kết bạn trước!</p>
+              ) : (
+                <div className="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1">
+                  {friends.map((f) => {
+                    const checked = selectedFriends.has(f._id);
+                    return (
+                      <button
+                        key={f._id}
+                        onClick={() => toggleFriend(f._id)}
+                        className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all ${
+                          checked ? "border-[#7C3AED] bg-[#7C3AED]/10" : "border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 overflow-hidden">
+                          {f.avatar ? <img src={f.avatar.startsWith("http") ? f.avatar : `http://localhost:5000${f.avatar}`} alt="" className="w-full h-full object-cover" /> : f.fullname.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className="text-white text-sm font-medium">{f.fullname}</p>
+                          <p className="text-gray-500 text-xs">@{f.username}</p>
+                        </div>
+                        {checked && <Check className="w-4 h-4 text-[#a78bfa] flex-shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Word selection */}
+          <div>
+            <div className="flex items-center justify-between mb-2.5">
+              <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Chọn từ ({selected.size}/{group.items.length})</p>
+              <button
+                onClick={() =>
+                  selected.size === group.items.length
+                    ? setSelected(new Set())
+                    : setSelected(new Set(group.items.map((i) => i._id)))
+                }
+                className="text-xs text-[#a78bfa] hover:underline"
+              >
+                {selected.size === group.items.length ? "Bỏ chọn tất cả" : "Chọn tất cả"}
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-1">
+              {group.items.map((item) => {
+                const active = selected.has(item._id);
+                return (
+                  <button
+                    key={item._id}
+                    onClick={() => toggleWord(item._id)}
+                    className={`px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${
+                      active ? "border-[#7C3AED] bg-[#7C3AED]/15 text-[#c4b5fd]" : "border-white/10 text-gray-400 hover:border-white/20"
+                    }`}
+                  >
+                    {item.word}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Caption */}
+          <div>
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-2 font-semibold">Ghi chú (tuỳ chọn)</p>
+            <textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              placeholder="Viết gì đó về bộ từ này..."
+              rows={2}
+              className="w-full bg-[#0D0920] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 resize-none focus:outline-none focus:border-[#7C3AED] transition-colors"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-1">
+            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:bg-white/5 text-sm font-medium transition-colors">Huỷ</button>
+            <button
+              onClick={handleShare}
+              disabled={loading || selected.size === 0 || (visibility === "friends" && selectedFriends.size === 0)}
+              className="flex-1 py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+              Chia sẻ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// ─── Video Section ────────────────────────────────────────────────────────────
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "all", label: "Tất cả" },
@@ -1525,6 +1775,7 @@ export default function VocabularyPage() {
   const [practiceItems, setPracticeItems] = useState<VocabItem[] | null>(null);
   const [gameType, setGameType] = useState<"matching" | "listen" | "fillblank" | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<VideoGroup | null>(null);
+  const [shareGroup, setShareGroup] = useState<VideoGroup | null>(null);
   const [videoDialog, setVideoDialog] = useState<{
     videoId: string; startSec: number; endSec: number; transcript: string;
   } | null>(null);
@@ -1691,9 +1942,18 @@ export default function VocabularyPage() {
                   `/dashboard/practice/${group.videoId}?title=${encodeURIComponent(group.videoTitle)}`
                 )
               }
+              onShare={() => setShareGroup(group)}
             />
           ))}
         </div>
+      )}
+
+      {/* ── Share Vocab Modal ── */}
+      {shareGroup && typeof document !== "undefined" && (
+        <ShareVocabModal
+          group={shareGroup}
+          onClose={() => setShareGroup(null)}
+        />
       )}
 
       {/* ── Video Vocab Modal ── */}

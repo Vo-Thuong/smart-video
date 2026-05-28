@@ -164,6 +164,32 @@ interface RecentVideo {
   lastPracticed: string;
 }
 
+interface HistoryVideo {
+  _id: string;
+  youtubeId: string;
+  title: string;
+  thumbnail: string | null;
+  progressTime: number;
+  duration: number;
+  progressPercent: number;
+  isCompleted: boolean;
+  lastWatchedAt: string;
+  progressSegment: string;
+}
+
+interface HistoryVideo {
+  _id: string;
+  youtubeId: string;
+  title: string;
+  thumbnail: string | null;
+  progressTime: number;
+  duration: number;
+  progressPercent: number;
+  isCompleted: boolean;
+  lastWatchedAt: string;
+  progressSegment: string;
+}
+
 // ─── Stat card ────────────────────────────────────────────────────────────────
 
 function StatCard({
@@ -199,6 +225,8 @@ export default function ProfilePage() {
   // Stats
   const [stats, setStats] = useState<UserStats>({ videosCount: 0, vocabTotal: 0, vocabLearned: 0, study_streak: 0 });
   const [recentVideos, setRecentVideos] = useState<RecentVideo[]>([]);
+  const [historyVideos, setHistoryVideos] = useState<HistoryVideo[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
   const router = useRouter();
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -295,6 +323,15 @@ export default function ProfilePage() {
       })
       .catch(() => {})
       .finally(() => setStatsLoading(false));
+
+    // Fetch practice history
+    fetch("http://localhost:5000/api/saved-video/history", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setHistoryVideos(d.videos); })
+      .catch(() => {})
+      .finally(() => setHistoryLoading(false));
   }, []);
 
   const initials = name
@@ -524,6 +561,100 @@ export default function ProfilePage() {
           <StatCard icon={CheckCircle2} label="Từ đã thành thạo" value={statsLoading ? 0 : stats.vocabLearned} color="bg-emerald-500" />
           <StatCard icon={Flame} label="Chuỗi ngày học" value={statsLoading ? 0 : stats.study_streak} color="bg-orange-500" />
         </div>
+      </section>
+
+      {/* ── Tiếp tục học ──────────────────────────────────── */}
+      <section>
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <PlayCircle className="w-5 h-5 text-[#00E5FF]" />
+          Tiếp tục học
+        </h2>
+        {historyLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-6 h-6 text-[#00E5FF] animate-spin" />
+          </div>
+        ) : historyVideos.length === 0 ? (
+          <div className="bg-white/5 border border-white/10 rounded-2xl px-5 py-8 text-center">
+            <p className="text-gray-500 text-sm">Bạn chưa bắt đầu luyện tập video nào.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {historyVideos.map((v) => {
+              const mins = Math.floor(v.progressTime / 60);
+              const secs = Math.floor(v.progressTime % 60);
+              const durMins = Math.floor(v.duration / 60);
+              const durSecs = Math.floor(v.duration % 60);
+              return (
+                <div key={v._id} className="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-[#00E5FF]/30 transition-all">
+                  {/* Thumbnail */}
+                  <div className="relative aspect-video">
+                    {v.thumbnail ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={v.thumbnail} alt={v.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-purple-500/20 flex items-center justify-center">
+                        <Video className="w-8 h-8 text-purple-400" />
+                      </div>
+                    )}
+                    {v.isCompleted ? (
+                      <span className="absolute top-2 right-2 bg-emerald-500/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Hoàn thành
+                      </span>
+                    ) : (
+                      <span className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full">
+                        {v.progressPercent}%
+                      </span>
+                    )}
+                    {/* Thin progress bar at bottom of thumbnail */}
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                      <div
+                        className={`h-full ${v.isCompleted ? "bg-emerald-400" : "bg-[#00E5FF]"}`}
+                        style={{ width: `${v.progressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                  {/* Body */}
+                  <div className="p-4 space-y-3">
+                    <p className="text-white text-sm font-semibold line-clamp-2 leading-snug">{v.title}</p>
+                    <div className="flex items-center justify-between text-xs text-gray-400">
+                      <span>
+                        Đến: {mins}:{secs.toString().padStart(2, "0")}
+                        {v.duration > 0 && (
+                          <span className="text-gray-600"> / {durMins}:{durSecs.toString().padStart(2, "0")}</span>
+                        )}
+                      </span>
+                      <span>{new Date(v.lastWatchedAt).toLocaleDateString("vi-VN")}</span>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${v.isCompleted ? "bg-emerald-400" : "bg-[#00E5FF]"}`}
+                        style={{ width: `${v.progressPercent}%` }}
+                      />
+                    </div>
+                    {/* Last segment snippet */}
+                    {v.progressSegment && !v.isCompleted && (
+                      <p className="text-gray-600 text-[11px] italic truncate">&ldquo;{v.progressSegment}&rdquo;</p>
+                    )}
+                    <button
+                      onClick={() =>
+                        router.push(`/dashboard/practice/${v.youtubeId}?title=${encodeURIComponent(v.title)}`)
+                      }
+                      className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                        v.isCompleted
+                          ? "bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/20"
+                          : "bg-[#00E5FF]/15 hover:bg-[#00E5FF]/25 text-[#00E5FF] border border-[#00E5FF]/20"
+                      }`}
+                    >
+                      <PlayCircle className="w-4 h-4" />
+                      {v.isCompleted ? "Luyện tập lại" : "Luyện tập tiếp"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* ── Recent videos ────────────────────────────────── */}
