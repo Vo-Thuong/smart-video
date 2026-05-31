@@ -1,6 +1,8 @@
 const Post = require("../models/Post");
 const Video = require("../models/Video");
 const Comment = require("../models/Comment");
+const FriendRequest = require("../models/FriendRequest");
+const Vocabulary = require("../models/Vocabulary");
 
 // POST /api/posts  — create a new post
 exports.createPost = async (req, res) => {
@@ -17,6 +19,7 @@ exports.createPost = async (req, res) => {
       title,
       thumbnail: thumbnail ?? "",
       sourceType: sourceType ?? "saved",
+      visibility: "public",
     });
     const populated = await Post.findById(post._id).populate(
       "userId",
@@ -36,12 +39,33 @@ exports.getFeed = async (req, res) => {
     const skip = (page - 1) * limit;
     const me = req.userId;
 
-    // Include: all public posts + posts sharedWith current user
+    // Resolve accepted friends of current user — fail gracefully if this errors
+    let friendIds = [];
+    try {
+      const friendRelations = await FriendRequest.find({
+        $or: [{ sender: me }, { receiver: me }],
+        status: "accepted",
+      }).lean();
+
+      friendIds = friendRelations.map((r) =>
+        r.sender.toString() === me.toString() ? r.receiver : r.sender
+      );
+    } catch (_) {
+      // If friend lookup fails, continue — public posts will still show
+    }
+
+    // Include:
+    //   1. Posts that are explicitly public OR have no visibility set (legacy)
+    //   2. Posts shared directly with current user (sharedWith)
+    //   3. Current user's own posts
+    //   4. Friends-only posts from accepted friends
     const query = {
       $or: [
-        { visibility: "public" },
+        { visibility: { $in: ["public", null] } },
+        { visibility: { $exists: false } },
         { sharedWith: me },
         { userId: me },
+        { visibility: "friends", userId: { $in: friendIds } },
       ],
     };
 
@@ -107,12 +131,93 @@ exports.saveVideoFromPost = async (req, res) => {
       userId: req.userId,
       youtubeUrl: post.youtubeUrl,
       youtubeId: post.youtubeId,
-      title: post.title,
+      title: post.title?.trim() || "Untitled",
       thumbnail: post.thumbnail,
       isFavorite: false,
     });
 
     res.status(201).json({ success: true, video });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/posts/:id/favorite-video  — save the video to favorites (isFavorite: true)
+exports.favoriteVideoFromPost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ success: false, message: "Bài đăng không tồn tại." });
+
+    const existing = await Video.findOne({ userId: req.userId, youtubeId: post.youtubeId });
+    if (existing) {
+      // Already saved — just mark as favorite
+      existing.isFavorite = true;
+      await existing.save();
+      return res.json({ success: true, video: existing, alreadyExisted: true });
+    }
+
+    const video = await Video.create({
+      userId: req.userId,
+      youtubeUrl: post.youtubeUrl,
+      youtubeId: post.youtubeId,
+      title: post.title?.trim() || "Untitled",
+      thumbnail: post.thumbnail,
+      isFavorite: true,
+    });
+
+    res.status(201).json({ success: true, video });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/posts/:id/save-vocab  — import all vocab words from a post into current user's vocabulary
+exports.saveVocabFromPost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id)
+      .populate("userId", "fullname username");
+    if (!post) return res.status(404).json({ success: false, message: "Bài đăng không tồn tại." });
+    if (post.postType !== "vocab" || !post.vocabWords?.length) {
+      return res.status(400).json({ success: false, message: "Bài đăng không có từ vựng." });
+    }
+
+    const userId = req.userId;
+    const isFavorite = req.body?.isFavorite === true;
+    const authorName = post.userId?.fullname || post.userId?.username || "Bạn bè";
+    const sourceTitle = post.caption?.trim()
+      ? `${authorName}: ${post.caption.slice(0, 60)}`
+      : `Chia sẻ từ ${authorName}`;
+
+    // Avoid duplicates: find words already in user's vocabulary
+    const existingWords = await Vocabulary.find({ userId }).select("word").lean();
+    const existingSet = new Set(existingWords.map((v) => v.word.toLowerCase().trim()));
+
+    const toInsert = post.vocabWords
+      .filter((w) => w.word && !existingSet.has(w.word.toLowerCase().trim()))
+      .map((w) => ({
+        userId,
+        word: w.word.trim(),
+        phonetic: w.phonetic || "",
+        translation: w.translation || "",
+        example: w.example || "",
+        videoTitle: sourceTitle,
+        isFavorite,
+        source: "vocabulary",
+      }));
+
+    if (toInsert.length === 0) {
+      // If isFavorite=true, mark existing words as favorite too
+      if (isFavorite) {
+        await Vocabulary.updateMany(
+          { userId, word: { $in: post.vocabWords.map((w) => w.word?.trim()).filter(Boolean) } },
+          { $set: { isFavorite: true } }
+        );
+      }
+      return res.status(400).json({ success: false, message: "Tất cả từ đã có trong từ điển của bạn." });
+    }
+
+    const inserted = await Vocabulary.insertMany(toInsert);
+    res.status(201).json({ success: true, count: inserted.length });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -135,6 +240,46 @@ exports.createVocabPost = async (req, res) => {
     });
     const populated = await Post.findById(post._id).populate("userId", "username fullname avatar");
     res.status(201).json({ success: true, post: populated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// GET /api/posts/liked  — posts the current user has liked
+exports.getLikedPosts = async (req, res) => {
+  try {
+    const me = req.userId;
+    const posts = await Post.find({ likes: me })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .populate("userId", "username fullname avatar")
+      .lean();
+    res.json({ success: true, posts });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// GET /api/posts/friends-recent  — recent posts from accepted friends
+exports.getFriendsRecentPosts = async (req, res) => {
+  try {
+    const me = req.userId;
+    const friendRelations = await FriendRequest.find({
+      $or: [{ sender: me }, { receiver: me }],
+      status: "accepted",
+    }).lean();
+    const friendIds = friendRelations.map((r) =>
+      r.sender.toString() === me.toString() ? r.receiver : r.sender
+    );
+    if (friendIds.length === 0) {
+      return res.json({ success: true, posts: [] });
+    }
+    const posts = await Post.find({ userId: { $in: friendIds } })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .populate("userId", "username fullname avatar")
+      .lean();
+    res.json({ success: true, posts });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

@@ -8,8 +8,10 @@ const transcriptItemSchema = new mongoose.Schema(
 const videoSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    youtubeUrl: { type: String, required: true },
+    youtubeUrl: { type: String },
     youtubeId: { type: String },
+    isLocal: { type: Boolean, default: false },
+    localFilename: { type: String },
     title: { type: String, default: "Untitled" },
     thumbnail: { type: String },
     filename: { type: String },

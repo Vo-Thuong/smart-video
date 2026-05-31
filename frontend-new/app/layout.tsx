@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { GoogleProvider } from "@/components/auth/google-provider";
+import { LanguageProvider } from "@/lib/i18n";
 
 export const metadata: Metadata = {
-  title: "EasyBilly",
+  title: "Smart Video",
   description: "Language learning platform",
+  icons: {
+    icon: "/assets/image/logo/logo-smart-video.png",
+  },
 };
 
 export default function RootLayout({
@@ -15,14 +20,18 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <GoogleProvider>
+          <LanguageProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+            </ThemeProvider>
+          </LanguageProvider>
+        </GoogleProvider>
       </body>
     </html>
   );

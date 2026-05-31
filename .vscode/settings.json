@@ -1,0 +1,10 @@
+{
+  "typescript.tsdk": "frontend-new/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "search.exclude": {
+    "**/node_modules": true
+  },
+  "files.exclude": {
+    "**/node_modules": true
+  }
+}

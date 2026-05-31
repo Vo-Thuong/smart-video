@@ -8,7 +8,9 @@ const {
   updateCategory,
   deleteVideo,
   recordPractice,
+  recordLocalPractice,
   saveProgress,
+  saveLocalProgress,
   getProgress,
   getHistory,
 } = require("../controllers/savedVideoController");
@@ -20,7 +22,9 @@ router.patch("/:id/favorite", auth, toggleFavorite);
 router.patch("/:id/category", auth, updateCategory);
 router.delete("/:id", auth, deleteVideo);
 router.post("/:youtubeId/practice", auth, recordPractice);
+router.post("/:id/local-practice", auth, recordLocalPractice);
 router.patch("/:youtubeId/progress", auth, saveProgress);
+router.patch("/:id/local-progress", auth, saveLocalProgress);
 router.get("/:youtubeId/progress-get", auth, getProgress);
 
 module.exports = router;

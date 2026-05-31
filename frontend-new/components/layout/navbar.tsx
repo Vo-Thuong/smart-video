@@ -121,7 +121,11 @@ export const Navbar = () => {
               <Link href="/dashboard">
                 <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-blue-500 cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all flex items-center justify-center bg-blue-600 text-white font-bold text-sm">
                   {user.avatar ? (
-                    <img src={`http://localhost:5000${user.avatar}`} alt="avatar" className="w-full h-full object-cover" />
+                    <img
+                      src={user.avatar.startsWith("/uploads") ? `http://localhost:5000${user.avatar}` : user.avatar}
+                      alt="avatar"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <span>{user.name ? user.name.charAt(0).toUpperCase() : "U"}</span>
                   )}

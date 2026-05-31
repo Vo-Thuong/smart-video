@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { Users, UserPlus, UserCheck, UserX, Search, Clock } from "lucide-react";
+import { useLang } from "@/lib/i18n";
 
 const API = "http://localhost:5000/api";
 
@@ -53,6 +54,8 @@ function timeAgo(dateStr: string) {
 /* ─────────────── Suggestion Card ─────────────── */
 function SuggestionCard({ user, onSent }: { user: UserInfo; onSent: (id: string) => void }) {
   const [state, setState] = useState<"idle" | "loading" | "sent">("idle");
+  const { t } = useLang();
+  const f = t.friends;
 
   async function send() {
     setState("loading");
@@ -81,7 +84,7 @@ function SuggestionCard({ user, onSent }: { user: UserInfo; onSent: (id: string)
       </div>
       {user.createdAt && (
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Clock size={11} /> Joined {timeAgo(user.createdAt)}
+          <Clock size={11} /> {f.joined} {timeAgo(user.createdAt)}
         </span>
       )}
       <button
@@ -96,9 +99,9 @@ function SuggestionCard({ user, onSent }: { user: UserInfo; onSent: (id: string)
         {state === "loading" ? (
           <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
         ) : state === "sent" ? (
-          <><UserCheck size={15} /> Request Sent</>
+          <><UserCheck size={15} /> {f.requestSent}</>
         ) : (
-          <><UserPlus size={15} /> Add Friend</>
+          <><UserPlus size={15} /> {f.addFriend}</>
         )}
       </button>
     </div>
@@ -116,6 +119,8 @@ function RequestCard({
   onDecline: (id: string) => void;
 }) {
   const [loading, setLoading] = useState<"accept" | "decline" | null>(null);
+  const { t } = useLang();
+  const f = t.friends;
 
   async function accept() {
     setLoading("accept");
@@ -156,7 +161,7 @@ function RequestCard({
           ) : (
             <UserCheck size={14} />
           )}
-          Accept
+          {f.accept}
         </button>
         <button
           onClick={decline}
@@ -168,7 +173,7 @@ function RequestCard({
           ) : (
             <UserX size={14} />
           )}
-          Decline
+          {f.decline}
         </button>
       </div>
     </div>
@@ -178,9 +183,11 @@ function RequestCard({
 /* ─────────────── Friend Card ─────────────── */
 function FriendCard({ user, onUnfriend }: { user: UserInfo; onUnfriend: (id: string) => void }) {
   const [loading, setLoading] = useState(false);
+  const { t } = useLang();
+  const f = t.friends;
 
   async function unfriend() {
-    if (!confirm(`Remove ${user.fullname} from friends?`)) return;
+    if (!confirm(f.unfriendConfirm.replace("{name}", user.fullname))) return;
     setLoading(true);
     await fetch(`${API}/friends/${user._id}`, { method: "DELETE", headers: authHeaders() });
     onUnfriend(user._id);
@@ -199,7 +206,7 @@ function FriendCard({ user, onUnfriend }: { user: UserInfo; onUnfriend: (id: str
         disabled={loading}
         className="flex items-center gap-1.5 px-3 py-1.5 border border-border hover:bg-red-500/10 hover:text-red-400 hover:border-red-400 text-muted-foreground rounded-xl text-xs font-semibold transition-all"
       >
-        <UserX size={13} /> Unfriend
+        <UserX size={13} /> {f.unfriend}
       </button>
     </div>
   );
@@ -213,6 +220,8 @@ export default function FriendsPage() {
   const [friends, setFriends] = useState<UserInfo[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const { t } = useLang();
+  const f = t.friends;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -256,9 +265,9 @@ export default function FriendsPage() {
   );
 
   const tabs = [
-    { key: "suggestions", label: "Suggestions", icon: UserPlus, count: suggestions.length },
-    { key: "requests", label: "Friend Requests", icon: UserCheck, count: requests.length },
-    { key: "friends", label: "My Friends", icon: Users, count: friends.length },
+    { key: "suggestions", label: f.tabSuggestions, icon: UserPlus, count: suggestions.length },
+    { key: "requests", label: f.tabRequests, icon: UserCheck, count: requests.length },
+    { key: "friends", label: f.tabFriends, icon: Users, count: friends.length },
   ] as const;
 
   return (
@@ -269,9 +278,9 @@ export default function FriendsPage() {
           <div className="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center">
             <Users className="w-5 h-5 text-blue-500" />
           </div>
-          Friends
+          {f.title}
         </h1>
-        <p className="text-muted-foreground text-sm mt-1">Connect with other learners</p>
+        <p className="text-muted-foreground text-sm mt-1">{f.subtitle}</p>
       </div>
 
       {/* Tabs */}
@@ -313,8 +322,8 @@ export default function FriendsPage() {
               {suggestions.length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground">
                   <UserPlus className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                  <p className="font-medium">No suggestions right now</p>
-                  <p className="text-sm mt-1">Check back later for new members!</p>
+                  <p className="font-medium">{f.noSuggestions}</p>
+                  <p className="text-sm mt-1">{f.noSuggestionsHint}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -332,7 +341,7 @@ export default function FriendsPage() {
               {requests.length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground">
                   <UserCheck className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                  <p className="font-medium">No pending requests</p>
+                  <p className="font-medium">{f.noRequests}</p>
                 </div>
               ) : (
                 requests.map((req) => (
@@ -355,7 +364,7 @@ export default function FriendsPage() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Search friends..."
+                    placeholder={f.searchPlaceholder}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full bg-background border border-border rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
@@ -365,16 +374,16 @@ export default function FriendsPage() {
               {filteredFriends.length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                  <p className="font-medium">{friends.length === 0 ? "No friends yet" : "No results found"}</p>
+                  <p className="font-medium">{friends.length === 0 ? f.noFriends : f.noResults}</p>
                   <p className="text-sm mt-1">
-                    {friends.length === 0 ? "Go to Suggestions to connect with learners!" : "Try a different search"}
+                    {friends.length === 0 ? f.noFriendsHint : f.noResultsHint}
                   </p>
                   {friends.length === 0 && (
                     <button
                       onClick={() => setTab("suggestions")}
                       className="mt-4 px-5 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
                     >
-                      Browse Suggestions
+                      {f.browseSuggestions}
                     </button>
                   )}
                 </div>

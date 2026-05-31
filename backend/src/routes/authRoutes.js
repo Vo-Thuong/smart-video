@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const { register, login, getMe, getStats, updateProfile, changePassword, uploadAvatar, saveSurvey } = require("../controllers/authController");
+const { register, login, getMe, getStats, getPublicProfile, updateProfile, changePassword, uploadAvatar, saveSurvey, googleAuth, updateNotificationSettings, testStreakReminder, upgradeToPremium, downgradePremium } = require("../controllers/authController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 // Multer setup for avatar uploads
@@ -29,6 +29,7 @@ const upload = multer({
 // Route: POST /api/auth/register
 router.post("/register", register);
 router.post("/login", login);
+router.post("/google", googleAuth);
 router.get("/me", authMiddleware, getMe);
 router.get("/stats", authMiddleware, getStats);
 router.patch("/profile", authMiddleware, updateProfile);
@@ -36,5 +37,10 @@ router.patch("/password", authMiddleware, changePassword);
 router.post("/avatar", authMiddleware, upload.single("avatar"), uploadAvatar);
 router.post("/survey", authMiddleware, saveSurvey);
 router.patch("/survey", authMiddleware, saveSurvey);
+router.patch("/notifications", authMiddleware, updateNotificationSettings);
+router.post("/test-reminder", authMiddleware, testStreakReminder);
+router.post("/upgrade", authMiddleware, upgradeToPremium);
+router.post("/downgrade", authMiddleware, downgradePremium);
+router.get("/users/:userId", authMiddleware, getPublicProfile);
 
 module.exports = router;

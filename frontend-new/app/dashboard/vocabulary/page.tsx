@@ -25,7 +25,11 @@ import {
   Users,
   Globe,
   Check,
+  Crown,
+  Lock,
+  Zap,
 } from "lucide-react";
+import { useLang } from "@/lib/i18n";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,17 +45,19 @@ interface VocabItem {
   videoUrl?: string;
   segmentTime?: string;
   learned: boolean;
+  isFavorite?: boolean;
   createdAt: string;
 }
 
 interface VideoGroup {
+  groupKey: string;
   videoId: string;
   videoTitle: string;
   thumbnail: string | null;
   items: VocabItem[];
 }
 
-type Tab = "all" | "unlearned" | "learned";
+type Tab = "all" | "unlearned" | "learned" | "favorite";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -85,15 +91,19 @@ function parseTime(t: string): number {
   return (parts[0] ?? 0) * 60 + (parts[1] ?? 0);
 }
 
-function groupByVideo(items: VocabItem[]): VideoGroup[] {
+function groupByVideo(items: VocabItem[], unknownVideo: string, unknownSource: string): VideoGroup[] {
   const map = new Map<string, VideoGroup>();
   for (const item of items) {
-    const key = item.videoId || "";
+    // Use videoId as primary key; fall back to videoTitle as a pseudo-key so
+    // items imported from different friend posts don't collapse into one "Unknown" group.
+    const key = item.videoId || (item.videoTitle ? `__title__${item.videoTitle}` : "__unknown__");
+    const isYouTubeId = !!item.videoId;
     if (!map.has(key)) {
       map.set(key, {
-        videoId: key,
-        videoTitle: item.videoTitle || (key ? "Video không có tiêu đề" : "Không xác định"),
-        thumbnail: key ? `https://img.youtube.com/vi/${key}/mqdefault.jpg` : null,
+        groupKey: key,
+        videoId: item.videoId || "",
+        videoTitle: item.videoTitle || (isYouTubeId ? unknownVideo : unknownSource),
+        thumbnail: isYouTubeId ? `https://img.youtube.com/vi/${item.videoId}/mqdefault.jpg` : null,
         items: [],
       });
     }
@@ -117,6 +127,8 @@ function VideoSegmentDialog({
   transcript: string;
   onClose: () => void;
 }) {
+  const { t } = useLang();
+  const sd = t.vocabulary.segmentDialog;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -187,10 +199,10 @@ function VideoSegmentDialog({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-white">Video gốc</span>
+            <span className="text-sm font-semibold text-white">{sd.originalVideo}</span>
             {transcript && (
               <span className="text-[11px] text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">
-                Ảm thanh lặp lại đoạn này
+                {sd.audioLoop}
               </span>
             )}
           </div>
@@ -207,7 +219,7 @@ function VideoSegmentDialog({
         {/* Transcript */}
         {transcript && (
           <div className="px-5 py-4 border-t border-white/10">
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">Nội dung đoạn</p>
+            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">{sd.segmentContent}</p>
             <p className="text-base text-white leading-relaxed">{transcript}</p>
           </div>
         )}
@@ -234,6 +246,8 @@ function EditModal({
     note: item.note ?? "",
   });
   const [saving, setSaving] = useState(false);
+  const { t } = useLang();
+  const p = t.vocabulary;
 
   const handleSave = async () => {
     setSaving(true);
@@ -247,7 +261,7 @@ function EditModal({
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <div className="flex items-center gap-2">
             <Pencil className="w-4 h-4 text-[#7C3AED]" />
-            <span className="text-sm font-semibold text-white">Chỉnh sửa từ vựng</span>
+            <span className="text-sm font-semibold text-white">{p.editModal.title}</span>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
             <X className="w-4 h-4" />
@@ -257,12 +271,12 @@ function EditModal({
         <div className="p-5 flex flex-col gap-3">
           {(
             [
-              { label: "Từ vựng", key: "word" as const, placeholder: "Nhập từ..." },
-              { label: "Phiên âm IPA", key: "phonetic" as const, placeholder: "/ˈwɜːrd/" },
-              { label: "Nghĩa", key: "translation" as const, placeholder: "(noun) nghĩa 1 | (verb) nghĩa 2" },
-              { label: "Ví dụ", key: "example" as const, placeholder: "Câu ví dụ..." },
-              { label: "Ghi chú", key: "note" as const, placeholder: "Ghi chú thêm..." },
-            ] as const
+              { label: p.editModal.word, key: "word" as const, placeholder: p.editModal.wordPlaceholder },
+              { label: p.editModal.phonetic, key: "phonetic" as const, placeholder: "/ˈwɜːrd/" },
+              { label: p.editModal.meaning, key: "translation" as const, placeholder: "(noun) nghĩa 1 | (verb) nghĩa 2" },
+              { label: p.editModal.example, key: "example" as const, placeholder: p.editModal.examplePlaceholder },
+              { label: p.editModal.note, key: "note" as const, placeholder: p.editModal.notePlaceholder },
+            ]
           ).map(({ label, key, placeholder }) => (
             <div key={key} className="flex flex-col gap-1">
               <label className="text-xs text-gray-500">{label}</label>
@@ -291,14 +305,14 @@ function EditModal({
             onClick={onClose}
             className="flex-1 py-2.5 rounded-xl border border-white/15 text-gray-300 hover:bg-white/5 text-sm transition-colors"
           >
-            Hủy
+            {p.editModal.cancel}
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
             className="flex-1 py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            {saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang lưu...</> : <><Save className="w-3.5 h-3.5" /> Lưu</>}
+            {saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {p.editModal.saving}</> : <><Save className="w-3.5 h-3.5" /> {p.editModal.save}</>}
           </button>
         </div>
       </div>
@@ -308,6 +322,76 @@ function EditModal({
 
 // ─── Game Selector ────────────────────────────────────────────────────────────
 
+// ─── Pro Paywall Modal ────────────────────────────────────────────────────────
+
+function ProPaywallModal({ onClose, onUpgrade }: { onClose: () => void; onUpgrade: () => void }) {
+  const { t } = useLang();
+  const p = t.vocabulary;
+  const games = [
+    { emoji: "🃏", title: p.proModal.flashcard, desc: p.proModal.flashcardDesc },
+    { emoji: "🧩", title: p.proModal.matching, desc: p.proModal.matchingDesc },
+    { emoji: "🎧", title: p.proModal.listenType, desc: p.proModal.listenTypeDesc },
+    { emoji: "✏️", title: p.proModal.fillBlank, desc: p.proModal.fillBlankDesc },
+  ];
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div className="w-full max-w-md bg-[#1C1132] border border-white/15 rounded-2xl shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+          <div className="flex items-center gap-2">
+            <Crown className="w-5 h-5 text-amber-400" />
+            <h2 className="text-white font-bold text-lg">{p.proModal.title}</h2>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          {/* Hero */}
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-3">
+              <Lock className="w-8 h-8 text-amber-400" />
+            </div>
+            <h3 className="text-white font-bold text-base mb-1">{p.proModal.heading}</h3>
+            <p className="text-gray-400 text-sm">{p.proModal.body}</p>
+          </div>
+
+          {/* Game list locked */}
+          <div className="flex flex-col gap-2.5 mb-6">
+            {games.map((g) => (
+              <div
+                key={g.title}
+                className="flex items-center gap-3 p-3.5 rounded-xl border border-white/8 bg-white/3 opacity-60"
+              >
+                <span className="text-2xl flex-shrink-0">{g.emoji}</span>
+                <div className="flex-1">
+                  <p className="text-white font-medium text-sm">{g.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{g.desc}</p>
+                </div>
+                <Lock className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <button
+            onClick={onUpgrade}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-[#7c3aed] to-[#6366f1] hover:from-[#6d28d9] hover:to-[#4f46e5] text-white font-bold text-sm shadow-lg shadow-purple-500/25 transition-all flex items-center justify-center gap-2"
+          >
+            <Zap className="w-4 h-4" />
+            {p.proModal.cta}
+          </button>
+          <p className="text-center text-gray-500 text-xs mt-3">{p.proModal.price}</p>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// ─── Game Selector ─────────────────────────────────────────────────────────────
 function GameSelector({
   items,
   onSelect,
@@ -320,12 +404,14 @@ function GameSelector({
   const hasFillBlank = items.some(
     (v) => v.example && v.example.toLowerCase().includes(v.word.toLowerCase())
   );
+  const { t } = useLang();
+  const p = t.vocabulary;
   const games = [
     {
       id: "matching" as const,
       emoji: "🧩",
-      title: "Nối từ",
-      desc: "Nối từ vựng với nghĩa tương ứng",
+      title: p.proModal.matching,
+      desc: p.proModal.matchingDesc,
       gradient: "from-violet-600/20 to-purple-700/20",
       border: "border-violet-500/30",
       available: items.length >= 2,
@@ -334,8 +420,8 @@ function GameSelector({
     {
       id: "listen" as const,
       emoji: "🎧",
-      title: "Nghe điền từ",
-      desc: "Nghe phát âm và gõ từ bạn nghe được",
+      title: p.proModal.listenType,
+      desc: p.proModal.listenTypeDesc,
       gradient: "from-cyan-600/20 to-blue-700/20",
       border: "border-cyan-500/30",
       available: true,
@@ -344,12 +430,12 @@ function GameSelector({
     {
       id: "fillblank" as const,
       emoji: "✏️",
-      title: "Chọn từ đúng",
-      desc: "Chọn từ đúng điền vào chỗ trống trong câu",
+      title: p.proModal.fillBlank,
+      desc: p.proModal.fillBlankDesc,
       gradient: "from-emerald-600/20 to-teal-700/20",
       border: "border-emerald-500/30",
       available: hasFillBlank && items.length >= 2,
-      unavailableHint: "Cần từ có câu ví dụ",
+      unavailableHint: p.gameSelector.needsExample,
     },
   ];
 
@@ -358,8 +444,8 @@ function GameSelector({
       <div className="w-full max-w-md bg-[#1C1132] border border-white/15 rounded-2xl shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
           <div>
-            <h2 className="text-white font-bold text-lg">Chọn trò chơi</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{items.length} từ vựng sẽ được luyện tập</p>
+            <h2 className="text-white font-bold text-lg">{p.gameSelector.title}</h2>
+            <p className="text-xs text-gray-500 mt-0.5">{p.gameSelector.wordsCount.replace("{n}", String(items.length))}</p>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
             <X className="w-4 h-4" />
@@ -416,8 +502,8 @@ function MatchingGame({
   const [userPairs, setUserPairs] = useState<Map<string, string>>(new Map());
   const [selectedWordId, setSelectedWordId] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
-
-  // SVG line refs
+  const { t } = useLang();
+  const p = t.vocabulary;
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const wordRefs = useRef<Map<string, any>>(new Map());
@@ -513,9 +599,9 @@ function MatchingGame({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-white font-bold text-lg">🧩 Nối từ</span>
+            <span className="text-white font-bold text-lg">{p.matching.title}</span>
             <p className="text-xs text-gray-400 mt-0.5">
-              Trang {pageIndex + 1}/{totalPages} · {userPairs.size}/{batch.length} cặp đã nối
+              {p.matching.progress.replace("{x}", String(pageIndex + 1)).replace("{y}", String(totalPages)).replace("{a}", String(userPairs.size)).replace("{b}", String(batch.length))}
             </p>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl bg-white/10 text-gray-300 hover:text-white transition-colors">
@@ -542,17 +628,17 @@ function MatchingGame({
                 <span className="text-2xl font-bold text-white">{correctCount}</span>
               </div>
               <div>
-                <p className="text-white font-bold text-lg">/{batch.length} đúng</p>
+                <p className="text-white font-bold text-lg">/{batch.length}</p>
                 <p className="text-xs text-gray-500">
                   {correctCount === batch.length
-                    ? "Xuất sắc! Tất cả đều đúng 🎉"
-                    : `${batch.length - correctCount} cặp chưa đúng`}
+                    ? p.matching.allCorrect
+                    : p.matching.incorrect.replace("{n}", String(batch.length - correctCount))}
                 </p>
               </div>
             </div>
           ) : (
             <p className="text-xs text-gray-500 text-center">
-              Nhấp vào một từ, rồi nhấp vào nghĩa tương ứng
+              {p.matching.hint}
             </p>
           )}
 
@@ -672,7 +758,7 @@ function MatchingGame({
           {/* Wrong pair corrections (shown after check) */}
           {checked && [...userPairs.entries()].some(([wId, mId]) => wId !== mId) && (
             <div className="flex flex-col gap-1.5 pt-1 border-t border-white/10">
-              <p className="text-[10px] uppercase tracking-wider text-gray-500">Đáp án đúng</p>
+              <p className="text-[10px] uppercase tracking-wider text-gray-500">{p.matching.correctAnswers}</p>
               {shuffledWords
                 .filter((w) => userPairs.get(w._id) !== w._id)
                 .map((w) => (
@@ -692,21 +778,21 @@ function MatchingGame({
                 onClick={() => resetBatch(batch)}
                 className="flex-1 py-3 rounded-xl border border-white/15 text-gray-300 hover:bg-white/5 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
               >
-                <RotateCcw className="w-4 h-4" /> Làm lại
+                <RotateCcw className="w-4 h-4" /> {p.matching.retry}
               </button>
               {pageIndex + 1 < totalPages ? (
                 <button
                   onClick={() => setPageIndex((p) => p + 1)}
                   className="flex-1 py-3 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold text-sm transition-colors"
                 >
-                  Trang tiếp →
+                  {p.matching.nextPage}
                 </button>
               ) : (
                 <button
                   onClick={onClose}
                   className="flex-1 py-3 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold text-sm transition-colors"
                 >
-                  Đóng
+                  {p.matching.close}
                 </button>
               )}
             </div>
@@ -716,7 +802,7 @@ function MatchingGame({
               disabled={!allPaired}
               className="w-full py-3 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              {allPaired ? "Kiểm tra kết quả" : `Còn ${batch.length - userPairs.size} cặp chưa nối`}
+              {allPaired ? p.matching.checkBtn : p.matching.remainingPairs.replace("{n}", String(batch.length - userPairs.size))}
             </button>
           )}
         </div>
@@ -743,6 +829,8 @@ function ListenTypeGame({
   const [score, setScore] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const current = items[index];
+  const { t } = useLang();
+  const p = t.vocabulary;
 
   useEffect(() => {
     if (current) setTimeout(() => speak(current.word), 400);
@@ -778,18 +866,18 @@ function ListenTypeGame({
         <div className="w-full max-w-md bg-[#1C1132] border border-white/15 rounded-2xl p-8 flex flex-col items-center gap-6">
           <span className="text-5xl">🎧</span>
           <div className="text-center">
-            <h3 className="text-xl font-bold text-white">Hoàn thành!</h3>
-            <p className="text-gray-400 text-sm mt-1">Đúng {score}/{items.length} từ</p>
+            <h3 className="text-xl font-bold text-white">{p.listenType.done}</h3>
+            <p className="text-gray-400 text-sm mt-1">{p.listenType.score.replace("{score}", String(score)).replace("{total}", String(items.length))}</p>
           </div>
           <div className="flex gap-3 w-full">
             <button
               onClick={() => { setIndex(0); setInput(""); setStatus("idle"); setDone(false); setScore(0); }}
               className="flex-1 py-3 rounded-xl border border-white/15 text-gray-300 hover:bg-white/5 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
             >
-              <RotateCcw className="w-4 h-4" /> Làm lại
+              <RotateCcw className="w-4 h-4" /> {p.matching.retry}
             </button>
             <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-[#7C3AED] text-white font-semibold text-sm">
-              Đóng
+              {p.matching.close}
             </button>
           </div>
         </div>
@@ -820,7 +908,7 @@ function ListenTypeGame({
           >
             <Headphones className="w-10 h-10 text-[#00E5FF]" />
           </button>
-          <p className="text-xs text-gray-500">Nhấn để nghe lại</p>
+          <p className="text-xs text-gray-500">{p.listenType.listenAgain}</p>
 
           {current.phonetic && status !== "idle" && (
             <p className="text-[#00E5FF] text-sm">{current.phonetic}</p>
@@ -834,7 +922,7 @@ function ListenTypeGame({
               onKeyDown={(e) => {
                 if (e.key === "Enter") status === "idle" ? check() : nextWord();
               }}
-              placeholder="Gõ từ bạn nghe được..."
+              placeholder={p.listenType.placeholder}
               disabled={status !== "idle"}
               className={`w-full rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-600 border outline-none transition-colors text-center text-lg font-medium ${
                 status === "correct"
@@ -846,12 +934,12 @@ function ListenTypeGame({
             />
             {status === "correct" && (
               <p className="text-emerald-400 text-sm text-center flex items-center justify-center gap-1">
-                <CheckCircle2 className="w-4 h-4" /> Chính xác! ✨
+                <CheckCircle2 className="w-4 h-4" /> {p.listenType.correct}
               </p>
             )}
             {status === "wrong" && (
               <p className="text-red-400 text-sm text-center">
-                Đáp án đúng: <span className="font-bold text-white">{current.word}</span>
+                {p.listenType.wrongAnswer}<span className="font-bold text-white">{current.word}</span>
               </p>
             )}
           </div>
@@ -862,14 +950,14 @@ function ListenTypeGame({
               disabled={!input.trim()}
               className="w-full py-3 rounded-xl bg-[#00E5FF] hover:bg-[#00cfeb] text-black font-semibold text-sm transition-colors disabled:opacity-40"
             >
-              Kiểm tra
+              {p.listenType.check}
             </button>
           ) : (
             <button
               onClick={nextWord}
               className="w-full py-3 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold text-sm transition-colors"
             >
-              {index + 1 >= items.length ? "Xem kết quả" : "Từ tiếp theo →"}
+              {index + 1 >= items.length ? p.listenType.seeResults : p.listenType.next}
             </button>
           )}
         </div>
@@ -900,6 +988,8 @@ function FillBlankGame({
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [score, setScore] = useState(0);
+  const { t } = useLang();
+  const p = t.vocabulary;
 
   const current = validItems[index];
 
@@ -937,8 +1027,8 @@ function FillBlankGame({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
         <div className="w-full max-w-md bg-[#1C1132] border border-white/15 rounded-2xl p-8 text-center flex flex-col gap-4">
-          <p className="text-white">Không có từ nào có câu ví dụ phù hợp</p>
-          <button onClick={onClose} className="px-6 py-2.5 rounded-xl bg-[#7C3AED] text-white text-sm">Đóng</button>
+          <p className="text-white">{p.fillBlank.noWords}</p>
+          <button onClick={onClose} className="px-6 py-2.5 rounded-xl bg-[#7C3AED] text-white text-sm">{p.matching.close}</button>
         </div>
       </div>
     );
@@ -950,18 +1040,18 @@ function FillBlankGame({
         <div className="w-full max-w-md bg-[#1C1132] border border-white/15 rounded-2xl p-8 flex flex-col items-center gap-6">
           <span className="text-5xl">✏️</span>
           <div className="text-center">
-            <h3 className="text-xl font-bold text-white">Hoàn thành!</h3>
-            <p className="text-gray-400 text-sm mt-1">Đúng {score}/{validItems.length} câu</p>
+            <h3 className="text-xl font-bold text-white">{p.listenType.done}</h3>
+            <p className="text-gray-400 text-sm mt-1">{p.fillBlank.score.replace("{score}", String(score)).replace("{total}", String(validItems.length))}</p>
           </div>
           <div className="flex gap-3 w-full">
             <button
               onClick={() => { setIndex(0); setSelectedAnswer(null); setDone(false); setScore(0); }}
               className="flex-1 py-3 rounded-xl border border-white/15 text-gray-300 hover:bg-white/5 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
             >
-              <RotateCcw className="w-4 h-4" /> Làm lại
+              <RotateCcw className="w-4 h-4" /> {p.matching.retry}
             </button>
             <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-[#7C3AED] text-white font-semibold text-sm">
-              Đóng
+              {p.matching.close}
             </button>
           </div>
         </div>
@@ -986,7 +1076,7 @@ function FillBlankGame({
         </div>
 
         <div className="bg-[#1C1132] border border-white/15 rounded-2xl p-6 flex flex-col gap-5">
-          <p className="text-[10px] uppercase tracking-wider text-gray-500 text-center">Điền vào chỗ trống</p>
+          <p className="text-[10px] uppercase tracking-wider text-gray-500 text-center">{p.fillBlank.title}</p>
 
           {/* Sentence */}
           <p className="text-white text-lg leading-relaxed text-center min-h-[3rem]">
@@ -1033,14 +1123,14 @@ function FillBlankGame({
                   : "text-red-400"
               }`}>
                 {selectedAnswer.toLowerCase() === current.word.toLowerCase()
-                  ? "✓ Chính xác! 🎉"
-                  : `✗ Đáp án đúng: "${current.word}"`}
+                  ? p.fillBlank.correct
+                  : p.fillBlank.wrong.replace("{word}", current.word)}
               </p>
               <button
                 onClick={next}
                 className="w-full py-3 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold text-sm transition-colors"
               >
-                {index + 1 >= validItems.length ? "Xem kết quả →" : "Tiếp theo →"}
+                {index + 1 >= validItems.length ? p.fillBlank.seeResults : p.fillBlank.next}
               </button>
             </div>
           )}
@@ -1064,6 +1154,8 @@ function PracticeMode({
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [done, setDone] = useState(false);
+  const { t } = useLang();
+  const p = t.vocabulary;
 
   const current = items[index];
 
@@ -1089,21 +1181,21 @@ function PracticeMode({
             <CheckCircle2 className="w-8 h-8 text-emerald-400" />
           </div>
           <div className="text-center">
-            <h3 className="text-xl font-bold text-white mb-1">Hoàn thành!</h3>
-            <p className="text-sm text-gray-400">Bạn đã luyện tập xong {items.length} từ vựng</p>
+            <h3 className="text-xl font-bold text-white mb-1">{p.listenType.done}</h3>
+            <p className="text-sm text-gray-400">{p.practice.done.replace("{n}", String(items.length))}</p>
           </div>
           <div className="flex gap-3 w-full">
             <button
               onClick={() => { setIndex(0); setFlipped(false); setDone(false); }}
               className="flex-1 py-3 rounded-xl border border-white/15 text-gray-300 hover:bg-white/5 text-sm font-medium transition-colors flex items-center justify-center gap-2"
             >
-              <RotateCcw className="w-4 h-4" /> Luyện lại
+              <RotateCcw className="w-4 h-4" /> {p.practice.again}
             </button>
             <button
               onClick={onClose}
               className="flex-1 py-3 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-sm font-semibold transition-colors"
             >
-              Đóng
+              {p.matching.close}
             </button>
           </div>
         </div>
@@ -1158,7 +1250,7 @@ function PracticeMode({
               >
                 <Volume2 className="w-5 h-5" />
               </button>
-              <p className="text-xs text-gray-500 mt-2 flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> Nhấp để xem nghĩa</p>
+              <p className="text-xs text-gray-500 mt-2 flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> {p.practice.flipHint}</p>
             </div>
 
             {/* Back */}
@@ -1166,7 +1258,7 @@ function PracticeMode({
               className="absolute inset-0 bg-[#1C1132] border border-[#7C3AED]/50 rounded-2xl p-8 flex flex-col items-center justify-center gap-4 min-h-[260px]"
               style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
             >
-              <p className="text-[10px] uppercase tracking-widest text-gray-500">Nghĩa</p>
+              <p className="text-[10px] uppercase tracking-widest text-gray-500">{p.practice.meaning}</p>
               <p className="text-lg text-white font-medium text-center leading-relaxed whitespace-pre-line">
                 {formatTranslation(current.translation)}
               </p>
@@ -1190,13 +1282,13 @@ function PracticeMode({
             onClick={() => { onLearned(current._id, false); next(); }}
             className="flex-1 py-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/25 text-sm font-medium transition-colors"
           >
-            Chưa thuộc
+            {p.practice.dontKnow}
           </button>
           <button
             onClick={() => { onLearned(current._id, true); next(); }}
             className="flex-1 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 text-sm font-medium transition-colors"
           >
-            Đã thuộc ✓
+            {p.practice.gotIt}
           </button>
           <button
             onClick={next}
@@ -1228,6 +1320,8 @@ function VocabCard({
   const [flipped, setFlipped] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const pos = extractPos(item.translation);
+  const { t } = useLang();
+  const p = t.vocabulary;
 
   const CardActions = () => (
     <div
@@ -1236,7 +1330,7 @@ function VocabCard({
     >
       <button
         onClick={() => onLearned(item._id, !item.learned)}
-        title={item.learned ? "Bỏ đánh dấu đã thuộc" : "Đánh dấu là đã nhớ"}
+        title={item.learned ? p.card.unlearnTitle : p.card.learnTitle}
         className={`p-2 rounded-xl transition-colors ${
           item.learned
             ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
@@ -1248,7 +1342,7 @@ function VocabCard({
       <button
         onClick={() => { onEdit(item); setFlipped(false); }}
         className="p-2 rounded-xl bg-white/5 text-gray-400 hover:bg-[#7C3AED]/20 hover:text-[#7C3AED] transition-colors"
-        title="Chỉnh sửa"
+        title={p.card.editTitle}
       >
         <Pencil className="w-3.5 h-3.5" />
       </button>
@@ -1257,14 +1351,14 @@ function VocabCard({
           onClick={() => onDelete(item._id)}
           className="px-2.5 py-2 rounded-xl bg-red-500 text-white text-xs font-semibold transition-colors"
         >
-          Xóa?
+          {p.card.deleteConfirm}
         </button>
       ) : (
         <button
           onClick={() => setDeleteConfirm(true)}
           onBlur={() => setTimeout(() => setDeleteConfirm(false), 200)}
           className="p-2 rounded-xl bg-white/5 text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition-colors"
-          title="Xóa"
+          title={p.card.deleteTitle}
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -1307,7 +1401,7 @@ function VocabCard({
             <button
               onClick={(e) => { e.stopPropagation(); speak(item.word); }}
               className="p-2.5 rounded-xl bg-[#1C1132] border border-white/10 text-[#00E5FF] hover:bg-[#00E5FF]/10 transition-colors flex-shrink-0"
-              title="Nghe phát âm"
+              title={p.card.listenTitle}
             >
               <Volume2 className="w-4 h-4" />
             </button>
@@ -1317,13 +1411,13 @@ function VocabCard({
           <div className="flex-1" />
 
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] text-gray-600">Nhấp để xem nghĩa →</p>
+            <p className="text-[11px] text-gray-600">{p.card.hint}</p>
             {item.videoId && (
               <button
                 onClick={(e) => { e.stopPropagation(); onVideoPlay(item); }}
                 className="text-xs text-[#7C3AED] hover:text-[#a78bfa] flex items-center gap-1 transition-colors flex-shrink-0"
               >
-                🎬 {item.segmentTime ?? "Video gốc"}
+                🎬 {item.segmentTime ?? p.segmentDialog.originalVideo}
               </button>
             )}
           </div>
@@ -1331,7 +1425,7 @@ function VocabCard({
           {/* Learned badge — bottom so it doesn't crowd the word */}
           {item.learned && (
             <span className="self-start text-[10px] font-semibold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
-              ✓ Đã thuộc
+              {p.card.learned}
             </span>
           )}
 
@@ -1346,20 +1440,20 @@ function VocabCard({
           style={{ gridArea: "card", backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
         >
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1.5">Nghĩa</p>
+            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1.5">{p.card.meaningLabel}</p>
             <p className="text-sm text-white leading-relaxed whitespace-pre-line">
               {formatTranslation(item.translation)}
             </p>
           </div>
           {item.example && (
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1.5">Ví dụ</p>
+              <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1.5">{p.card.exampleLabel}</p>
               <p className="text-sm text-[#00E5FF] italic leading-relaxed">"{item.example}"</p>
             </div>
           )}
           {item.note && (
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Ghi chú</p>
+              <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">{p.card.noteLabel}</p>
               <p className="text-xs text-gray-300 leading-relaxed">{item.note}</p>
             </div>
           )}
@@ -1396,6 +1490,8 @@ function VideoVocabModal({
   onVideoPlay: (item: VocabItem) => void;
 }) {
   const learnedCount = group.items.filter((v) => v.learned).length;
+  const { t } = useLang();
+  const p = t.vocabulary;
 
   return createPortal(
     <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
@@ -1410,13 +1506,13 @@ function VideoVocabModal({
           )}
           <div className="flex-1 min-w-0">
             <h2 className="text-white font-semibold text-sm leading-snug line-clamp-1">{group.videoTitle}</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{group.items.length} từ · {learnedCount} đã thuộc</p>
+            <p className="text-xs text-gray-500 mt-0.5">{p.modal.learnedCount.replace("{n}", String(group.items.length)).replace("{m}", String(learnedCount))}</p>
           </div>
           <button
             onClick={onPracticeVocab}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-sm font-medium transition-colors flex-shrink-0"
           >
-            <Dumbbell className="w-3.5 h-3.5" /> Luyện từ vựng
+            <Dumbbell className="w-3.5 h-3.5" /> {p.modal.practiceBtn}
           </button>
           <button onClick={onClose} className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex-shrink-0">
             <X className="w-4 h-4" />
@@ -1452,14 +1548,19 @@ function VideoSection({
   onPracticeVocab,
   onPracticeListening,
   onShare,
+  onDeleteGroup,
 }: {
   group: VideoGroup;
   onOpenCards: () => void;
   onPracticeVocab: () => void;
   onPracticeListening: () => void;
   onShare: () => void;
+  onDeleteGroup: () => void;
 }) {
   const learnedCount = group.items.filter((v) => v.learned).length;
+  const { t } = useLang();
+  const p = t.vocabulary;
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <div className="flex items-center gap-4 p-4 bg-[#1C1132]/70 rounded-2xl border border-white/10 hover:border-white/20 transition-colors">
@@ -1488,13 +1589,13 @@ function VideoSection({
         </button>
         <div className="flex items-center gap-3 mt-1.5 flex-wrap">
           <span className="text-xs text-gray-500">
-            {group.items.length} từ · {learnedCount} đã thuộc
+            {p.modal.learnedCount.replace("{n}", String(group.items.length)).replace("{m}", String(learnedCount))}
           </span>
           <button
             onClick={onPracticeVocab}
             className="text-xs text-[#7C3AED] hover:text-[#a78bfa] flex items-center gap-1 transition-colors"
           >
-            <Dumbbell className="w-3 h-3" /> Luyện từ vựng
+            <Dumbbell className="w-3 h-3" /> {p.section.practiceBtn}
           </button>
         </div>
       </div>
@@ -1506,18 +1607,39 @@ function VideoSection({
           className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[#00E5FF] hover:bg-[#00E5FF]/20 text-sm font-medium transition-colors flex-shrink-0"
         >
           <Headphones className="w-4 h-4" />
-          Luyện tập lại
+          {p.section.practiceAgain}
         </button>
       )}
       {/* Share button */}
       <button
         onClick={onShare}
-        title="Chia sẻ bộ từ vựng"
+        title={p.section.shareTitle}
         className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#7C3AED]/40 text-[#a78bfa] hover:bg-[#7C3AED]/15 hover:border-[#7C3AED] text-sm font-medium transition-all flex-shrink-0"
       >
         <Share2 className="w-4 h-4" />
-        <span className="hidden sm:inline">Chia sẻ</span>
+        <span className="hidden sm:inline">{p.section.share}</span>
       </button>
+
+      {/* Delete group button */}
+      {confirmDelete ? (
+        <button
+          onClick={() => { setConfirmDelete(false); onDeleteGroup(); }}
+          onBlur={() => setTimeout(() => setConfirmDelete(false), 200)}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500 text-white text-xs font-semibold transition-colors flex-shrink-0 whitespace-nowrap"
+          autoFocus
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          {p.card.deleteConfirm}
+        </button>
+      ) : (
+        <button
+          onClick={() => setConfirmDelete(true)}
+          title={p.card.deleteTitle}
+          className="p-2 rounded-xl border border-white/10 text-gray-500 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all flex-shrink-0"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
     </div>
   );
 }
@@ -1533,6 +1655,8 @@ function ShareVocabModal({
   group: VideoGroup;
   onClose: () => void;
 }) {
+  const { t } = useLang();
+  const sm = t.vocabulary.shareModal;
   const [selected, setSelected] = useState<Set<string>>(new Set(group.items.map((i) => i._id)));
   const [caption, setCaption] = useState("");
   const [visibility, setVisibility] = useState<"public" | "friends">("public");
@@ -1604,12 +1728,12 @@ function ShareVocabModal({
           <div className="w-14 h-14 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-5">
             <Check className="w-7 h-7 text-green-400" />
           </div>
-          <h3 className="text-white font-bold text-lg mb-2">Đã chia sẻ!</h3>
+          <h3 className="text-white font-bold text-lg mb-2">{sm.shared}</h3>
           <p className="text-gray-400 text-sm mb-6">
-            {visibility === "public" ? "Bộ từ vựng đã được đăng lên Feed." : "Đã gửi cho bạn bè được chọn."}
+            {visibility === "public" ? sm.sharedFeed : sm.sharedFriends}
           </p>
           <button onClick={onClose} className="w-full py-2.5 rounded-xl bg-[#7C3AED] text-white font-semibold text-sm hover:bg-[#6D28D9] transition-colors">
-            Đóng
+            {sm.cancel}
           </button>
         </div>
       </div>,
@@ -1624,7 +1748,7 @@ function ShareVocabModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
           <div className="flex items-center gap-2.5">
             <Share2 className="w-5 h-5 text-[#a78bfa]" />
-            <span className="text-white font-bold">Chia sẻ bộ từ vựng</span>
+            <span className="text-white font-bold">{sm.title}</span>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
             <X className="w-5 h-5" />
@@ -1634,7 +1758,7 @@ function ShareVocabModal({
         <div className="p-6 space-y-5">
           {/* Visibility toggle */}
           <div>
-            <p className="text-xs text-gray-400 uppercase tracking-widest mb-2.5 font-semibold">Chia sẻ với</p>
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-2.5 font-semibold">{sm.shareWith}</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setVisibility("public")}
@@ -1644,7 +1768,7 @@ function ShareVocabModal({
                     : "border-white/10 text-gray-400 hover:border-white/20"
                 }`}
               >
-                <Globe className="w-4 h-4" /> Feed công khai
+                <Globe className="w-4 h-4" /> {sm.publicFeed}
               </button>
               <button
                 onClick={() => setVisibility("friends")}
@@ -1654,7 +1778,7 @@ function ShareVocabModal({
                     : "border-white/10 text-gray-400 hover:border-white/20"
                 }`}
               >
-                <Users className="w-4 h-4" /> Bạn bè
+                <Users className="w-4 h-4" /> {sm.friends}
               </button>
             </div>
           </div>
@@ -1662,9 +1786,9 @@ function ShareVocabModal({
           {/* Friend selector */}
           {visibility === "friends" && (
             <div>
-              <p className="text-xs text-gray-400 uppercase tracking-widest mb-2.5 font-semibold">Chọn bạn bè</p>
+              <p className="text-xs text-gray-400 uppercase tracking-widest mb-2.5 font-semibold">{sm.chooseFriends}</p>
               {friends.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">Chưa có bạn bè nào. Hãy kết bạn trước!</p>
+                <p className="text-sm text-gray-500 text-center py-4">{sm.noFriends}</p>
               ) : (
                 <div className="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1">
                   {friends.map((f) => {
@@ -1696,7 +1820,7 @@ function ShareVocabModal({
           {/* Word selection */}
           <div>
             <div className="flex items-center justify-between mb-2.5">
-              <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Chọn từ ({selected.size}/{group.items.length})</p>
+              <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">{sm.selectWords.replace("{selected}", String(selected.size)).replace("{total}", String(group.items.length))}</p>
               <button
                 onClick={() =>
                   selected.size === group.items.length
@@ -1705,7 +1829,7 @@ function ShareVocabModal({
                 }
                 className="text-xs text-[#a78bfa] hover:underline"
               >
-                {selected.size === group.items.length ? "Bỏ chọn tất cả" : "Chọn tất cả"}
+                {selected.size === group.items.length ? sm.deselectAll : sm.selectAll}
               </button>
             </div>
             <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-1">
@@ -1728,11 +1852,11 @@ function ShareVocabModal({
 
           {/* Caption */}
           <div>
-            <p className="text-xs text-gray-400 uppercase tracking-widest mb-2 font-semibold">Ghi chú (tuỳ chọn)</p>
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-2 font-semibold">{sm.note}</p>
             <textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
-              placeholder="Viết gì đó về bộ từ này..."
+              placeholder={sm.notePlaceholder}
               rows={2}
               className="w-full bg-[#0D0920] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 resize-none focus:outline-none focus:border-[#7C3AED] transition-colors"
             />
@@ -1740,14 +1864,14 @@ function ShareVocabModal({
 
           {/* Actions */}
           <div className="flex gap-3 pt-1">
-            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:bg-white/5 text-sm font-medium transition-colors">Huỷ</button>
+            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:bg-white/5 text-sm font-medium transition-colors">{sm.cancel}</button>
             <button
               onClick={handleShare}
               disabled={loading || selected.size === 0 || (visibility === "friends" && selectedFriends.size === 0)}
               className="flex-1 py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
-              Chia sẻ
+              {sm.share}
             </button>
           </div>
         </div>
@@ -1759,14 +1883,17 @@ function ShareVocabModal({
 
 // ─── Video Section ────────────────────────────────────────────────────────────
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "all", label: "Tất cả" },
-  { id: "unlearned", label: "Chưa thuộc" },
-  { id: "learned", label: "Đã thuộc" },
-];
-
 export default function VocabularyPage() {
   const router = useRouter();
+  const { t } = useLang();
+  const p = t.vocabulary;
+
+  const TABS: { id: Tab; label: string }[] = [
+    { id: "all", label: p.tabs.all },
+    { id: "unlearned", label: p.tabs.unlearned },
+    { id: "learned", label: p.tabs.learned },
+    { id: "favorite", label: p.tabs.favorite },
+  ];
   const [items, setItems] = useState<VocabItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("all");
@@ -1779,6 +1906,22 @@ export default function VocabularyPage() {
   const [videoDialog, setVideoDialog] = useState<{
     videoId: string; startSec: number; endSec: number; transcript: string;
   } | null>(null);
+  const [isPro, setIsPro] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+
+  useEffect(() => {
+    // Đọc is_premium từ user object để tránh cache cũ khi đổi tài khoản
+    try {
+      const raw = localStorage.getItem("user");
+      if (raw) setIsPro(!!JSON.parse(raw).is_premium);
+    } catch {}
+  }, []);
+
+  const tryPractice = useCallback((vocabItems: VocabItem[]) => {
+    if (!isPro) { setShowPaywall(true); return; }
+    setPracticeItems([...vocabItems].sort(() => Math.random() - 0.5));
+    setGameType(null);
+  }, [isPro]);
 
   const openVideoDialog = useCallback((item: VocabItem) => {
     if (!item.videoId) return;
@@ -1860,10 +2003,11 @@ export default function VocabularyPage() {
   const filtered = items.filter((v) => {
     if (tab === "learned") return v.learned;
     if (tab === "unlearned") return !v.learned;
+    if (tab === "favorite") return !!v.isFavorite;
     return true;
   });
 
-  const videoGroups = groupByVideo(filtered);
+  const videoGroups = groupByVideo(filtered, p.unknownVideo, p.unknownSource);
 
   return (
     <div className="min-h-full">
@@ -1871,10 +2015,10 @@ export default function VocabularyPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white flex items-center gap-2.5">
           <BookOpen className="w-6 h-6 text-[#00E5FF]" />
-          Từ vựng của tôi
+          {p.title}
         </h1>
         <p className="text-sm text-gray-400 mt-1">
-          {items.length} từ · {items.filter((v) => v.learned).length} đã thuộc · {new Set(items.map((v) => v.videoId).filter(Boolean)).size} video
+          {p.stats.replace("{words}", String(items.length)).replace("{learned}", String(items.filter((v) => v.learned).length)).replace("{videos}", String(new Set(items.map((v) => v.videoId).filter(Boolean)).size))}
         </p>
       </div>
 
@@ -1884,6 +2028,7 @@ export default function VocabularyPage() {
           const count =
             id === "all" ? items.length
             : id === "learned" ? items.filter((v) => v.learned).length
+            : id === "favorite" ? items.filter((v) => v.isFavorite).length
             : items.filter((v) => !v.learned).length;
           return (
             <button
@@ -1908,7 +2053,7 @@ export default function VocabularyPage() {
       {loading ? (
         <div className="flex flex-col items-center justify-center h-60 gap-3 text-gray-400">
           <Loader2 className="w-7 h-7 animate-spin text-[#00E5FF]" />
-          <p className="text-sm">Đang tải từ vựng...</p>
+          <p className="text-sm">{p.loading}</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-60 gap-4 text-center">
@@ -1917,12 +2062,15 @@ export default function VocabularyPage() {
           </div>
           <div>
             <p className="text-white font-medium">
-              {tab === "learned" ? "Chưa có từ nào được đánh dấu đã thuộc"
-               : tab === "unlearned" ? "Tất cả từ đã được đánh dấu thuộc rồi!"
-               : "Chưa có từ vựng nào"}
+              {tab === "learned" ? p.empty.unlearned
+               : tab === "unlearned" ? p.empty.learned
+               : tab === "favorite" ? p.empty.favorite
+               : p.empty.all}
             </p>
-            {tab === "all" && (
-              <p className="text-sm text-gray-400 mt-1">Hãy luyện tập và lưu từ vựng trong video</p>
+            {(tab === "all" || tab === "favorite") && (
+              <p className="text-sm text-gray-400 mt-1">
+                {tab === "favorite" ? p.empty.favoriteHint : p.empty.allHint}
+              </p>
             )}
           </div>
         </div>
@@ -1930,19 +2078,19 @@ export default function VocabularyPage() {
         <div className="flex flex-col gap-2">
           {videoGroups.map((group) => (
             <VideoSection
-              key={group.videoId}
+              key={group.groupKey}
               group={group}
               onOpenCards={() => setSelectedGroup(group)}
-              onPracticeVocab={() => {
-                setPracticeItems([...group.items].sort(() => Math.random() - 0.5));
-                setGameType(null);
-              }}
+              onPracticeVocab={() => tryPractice(group.items)}
               onPracticeListening={() =>
                 router.push(
                   `/dashboard/practice/${group.videoId}?title=${encodeURIComponent(group.videoTitle)}`
                 )
               }
               onShare={() => setShareGroup(group)}
+              onDeleteGroup={() => {
+                group.items.forEach((item) => deleteItem(item._id));
+              }}
             />
           ))}
         </div>
@@ -1961,11 +2109,7 @@ export default function VocabularyPage() {
         <VideoVocabModal
           group={selectedGroup}
           onClose={() => setSelectedGroup(null)}
-          onPracticeVocab={() => {
-            setPracticeItems([...selectedGroup.items].sort(() => Math.random() - 0.5));
-            setGameType(null);
-            setSelectedGroup(null);
-          }}
+          onPracticeVocab={() => { tryPractice(selectedGroup.items); setSelectedGroup(null); }}
           onLearned={toggleLearned}
           onEdit={setEditItem}
           onDelete={deleteItem}
@@ -1979,6 +2123,14 @@ export default function VocabularyPage() {
           item={editItem}
           onSave={saveEdit}
           onClose={() => setEditItem(null)}
+        />
+      )}
+
+      {/* ── Pro Paywall ── */}
+      {showPaywall && typeof document !== "undefined" && (
+        <ProPaywallModal
+          onClose={() => setShowPaywall(false)}
+          onUpgrade={() => router.push("/dashboard/upgrade")}
         />
       )}
 

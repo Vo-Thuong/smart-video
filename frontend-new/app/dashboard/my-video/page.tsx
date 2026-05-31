@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Heart, Trash2, BookOpen, Play, FolderPlus, Check, Plus, X, Clock, PlayCircle } from "lucide-react";
+import { Heart, Trash2, BookOpen, Play, FolderPlus, Check, Plus, X, Clock, PlayCircle, FileVideo } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { VideoToolbar } from "@/components/my-video/video-toolbar";
+import { useLang } from "@/lib/i18n";
 
 interface Category {
   _id: string;
@@ -14,16 +15,17 @@ interface Category {
 
 interface SavedVideo {
   _id: string;
-  youtubeId: string;
-  youtubeUrl: string;
+  youtubeId?: string;
+  youtubeUrl?: string;
   title: string;
-  thumbnail: string;
+  thumbnail?: string;
   isFavorite: boolean;
   categoryId: Category | null;
   createdAt: string;
   progressTime?: number;
   progressSegment?: string;
   lastPracticed?: string | null;
+  isLocal?: boolean;
 }
 
 const PRESET_COLORS = [
@@ -33,10 +35,13 @@ const PRESET_COLORS = [
 
 export default function MyVideoPage() {
   const router = useRouter();
+  const { t } = useLang();
+  const p = t.myVideo;
   const [videos, setVideos] = useState<SavedVideo[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filter, setFilter] = useState<"all" | "favorite" | string>("all");
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Collection dropdown state
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
@@ -60,9 +65,28 @@ export default function MyVideoPage() {
         headers: { ...authHeader, "Content-Type": "application/json" },
       });
       const data = await res.json();
-      if (data.success) setVideos(data.videos);
+      if (data.success) {
+        setVideos(data.videos);
+        // Auto-generate thumbnails for local videos that don't have one yet
+        const noThumb = (data.videos as SavedVideo[]).filter((v) => v.isLocal && !v.thumbnail);
+        noThumb.forEach((v) => {
+          fetch(`http://localhost:5000/api/video/local/${v._id}/thumbnail`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          })
+            .then((r) => r.json())
+            .then((d) => {
+              if (d.success && d.thumbnail) {
+                setVideos((prev) =>
+                  prev.map((vid) => vid._id === v._id ? { ...vid, thumbnail: d.thumbnail } : vid)
+                );
+              }
+            })
+            .catch(() => {});
+        });
+      }
     } catch {
-      toast.error("Không thể tải danh sách video");
+      toast.error(p.loadErr);
     } finally {
       setLoading(false);
     }
@@ -111,7 +135,7 @@ export default function MyVideoPage() {
         );
       }
     } catch {
-      toast.error("Lỗi khi cập nhật yêu thích");
+      toast.error(p.favErr);
     }
   };
 
@@ -124,10 +148,10 @@ export default function MyVideoPage() {
       const data = await res.json();
       if (data.success) {
         setVideos((prev) => prev.filter((v) => v._id !== id));
-        toast.success("Đã xóa video");
+        toast.success(p.deleted);
       }
     } catch {
-      toast.error("Lỗi khi xóa video");
+      toast.error(p.deleteErr);
     }
   };
 
@@ -143,11 +167,11 @@ export default function MyVideoPage() {
         setVideos((prev) =>
           prev.map((v) => (v._id === videoId ? { ...v, categoryId: data.video.categoryId } : v))
         );
-        toast.success(categoryId ? "Đã thêm vào bộ sưu tập" : "Đã xóa khỏi bộ sưu tập");
+        toast.success(categoryId ? p.collectionAdded : p.collectionRemoved);
         closeDropdown();
       }
     } catch {
-      toast.error("Lỗi khi cập nhật bộ sưu tập");
+      toast.error(p.collectionErr);
     }
   };
 
@@ -168,7 +192,7 @@ export default function MyVideoPage() {
       // Assign to video
       await assignCategory(videoId, newCat._id);
     } catch {
-      toast.error("Lỗi khi tạo bộ sưu tập");
+      toast.error(p.collectionCreateErr);
     } finally {
       setCatLoading(false);
     }
@@ -184,7 +208,9 @@ export default function MyVideoPage() {
       <VideoToolbar
         categories={categories}
         activeFilter={filter}
-        onFilterChange={setFilter}
+        onFilterChange={(f) => { setFilter(f); setSearchQuery(""); }}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
       {loading ? (
@@ -193,19 +219,37 @@ export default function MyVideoPage() {
         </div>
       ) : videos.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
-          <p className="text-lg">Chưa có video nào được lưu</p>
-          <p className="text-sm mt-1">Paste URL YouTube ở Dashboard để lưu video đầu tiên</p>
+        <p className="text-lg">{p.noVideos}</p>
+          <p className="text-sm mt-1">{p.noVideosHint}</p>
         </div>
       ) : (
         <>
           {/* ── Continue Watching ── */}
-          {filter === "all" && (() => {
-            const inProgress = videos.filter((v) => (v.progressTime ?? 0) > 3);
+          {(() => {
+            const q = searchQuery.trim().toLowerCase();
+            const displayVideos = q
+              ? videos.filter((v) => v.title.toLowerCase().includes(q))
+              : videos;
+
+            if (displayVideos.length === 0 && q) {
+              return (
+                <div className="text-center py-20 text-gray-400">
+                  <p className="text-lg">{p.noResults}</p>
+                  <p className="text-sm mt-1">{p.noResultsHint}</p>
+                </div>
+              );
+            }
+
+            return (
+              <>
+                {/* Continue watching strip — only when no search */}
+                {filter === "all" && !q && (() => {
+                  const inProgress = displayVideos.filter((v) => (v.progressTime ?? 0) > 3);
             if (inProgress.length === 0) return null;
             return (
               <div className="mb-6">
                 <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#00E5FF]" /> Tiếp tục luyện tập
+                  <Clock className="w-4 h-4 text-[#00E5FF]" /> {p.continuePracticing}
                 </h2>
                 <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
                   {inProgress.map((video) => {
@@ -217,11 +261,21 @@ export default function MyVideoPage() {
                         key={video._id}
                         className="flex-shrink-0 w-56 bg-[#1C1132] border border-white/10 rounded-xl overflow-hidden cursor-pointer hover:border-[#00E5FF]/40 transition-all group"
                         onClick={() =>
-                          router.push(`/dashboard/practice/${video.youtubeId}?title=${encodeURIComponent(video.title)}`)
+                          video.isLocal
+                            ? router.push(`/dashboard/practice/local/${video._id}?title=${encodeURIComponent(video.title)}`)
+                            : router.push(`/dashboard/practice/${video.youtubeId}?title=${encodeURIComponent(video.title)}`)
                         }
                       >
                         <div className="relative aspect-video">
-                          <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+                          {video.isLocal && video.thumbnail ? (
+                            <img src={`http://localhost:5000${video.thumbnail}`} alt={video.title} className="w-full h-full object-cover" />
+                          ) : video.isLocal ? (
+                            <div className="w-full h-full bg-gradient-to-br from-purple-900/60 to-[#1C1132] flex items-center justify-center">
+                              <FileVideo className="w-10 h-10 text-purple-400/60" />
+                            </div>
+                          ) : (
+                            <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+                          )}
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <PlayCircle className="w-10 h-10 text-white" />
                           </div>
@@ -235,7 +289,7 @@ export default function MyVideoPage() {
                         <div className="px-3 py-2">
                           <p className="text-white text-xs font-medium line-clamp-1">{video.title}</p>
                           <p className="text-gray-500 text-xs mt-0.5">
-                            Đến: {mins}:{secs.toString().padStart(2, "0")}
+                            {p.at.replace("{time}", `${mins}:${secs.toString().padStart(2, "0")}`)}
                             {video.progressSegment && (
                               <span className="block truncate italic mt-0.5 text-gray-600">&ldquo;{video.progressSegment}&rdquo;</span>
                             )}
@@ -249,31 +303,59 @@ export default function MyVideoPage() {
             );
           })()}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {videos.map((video) => (
+          {displayVideos.map((video) => (
             <div
               key={video._id}
               className="bg-[#1C1132] border border-white/10 rounded-xl overflow-hidden group hover:border-white/20 transition-colors"
             >
               {/* Thumbnail */}
               <div className="relative aspect-video bg-[#2D1F47]">
-                <img
-                  src={video.thumbnail}
-                  alt={video.title}
-                  className="w-full h-full object-cover"
-                />
-                <a
-                  href={`https://www.youtube.com/watch?v=${video.youtubeId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Play className="w-12 h-12 text-white fill-white" />
-                </a>
+                {video.isLocal && video.thumbnail ? (
+                  <img
+                    src={`http://localhost:5000${video.thumbnail}`}
+                    alt={video.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : video.isLocal ? (
+                  <div className="w-full h-full bg-gradient-to-br from-purple-900/60 to-[#1C1132] flex items-center justify-center">
+                    <FileVideo className="w-12 h-12 text-purple-400/60" />
+                  </div>
+                ) : (
+                  <img
+                    src={video.thumbnail}
+                    alt={video.title}
+                    className="w-full h-full object-cover"
+                  />
+                )}
+                {video.isLocal ? (
+                  <button
+                    onClick={() => router.push(`/dashboard/practice/local/${video._id}?title=${encodeURIComponent(video.title)}`)}
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Play className="w-12 h-12 text-white fill-white" />
+                  </button>
+                ) : (
+                  <a
+                    href={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Play className="w-12 h-12 text-white fill-white" />
+                  </a>
+                )}
               </div>
 
               {/* Info */}
               <div className="p-3 space-y-2">
-                <p className="text-white text-sm font-medium line-clamp-2">{video.title}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-white text-sm font-medium line-clamp-2 flex-1">{video.title}</p>
+                  {video.isLocal && (
+                    <span className="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-medium">
+                      Local
+                    </span>
+                  )}
+                </div>
 
                 {/* Category badge */}
                 {video.categoryId && (
@@ -294,15 +376,15 @@ export default function MyVideoPage() {
                   {/* Practice button */}
                   <button
                     className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#00E5FF]/10 hover:bg-[#00E5FF]/20 text-[#00E5FF] text-xs font-medium transition-colors"
-                    title="Luyện tập"
+                    title={p.practiceTitle}
                     onClick={() =>
-                      router.push(
-                        `/dashboard/practice/${video.youtubeId}?title=${encodeURIComponent(video.title)}`
-                      )
+                      video.isLocal
+                        ? router.push(`/dashboard/practice/local/${video._id}?title=${encodeURIComponent(video.title)}`)
+                        : router.push(`/dashboard/practice/${video.youtubeId}?title=${encodeURIComponent(video.title)}`)
                     }
                   >
                     <BookOpen className="w-3.5 h-3.5" />
-                    Luyện tập
+                    {p.practice}
                   </button>
 
                   <div className="flex items-center gap-1">
@@ -317,7 +399,7 @@ export default function MyVideoPage() {
                             ? "text-purple-400 hover:bg-purple-400/10"
                             : "text-gray-500 hover:text-purple-400 hover:bg-purple-400/10"
                         }`}
-                        title="Thêm vào bộ sưu tập"
+                        title={p.addToCollection}
                       >
                         <FolderPlus className="w-4 h-4" />
                       </button>
@@ -326,7 +408,7 @@ export default function MyVideoPage() {
                       {openDropdownId === video._id && (
                         <div className="absolute bottom-full right-0 mb-2 w-52 bg-[#1C1132] border border-white/15 rounded-xl shadow-2xl z-50 overflow-hidden">
                           <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
-                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Bộ sưu tập</span>
+                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{p.collectionLabel}</span>
                             <button onClick={closeDropdown} className="text-gray-500 hover:text-white">
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -338,14 +420,14 @@ export default function MyVideoPage() {
                               onClick={() => assignCategory(video._id, null)}
                               className="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-red-400/10 transition-colors"
                             >
-                              Xóa khỏi bộ sưu tập
+                              {p.removeFromCollection}
                             </button>
                           )}
 
                           {/* Existing categories */}
                           <div className="max-h-36 overflow-y-auto">
                             {categories.length === 0 && (
-                              <p className="px-3 py-3 text-xs text-gray-500 text-center">Chưa có bộ sưu tập nào</p>
+                              <p className="px-3 py-3 text-xs text-gray-500 text-center">{p.noCollections}</p>
                             )}
                             {categories.map((cat) => (
                               <button
@@ -373,7 +455,7 @@ export default function MyVideoPage() {
                                 className="w-full text-left px-3 py-2 flex items-center gap-2 text-[#00E5FF] hover:bg-[#00E5FF]/10 transition-colors text-xs"
                               >
                                 <Plus className="w-3.5 h-3.5" />
-                                Tạo bộ mới
+                                {p.createNew}
                               </button>
                             ) : (
                               <div className="p-3 space-y-2">
@@ -383,7 +465,7 @@ export default function MyVideoPage() {
                                   value={newCatName}
                                   onChange={(e) => setNewCatName(e.target.value)}
                                   onKeyDown={(e) => e.key === "Enter" && createCategoryAndAssign(video._id)}
-                                  placeholder="Tên bộ sưu tập..."
+                                  placeholder={p.collectionPlaceholder}
                                   className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white placeholder:text-gray-500 outline-none focus:border-[#00E5FF]/50"
                                 />
                                 <div className="flex gap-1 flex-wrap">
@@ -404,7 +486,7 @@ export default function MyVideoPage() {
                                   disabled={catLoading || !newCatName.trim()}
                                   className="w-full py-1.5 rounded-lg bg-[#00E5FF] text-black text-xs font-semibold disabled:opacity-50 hover:bg-[#00BCCC] transition-colors"
                                 >
-                                  {catLoading ? "Đang tạo..." : "Tạo & Thêm"}
+                                  {catLoading ? p.creating : p.createAdd}
                                 </button>
                               </div>
                             )}
@@ -435,6 +517,9 @@ export default function MyVideoPage() {
             </div>
           ))}
           </div>
+              </>
+            );
+          })()}
           </>
       )}
     </div>

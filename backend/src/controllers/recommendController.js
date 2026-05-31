@@ -52,6 +52,12 @@ const INTEREST_MAP = {
 
 exports.getRecommendations = async (req, res) => {
   try {
+    const limit = Math.min(parseInt(req.query.limit) || 8, 20);
+    // For 8 videos: 4 queries × 3 each = 12 raw (buffer for dedup)
+    // For 20 videos: 10 queries × 3 each = 30 raw (buffer for dedup)
+    const queryCount = limit <= 8 ? 4 : 10;
+    const videosPerQuery = 3;
+
     const user = await User.findById(req.userId).select("survey onboardingCompleted");
 
     // Build search queries even without AI if survey is incomplete
@@ -70,9 +76,9 @@ exports.getRecommendations = async (req, res) => {
         // Use Gemini to generate smart search queries
         try {
           const genAI = new GoogleGenerativeAI(apiKey);
-          const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+          const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-          const prompt = `Bạn là trợ lý gợi ý video học tiếng Anh. Dựa trên hồ sơ người dùng sau, hãy tạo đúng 5 cụm từ tìm kiếm YouTube bằng tiếng Anh để tìm các video học tiếng Anh phù hợp và hấp dẫn.
+          const prompt = `Bạn là trợ lý gợi ý video học tiếng Anh. Dựa trên hồ sơ người dùng sau, hãy tạo đúng ${queryCount} cụm từ tìm kiếm YouTube bằng tiếng Anh để tìm các video học tiếng Anh phù hợp và hấp dẫn.
 
 Hồ sơ người dùng:
 - Trình độ: ${level}
@@ -84,6 +90,7 @@ Hồ sơ người dùng:
 Yêu cầu:
 - Trả về ĐÚNG định dạng JSON array, không có markdown, không có giải thích
 - Mỗi cụm từ tìm kiếm phải bằng tiếng Anh
+- Đa dạng chủ đề, không lặp lại ý
 - Ưu tiên kênh học tiếng Anh nổi tiếng
 - Phù hợp với trình độ và mục tiêu người dùng
 
@@ -97,7 +104,7 @@ Output:`;
           const match = text.match(/\[[\s\S]*\]/);
           if (match) {
             const parsed = JSON.parse(match[0]);
-            if (Array.isArray(parsed)) queries = parsed.slice(0, 5);
+            if (Array.isArray(parsed)) queries = parsed.slice(0, queryCount);
           }
         } catch {
           // Fall back to rule-based queries
@@ -129,7 +136,12 @@ Output:`;
           `english ${levelKey} listening practice`,
           `everyday english conversation`,
           `english vocabulary ${levelKey} level`,
-        ];
+          `english speaking practice ${levelKey}`,
+          `english grammar tips ${levelKey}`,
+          `learn english with movies ${levelKey}`,
+          `english for beginners daily practice`,
+          `english listening skills improvement`,
+        ].slice(0, queryCount);
       }
     } else {
       // No survey: generic popular queries
@@ -139,15 +151,20 @@ Output:`;
         "english pronunciation tips",
         "english vocabulary daily",
         "speak english fluently tips",
-      ];
+        "english grammar for beginners",
+        "english for daily life conversation",
+        "learn english with stories",
+        "english listening comprehension practice",
+        "american english accent training",
+      ].slice(0, queryCount);
     }
 
-    // Search YouTube for each query (2 videos per query = 10 total)
+    // Search YouTube for each query
     const videoResults = await Promise.all(
-      queries.slice(0, 5).map(async (q) => {
+      queries.slice(0, queryCount).map(async (q) => {
         try {
           const r = await yts({ query: q, pages: 1 });
-          return (r.videos || []).slice(0, 2).map((v) => ({
+          return (r.videos || []).slice(0, videosPerQuery).map((v) => ({
             youtubeId: v.videoId,
             title: v.title,
             thumbnail: v.thumbnail,
@@ -172,10 +189,111 @@ Output:`;
         seen.add(v.youtubeId);
         return true;
       })
-      .slice(0, 10);
+      .slice(0, limit);
 
     res.json({ success: true, videos, queriesUsed: queries });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+/**
+ * Pro-only: Tìm kiếm video YouTube từ keyword của người dùng
+ * Dùng Gemini để viết prompt tìm kiếm chính xác
+ * GET /api/recommendations/search?q=keyword
+ */
+exports.searchByKeyword = async (req, res) => {
+  try {
+    const keyword = (req.query.q || "").trim();
+    if (!keyword) {
+      return res.status(400).json({ success: false, message: "Vui lòng nhập từ khoá tìm kiếm." });
+    }
+
+    // Lấy thông tin user để personalise prompt
+    const user = await User.findById(req.userId).select("survey").lean();
+    const level = LEVEL_MAP[user?.survey?.englishLevel] || "trung cấp";
+
+    let queries = [];
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (apiKey) {
+      try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+        const prompt = `Bạn là chuyên gia tìm kiếm video học tiếng Anh trên YouTube. Người dùng muốn tìm video về chủ đề: "${keyword}".
+
+Trình độ người dùng: ${level}
+
+Hãy tạo ĐÚNG 5 cụm từ tìm kiếm YouTube tiếng Anh khác nhau để tìm được các video chất lượng cao, chính xác nhất về chủ đề này. Các query cần:
+- Đa dạng góc độ (tutorial, conversation practice, tips, examples, exercises...)
+- Thêm từ khoá chất lượng phù hợp (không quá dài, 3-7 từ)
+- Nhắm đến kênh học tiếng Anh uy tín
+- Phù hợp với trình độ người dùng
+
+Trả về ĐÚNG JSON array, không giải thích, không markdown.
+Ví dụ: ["job interview english tips", "english job interview common questions", "how to answer interview questions english", "professional english phrases workplace", "english for office communication beginners"]
+
+Output:`;
+
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().trim();
+        const match = text.match(/\[[\s\S]*\]/);
+        if (match) {
+          const parsed = JSON.parse(match[0]);
+          if (Array.isArray(parsed)) queries = parsed.slice(0, 5);
+        }
+      } catch {
+        // fallback below
+      }
+    }
+
+    // Fallback nếu Gemini lỗi
+    if (queries.length === 0) {
+      queries = [
+        `${keyword} english`,
+        `${keyword} english tutorial`,
+        `${keyword} english practice`,
+        `learn english ${keyword}`,
+        `${keyword} english lesson`,
+      ];
+    }
+
+    // Tìm kiếm YouTube với tất cả query song song
+    const videoResults = await Promise.all(
+      queries.map(async (q) => {
+        try {
+          const r = await yts({ query: q, pages: 1 });
+          return (r.videos || []).slice(0, 4).map((v) => ({
+            youtubeId: v.videoId,
+            title: v.title,
+            thumbnail: v.thumbnail,
+            duration: v.timestamp,
+            channel: v.author?.name || "",
+            views: v.views,
+            url: v.url,
+            query: q,
+          }));
+        } catch {
+          return [];
+        }
+      })
+    );
+
+    // Flatten + deduplicate
+    const seen = new Set();
+    const videos = videoResults
+      .flat()
+      .filter((v) => {
+        if (!v.youtubeId || seen.has(v.youtubeId)) return false;
+        seen.add(v.youtubeId);
+        return true;
+      })
+      .slice(0, 20);
+
+    res.json({ success: true, videos, queriesUsed: queries, keyword });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+

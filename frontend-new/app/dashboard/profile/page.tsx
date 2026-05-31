@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useLang } from "@/lib/i18n";
 import {
   User,
   Mail,
@@ -26,65 +27,6 @@ import {
   GraduationCap,
   Check,
 } from "lucide-react";
-
-// ─── Survey constants ─────────────────────────────────────────────────────────
-
-const ENGLISH_LEVELS = [
-  { value: "beginner", label: "Mới bắt đầu", desc: "Chưa biết gì hoặc biết rất ít" },
-  { value: "elementary", label: "Cơ bản", desc: "Biết một số từ và câu đơn giản" },
-  { value: "intermediate", label: "Trung cấp", desc: "Có thể giao tiếp thông thường" },
-  { value: "upper-intermediate", label: "Trên trung cấp", desc: "Khá tự tin khi giao tiếp" },
-  { value: "advanced", label: "Nâng cao", desc: "Giao tiếp tốt, muốn hoàn thiện hơn" },
-];
-
-const GOALS = [
-  { value: "communication", label: "💬 Giao tiếp hàng ngày" },
-  { value: "ielts", label: "📝 Luyện thi IELTS" },
-  { value: "toeic", label: "📋 Luyện thi TOEIC" },
-  { value: "listening", label: "👂 Nghe hiểu" },
-  { value: "pronunciation", label: "🗣️ Cải thiện phát âm" },
-  { value: "travel", label: "✈️ Du lịch nước ngoài" },
-  { value: "job", label: "💼 Phỏng vấn xin việc" },
-  { value: "it", label: "💻 Tiếng Anh IT" },
-  { value: "office", label: "🏢 Tiếng Anh văn phòng" },
-  { value: "academic", label: "🎓 Tiếng Anh học thuật" },
-];
-
-const INTERESTS = [
-  { value: "music", label: "🎵 Âm nhạc" },
-  { value: "sports", label: "⚽ Thể thao" },
-  { value: "tech", label: "🔬 Công nghệ" },
-  { value: "movies", label: "🎬 Phim ảnh" },
-  { value: "food", label: "🍜 Ẩm thực" },
-  { value: "travel", label: "🗺️ Du lịch" },
-  { value: "gaming", label: "🎮 Game" },
-  { value: "news", label: "📰 Thời sự" },
-  { value: "business", label: "📊 Kinh doanh" },
-  { value: "science", label: "🔭 Khoa học" },
-  { value: "fashion", label: "👗 Thời trang" },
-  { value: "health", label: "🏃 Sức khoẻ" },
-];
-
-const LEARNING_STYLES = [
-  { value: "short-video", label: "📱 Video ngắn (YouTube Shorts, Reels)" },
-  { value: "podcast", label: "🎙️ Podcast" },
-  { value: "movie", label: "🎥 Phim điện ảnh" },
-  { value: "series", label: "📺 Series / Phim bộ" },
-  { value: "documentary", label: "🌍 Phim tài liệu" },
-  { value: "music", label: "🎶 Học qua âm nhạc" },
-  { value: "news-video", label: "📡 Video tin tức" },
-  { value: "talk-show", label: "🎤 Talk show / Phỏng vấn" },
-];
-
-const STUDY_TIMES = [
-  { value: 10, label: "10 phút" },
-  { value: 20, label: "20 phút" },
-  { value: 30, label: "30 phút" },
-  { value: 45, label: "45 phút" },
-  { value: 60, label: "1 giờ" },
-  { value: 90, label: "1.5 giờ" },
-  { value: 120, label: "2 giờ+" },
-];
 
 // ─── Multi-select helper ──────────────────────────────────────────────────────
 
@@ -158,15 +100,16 @@ interface UserStats {
 
 interface RecentVideo {
   _id: string;
-  youtubeId: string;
+  youtubeId?: string;
   title: string;
   thumbnail: string | null;
   lastPracticed: string;
+  isLocal?: boolean;
 }
 
 interface HistoryVideo {
   _id: string;
-  youtubeId: string;
+  youtubeId?: string;
   title: string;
   thumbnail: string | null;
   progressTime: number;
@@ -175,19 +118,7 @@ interface HistoryVideo {
   isCompleted: boolean;
   lastWatchedAt: string;
   progressSegment: string;
-}
-
-interface HistoryVideo {
-  _id: string;
-  youtubeId: string;
-  title: string;
-  thumbnail: string | null;
-  progressTime: number;
-  duration: number;
-  progressPercent: number;
-  isCompleted: boolean;
-  lastWatchedAt: string;
-  progressSegment: string;
+  isLocal?: boolean;
 }
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
@@ -217,6 +148,35 @@ function StatCard({
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
+  const { t } = useLang();
+  const p = t.profile;
+
+  const ENGLISH_LEVELS = t.profile.survey.levels.map((l: { label: string; desc: string }, i: number) => ({
+    value: ["beginner", "elementary", "intermediate", "upper-intermediate", "advanced"][i],
+    label: l.label,
+    desc: l.desc,
+  }));
+
+  const GOALS = t.profile.survey.goals.map((label: string, i: number) => ({
+    value: ["communication", "ielts", "toeic", "listening", "pronunciation", "travel", "job", "it", "office", "academic"][i],
+    label,
+  }));
+
+  const INTERESTS = t.profile.survey.interests.map((label: string, i: number) => ({
+    value: ["music", "sports", "tech", "movies", "food", "travel", "gaming", "news", "business", "science", "fashion", "health"][i],
+    label,
+  }));
+
+  const LEARNING_STYLES = t.profile.survey.styles.map((label: string, i: number) => ({
+    value: ["short-video", "podcast", "movie", "series", "documentary", "music", "news-video", "talk-show"][i],
+    label,
+  }));
+
+  const STUDY_TIMES = t.profile.survey.studyTimes.map((label: string, i: number) => ({
+    value: [10, 20, 30, 45, 60, 90, 120][i],
+    label,
+  }));
+
   // Remote user state
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -266,7 +226,48 @@ export default function ProfilePage() {
 
   // Notifications
   const [emailNotif, setEmailNotif] = useState(true);
-  const [streakReminder, setStreakReminder] = useState(true);
+  const [streakReminder, setStreakReminder] = useState(false);
+  const [notifSaving, setNotifSaving] = useState(false);
+  const [testEmailSending, setTestEmailSending] = useState(false);
+  const [testEmailMsg, setTestEmailMsg] = useState("");
+
+  async function handleToggleStreakReminder() {
+    const newValue = !streakReminder;
+    setStreakReminder(newValue);
+    setNotifSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      await fetch("http://localhost:5000/api/auth/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ streakReminderEnabled: newValue }),
+      });
+    } catch {
+      // Revert on failure
+      setStreakReminder(!newValue);
+    } finally {
+      setNotifSaving(false);
+    }
+  }
+
+  async function handleSendTestEmail() {
+    setTestEmailSending(true);
+    setTestEmailMsg("");
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/auth/test-reminder", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setTestEmailMsg(data.message);
+    } catch {
+      setTestEmailMsg("Lỗi kết nối tới server.");
+    } finally {
+      setTestEmailSending(false);
+      setTimeout(() => setTestEmailMsg(""), 5000);
+    }
+  }
 
   // Delete modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -276,7 +277,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      setFetchError("Bạn chưa đăng nhập.");
+      setFetchError(p.notLoggedIn);
       setLoading(false);
       return;
     }
@@ -289,6 +290,8 @@ export default function ProfilePage() {
           setUser(data.user);
           setName(data.user.fullname);
           setEmail(data.user.email);
+          // Load notification prefs
+          setStreakReminder(data.user.streakReminderEnabled ?? false);
           // Load survey
           const s = data.user.survey;
           if (s) {
@@ -300,10 +303,10 @@ export default function ProfilePage() {
             setSurveyTime(s.studyTimeMinutes ?? null);
           }
         } else {
-          setFetchError(data.message || "Không thể tải thông tin.");
+          setFetchError(data.message || p.loadErr);
         }
       })
-      .catch(() => setFetchError("Không thể kết nối đến server."))
+      .catch(() => setFetchError(p.connectErr))
       .finally(() => setLoading(false));
   }, []);
 
@@ -359,7 +362,7 @@ export default function ProfilePage() {
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 3000);
     } catch {
-      setProfileError("Không thể kết nối đến server.");
+      setProfileError(p.connectErr);
     } finally {
       setProfileSaving(false);
     }
@@ -368,8 +371,8 @@ export default function ProfilePage() {
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
     setPwError("");
-    if (newPw.length < 8) { setPwError("Mật khẩu mới phải có ít nhất 8 ký tự."); return; }
-    if (newPw !== confirmPw) { setPwError("Mật khẩu mới không khớp."); return; }
+    if (newPw.length < 8) { setPwError(p.pwMinLength); return; }
+    if (newPw !== confirmPw) { setPwError(p.pwMismatch); return; }
     const token = localStorage.getItem("token");
     if (!token) return;
     setPwSaving(true);
@@ -387,7 +390,7 @@ export default function ProfilePage() {
       setConfirmPw("");
       setTimeout(() => setPwSaved(false), 3000);
     } catch {
-      setPwError("Không thể kết nối đến server.");
+      setPwError(p.connectErr);
     } finally {
       setPwSaving(false);
     }
@@ -431,7 +434,7 @@ export default function ProfilePage() {
       setSurveyEditing(false);
       setTimeout(() => setSurveySaved(false), 3000);
     } catch {
-      setSurveyError("Không thể kết nối đến server.");
+      setSurveyError(p.connectErr);
     } finally {
       setSurveySaving(false);
     }
@@ -474,7 +477,7 @@ export default function ProfilePage() {
       {/* ── Page title ─────────────────────────────── */}
       <div>
         <h1 className="text-3xl font-bold text-white">Profile</h1>
-        <p className="text-gray-400 mt-1">Quản lý thông tin cá nhân và cài đặt tài khoản của bạn.</p>
+        <p className="text-gray-400 mt-1">{p.subtitle}</p>
       </div>
 
       {/* ── Loading / error state ────────────────────── */}
@@ -518,7 +521,7 @@ export default function ProfilePage() {
           )}
           <button
             type="button"
-            title="Đổi ảnh đại diện"
+            title={p.changeAvatarTitle}
             onClick={() => avatarInputRef.current?.click()}
             disabled={avatarUploading}
             className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#00E5FF] flex items-center justify-center shadow-lg hover:scale-105 transition-transform disabled:opacity-60"
@@ -543,10 +546,10 @@ export default function ProfilePage() {
             )}
             <span className="inline-flex items-center gap-1.5 bg-white/10 text-gray-300 text-xs px-3 py-1 rounded-full">
               <Calendar className="w-3 h-3" />
-              Tham gia {new Date(user.created_at).toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}
+              {p.joined.replace("{date}", new Date(user.created_at).toLocaleDateString("vi-VN", { month: "long", year: "numeric" }))}
             </span>
             <span className="inline-flex items-center gap-1.5 bg-white/10 text-gray-300 text-xs px-3 py-1 rounded-full">
-              🏅 {user.total_points.toLocaleString()} điểm
+              {p.points.replace("{n}", user.total_points.toLocaleString())}
             </span>
           </div>
         </div>
@@ -554,12 +557,12 @@ export default function ProfilePage() {
 
       {/* ── Learning stats ──────────────────────────── */}
       <section>
-        <h2 className="text-lg font-semibold text-white mb-4">Thống kê học tập</h2>
+        <h2 className="text-lg font-semibold text-white mb-4">{p.stats.title}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard icon={Video} label="Video đã lưu" value={statsLoading ? 0 : stats.videosCount} color="bg-purple-500" />
-          <StatCard icon={BookOpen} label="Từ vựng đã lưu" value={statsLoading ? 0 : stats.vocabTotal} color="bg-blue-500" />
-          <StatCard icon={CheckCircle2} label="Từ đã thành thạo" value={statsLoading ? 0 : stats.vocabLearned} color="bg-emerald-500" />
-          <StatCard icon={Flame} label="Chuỗi ngày học" value={statsLoading ? 0 : stats.study_streak} color="bg-orange-500" />
+          <StatCard icon={Video} label={p.stats.savedVideos} value={statsLoading ? 0 : stats.videosCount} color="bg-purple-500" />
+          <StatCard icon={BookOpen} label={p.stats.savedWords} value={statsLoading ? 0 : stats.vocabTotal} color="bg-blue-500" />
+          <StatCard icon={CheckCircle2} label={p.stats.mastered} value={statsLoading ? 0 : stats.vocabLearned} color="bg-emerald-500" />
+          <StatCard icon={Flame} label={p.stats.streak} value={statsLoading ? 0 : stats.study_streak} color="bg-orange-500" />
         </div>
       </section>
 
@@ -567,7 +570,7 @@ export default function ProfilePage() {
       <section>
         <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <PlayCircle className="w-5 h-5 text-[#00E5FF]" />
-          Tiếp tục học
+          {p.continueLearning.title}
         </h2>
         {historyLoading ? (
           <div className="flex justify-center py-8">
@@ -575,7 +578,7 @@ export default function ProfilePage() {
           </div>
         ) : historyVideos.length === 0 ? (
           <div className="bg-white/5 border border-white/10 rounded-2xl px-5 py-8 text-center">
-            <p className="text-gray-500 text-sm">Bạn chưa bắt đầu luyện tập video nào.</p>
+            <p className="text-gray-500 text-sm">{p.continueLearning.empty}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -590,7 +593,11 @@ export default function ProfilePage() {
                   <div className="relative aspect-video">
                     {v.thumbnail ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={v.thumbnail} alt={v.title} className="w-full h-full object-cover" />
+                      <img
+                        src={v.isLocal ? `http://localhost:5000${v.thumbnail}` : v.thumbnail}
+                        alt={v.title}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <div className="w-full h-full bg-purple-500/20 flex items-center justify-center">
                         <Video className="w-8 h-8 text-purple-400" />
@@ -598,7 +605,7 @@ export default function ProfilePage() {
                     )}
                     {v.isCompleted ? (
                       <span className="absolute top-2 right-2 bg-emerald-500/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Hoàn thành
+                        <CheckCircle2 className="w-3 h-3" /> {p.continueLearning.completed}
                       </span>
                     ) : (
                       <span className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full">
@@ -618,7 +625,7 @@ export default function ProfilePage() {
                     <p className="text-white text-sm font-semibold line-clamp-2 leading-snug">{v.title}</p>
                     <div className="flex items-center justify-between text-xs text-gray-400">
                       <span>
-                        Đến: {mins}:{secs.toString().padStart(2, "0")}
+                        {p.continueLearning.at.replace("{time}", `${mins}:${secs.toString().padStart(2, "0")}`)}
                         {v.duration > 0 && (
                           <span className="text-gray-600"> / {durMins}:{durSecs.toString().padStart(2, "0")}</span>
                         )}
@@ -638,7 +645,9 @@ export default function ProfilePage() {
                     )}
                     <button
                       onClick={() =>
-                        router.push(`/dashboard/practice/${v.youtubeId}?title=${encodeURIComponent(v.title)}`)
+                        v.isLocal
+                          ? router.push(`/dashboard/practice/local/${v._id}?title=${encodeURIComponent(v.title)}`)
+                          : router.push(`/dashboard/practice/${v.youtubeId}?title=${encodeURIComponent(v.title)}`)
                       }
                       className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                         v.isCompleted
@@ -647,7 +656,7 @@ export default function ProfilePage() {
                       }`}
                     >
                       <PlayCircle className="w-4 h-4" />
-                      {v.isCompleted ? "Luyện tập lại" : "Luyện tập tiếp"}
+                      {v.isCompleted ? p.continueLearning.practiceAgain : p.continueLearning.continueBtn}
                     </button>
                   </div>
                 </div>
@@ -659,14 +668,14 @@ export default function ProfilePage() {
 
       {/* ── Recent videos ────────────────────────────────── */}
       <section>
-        <h2 className="text-lg font-semibold text-white mb-4">Video xem gần đây</h2>
+        <h2 className="text-lg font-semibold text-white mb-4">{p.recentVideos.title}</h2>
         {statsLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="w-6 h-6 text-[#00E5FF] animate-spin" />
           </div>
         ) : recentVideos.length === 0 ? (
           <div className="bg-white/5 border border-white/10 rounded-2xl px-5 py-8 text-center">
-            <p className="text-gray-500 text-sm">Bạn chưa lưu video nào.</p>
+            <p className="text-gray-500 text-sm">{p.recentVideos.empty}</p>
           </div>
         ) : (
           <div className="bg-white/5 border border-white/10 rounded-2xl divide-y divide-white/10">
@@ -674,7 +683,11 @@ export default function ProfilePage() {
               <div key={v._id} className="flex items-center gap-3 px-5 py-4">
                 {v.thumbnail ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={v.thumbnail} alt={v.title} className="w-14 h-10 rounded-lg object-cover flex-shrink-0" />
+                  <img
+                    src={v.isLocal ? `http://localhost:5000${v.thumbnail}` : v.thumbnail}
+                    alt={v.title}
+                    className="w-14 h-10 rounded-lg object-cover flex-shrink-0"
+                  />
                 ) : (
                   <div className="w-14 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
                     <Video className="w-5 h-5 text-purple-400" />
@@ -687,11 +700,15 @@ export default function ProfilePage() {
                   </p>
                 </div>
                 <button
-                  onClick={() => router.push(`/dashboard/practice/${v.youtubeId}?title=${encodeURIComponent(v.title)}`)}
+                  onClick={() => router.push(
+                  v.isLocal
+                    ? `/dashboard/practice/local/${v._id}?title=${encodeURIComponent(v.title)}`
+                    : `/dashboard/practice/${v.youtubeId}?title=${encodeURIComponent(v.title)}`
+                )}
                   className="flex items-center gap-1.5 text-xs font-medium text-[#00E5FF] hover:text-white bg-[#00E5FF]/10 hover:bg-[#00E5FF]/20 px-3 py-1.5 rounded-full transition-colors flex-shrink-0"
                 >
                   <PlayCircle className="w-3.5 h-3.5" />
-                  Luyện tập lại
+                  {p.recentVideos.practiceAgain}
                 </button>
               </div>
             ))}
@@ -705,12 +722,12 @@ export default function ProfilePage() {
       <section>
         <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <Edit3 className="w-5 h-5 text-[#00E5FF]" />
-          Chỉnh sửa thông tin
+          {p.editProfile.title}
         </h2>
         <form onSubmit={handleSaveProfile} className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="space-y-1.5">
-              <label className="text-sm text-gray-400">Tên hiển thị</label>
+              <label className="text-sm text-gray-400">{p.editProfile.displayName}</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <input
@@ -718,7 +735,7 @@ export default function ProfilePage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full bg-white/5 border border-white/15 text-white rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#00E5FF]/60 focus:ring-1 focus:ring-[#00E5FF]/30 transition"
-                  placeholder="Tên của bạn"
+                  placeholder={p.editProfile.namePlaceholder}
                   required
                 />
               </div>
@@ -748,7 +765,7 @@ export default function ProfilePage() {
               rows={3}
               maxLength={200}
               className="w-full bg-white/5 border border-white/15 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#00E5FF]/60 focus:ring-1 focus:ring-[#00E5FF]/30 transition resize-none"
-              placeholder="Một vài câu giới thiệu về bạn..."
+              placeholder={p.editProfile.bioPlaceholder}
             />
             <p className="text-xs text-gray-600 text-right">{bio.length}/200</p>
           </div>
@@ -766,11 +783,11 @@ export default function ProfilePage() {
               className="inline-flex items-center gap-2 bg-[#00E5FF] hover:bg-[#00E5FF]/90 disabled:opacity-60 text-black font-semibold text-sm px-5 py-2.5 rounded-xl transition"
             >
               {profileSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {profileSaving ? "Đang lưu..." : "Lưu thay đổi"}
+              {profileSaving ? p.editProfile.saving : p.editProfile.save}
             </button>
             {profileSaved && (
               <span className="flex items-center gap-1.5 text-emerald-400 text-sm">
-                <CheckCircle2 className="w-4 h-4" /> Đã lưu!
+                <CheckCircle2 className="w-4 h-4" /> {p.editProfile.saved}
               </span>
             )}
           </div>
@@ -782,7 +799,7 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
             <GraduationCap className="w-5 h-5 text-[#00E5FF]" />
-            Thông tin học tập
+            {p.learningPrefs.title}
           </h2>
           {!surveyEditing && (
             <button
@@ -790,12 +807,12 @@ export default function ProfilePage() {
               className="inline-flex items-center gap-1.5 text-sm text-[#00E5FF] hover:text-white bg-[#00E5FF]/10 hover:bg-[#00E5FF]/20 px-4 py-2 rounded-xl transition"
             >
               <Edit3 className="w-4 h-4" />
-              Chỉnh sửa
+              {p.learningPrefs.edit}
             </button>
           )}
           {surveySaved && !surveyEditing && (
             <span className="flex items-center gap-1.5 text-emerald-400 text-sm">
-              <CheckCircle2 className="w-4 h-4" /> Đã lưu!
+              <CheckCircle2 className="w-4 h-4" /> {p.editProfile.saved}
             </span>
           )}
         </div>
@@ -806,63 +823,63 @@ export default function ProfilePage() {
             {/* Age + Level */}
             <div className="flex flex-wrap gap-6">
               <div className="space-y-1">
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Tuổi</p>
-                <p className="text-white font-medium">{surveyAge || <span className="text-gray-500 italic">Chưa điền</span>}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">{p.learningPrefs.age}</p>
+                <p className="text-white font-medium">{surveyAge || <span className="text-gray-500 italic">{p.learningPrefs.notFilled}</span>}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Trình độ tiếng Anh</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">{p.learningPrefs.level}</p>
                 <p className="text-white font-medium">
-                  {ENGLISH_LEVELS.find((l) => l.value === surveyLevel)?.label ?? <span className="text-gray-500 italic">Chưa chọn</span>}
+                  {ENGLISH_LEVELS.find((l: {value:string}) => l.value === surveyLevel)?.label ?? <span className="text-gray-500 italic">{p.learningPrefs.notSelected}</span>}
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Thời gian học / ngày</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">{p.learningPrefs.studyTime}</p>
                 <p className="text-white font-medium">
-                  {STUDY_TIMES.find((t) => t.value === surveyTime)?.label ?? <span className="text-gray-500 italic">Chưa chọn</span>}
+                  {STUDY_TIMES.find((st: {value:number}) => st.value === surveyTime)?.label ?? <span className="text-gray-500 italic">{p.learningPrefs.notSelected}</span>}
                 </p>
               </div>
             </div>
 
             {/* Goals */}
             <div className="space-y-2">
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Mục tiêu học</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wide">{p.learningPrefs.goals}</p>
               {surveyGoals.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {surveyGoals.map((v) => (
                     <span key={v} className="px-3 py-1 rounded-full text-xs bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/30">
-                      {GOALS.find((g) => g.value === v)?.label ?? v}
+                      {GOALS.find((g: {value:string}) => g.value === v)?.label ?? v}
                     </span>
                   ))}
                 </div>
-              ) : <p className="text-gray-500 italic text-sm">Chưa chọn</p>}
+              ) : <p className="text-gray-500 italic text-sm">{p.learningPrefs.notSelected}</p>}
             </div>
 
             {/* Interests */}
             <div className="space-y-2">
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Sở thích</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wide">{p.learningPrefs.interests}</p>
               {surveyInterests.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {surveyInterests.map((v) => (
                     <span key={v} className="px-3 py-1 rounded-full text-xs bg-purple-500/10 text-purple-300 border border-purple-500/30">
-                      {INTERESTS.find((i) => i.value === v)?.label ?? v}
+                      {INTERESTS.find((ii: {value:string}) => ii.value === v)?.label ?? v}
                     </span>
                   ))}
                 </div>
-              ) : <p className="text-gray-500 italic text-sm">Chưa chọn</p>}
+              ) : <p className="text-gray-500 italic text-sm">{p.learningPrefs.notSelected}</p>}
             </div>
 
             {/* Learning style */}
             <div className="space-y-2">
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Phong cách học</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wide">{p.learningPrefs.style}</p>
               {surveyStyle.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {surveyStyle.map((v) => (
                     <span key={v} className="px-3 py-1 rounded-full text-xs bg-blue-500/10 text-blue-300 border border-blue-500/30">
-                      {LEARNING_STYLES.find((s) => s.value === v)?.label ?? v}
+                      {LEARNING_STYLES.find((s: {value:string}) => s.value === v)?.label ?? v}
                     </span>
                   ))}
                 </div>
-              ) : <p className="text-gray-500 italic text-sm">Chưa chọn</p>}
+              ) : <p className="text-gray-500 italic text-sm">{p.learningPrefs.notSelected}</p>}
             </div>
           </div>
         )}
@@ -873,23 +890,23 @@ export default function ProfilePage() {
 
             {/* Age */}
             <div className="space-y-1.5">
-              <label className="text-sm text-gray-400">Tuổi của bạn</label>
+              <label className="text-sm text-gray-400">{p.learningPrefs.ageLabel}</label>
               <input
                 type="number"
                 min={5}
                 max={100}
                 value={surveyAge}
                 onChange={(e) => setSurveyAge(e.target.value)}
-                placeholder="Ví dụ: 22"
+                placeholder={p.learningPrefs.agePlaceholder}
                 className="w-32 bg-white/5 border border-white/15 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#00E5FF]/60 focus:ring-1 focus:ring-[#00E5FF]/30 transition"
               />
             </div>
 
             {/* English level */}
             <div className="space-y-2">
-              <label className="text-sm text-gray-400">Trình độ tiếng Anh</label>
+              <label className="text-sm text-gray-400">{p.learningPrefs.level}</label>
               <div className="flex flex-wrap gap-2">
-                {ENGLISH_LEVELS.map((lvl) => (
+                {ENGLISH_LEVELS.map((lvl: {value:string;label:string;desc:string}) => (
                   <button
                     key={lvl.value}
                     type="button"
@@ -909,38 +926,38 @@ export default function ProfilePage() {
 
             {/* Goals */}
             <div className="space-y-2">
-              <label className="text-sm text-gray-400">Mục tiêu học tiếng Anh</label>
+              <label className="text-sm text-gray-400">{p.learningPrefs.goalsLabel}</label>
               <MultiSelect options={GOALS} selected={surveyGoals} onChange={setSurveyGoals} />
             </div>
 
             {/* Interests */}
             <div className="space-y-2">
-              <label className="text-sm text-gray-400">Sở thích cá nhân</label>
+              <label className="text-sm text-gray-400">{p.learningPrefs.interestsLabel}</label>
               <MultiSelect options={INTERESTS} selected={surveyInterests} onChange={setSurveyInterests} />
             </div>
 
             {/* Learning style */}
             <div className="space-y-2">
-              <label className="text-sm text-gray-400">Phong cách học tập</label>
+              <label className="text-sm text-gray-400">{p.learningPrefs.styleLabel}</label>
               <MultiSelect options={LEARNING_STYLES} selected={surveyStyle} onChange={setSurveyStyle} />
             </div>
 
             {/* Study time */}
             <div className="space-y-2">
-              <label className="text-sm text-gray-400">Thời gian học mỗi ngày</label>
+              <label className="text-sm text-gray-400">{p.learningPrefs.studyTimeLabel}</label>
               <div className="flex flex-wrap gap-2">
-                {STUDY_TIMES.map((t) => (
+                {STUDY_TIMES.map((st: {value:number;label:string}) => (
                   <button
-                    key={t.value}
+                    key={st.value}
                     type="button"
-                    onClick={() => setSurveyTime(t.value)}
+                    onClick={() => setSurveyTime(st.value)}
                     className={`px-4 py-2 rounded-xl text-sm border transition-all ${
-                      surveyTime === t.value
+                      surveyTime === st.value
                         ? "bg-[#00E5FF]/15 border-[#00E5FF] text-[#00E5FF] font-medium"
                         : "bg-white/5 border-white/10 text-gray-300 hover:border-white/30 hover:text-white"
                     }`}
                   >
-                    {t.label}
+                    {st.label}
                   </button>
                 ))}
               </div>
@@ -959,7 +976,7 @@ export default function ProfilePage() {
                 className="inline-flex items-center gap-2 bg-[#00E5FF] hover:bg-[#00E5FF]/90 disabled:opacity-60 text-black font-semibold text-sm px-5 py-2.5 rounded-xl transition"
               >
                 {surveySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {surveySaving ? "Đang lưu..." : "Lưu thông tin"}
+                {surveySaving ? p.learningPrefs.saving : p.learningPrefs.saveBtn}
               </button>
               <button
                 type="button"
@@ -967,7 +984,7 @@ export default function ProfilePage() {
                 disabled={surveySaving}
                 className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 disabled:opacity-60 text-white text-sm px-5 py-2.5 rounded-xl transition"
               >
-                Hủy
+                {p.learningPrefs.cancel}
               </button>
             </div>
           </form>
@@ -978,13 +995,13 @@ export default function ProfilePage() {
       <section>
         <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <Lock className="w-5 h-5 text-[#00E5FF]" />
-          Đổi mật khẩu
+          {p.changePassword.title}
         </h2>
         <form onSubmit={handleChangePassword} className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
           {[
-            { label: "Mật khẩu hiện tại", value: currentPw, setValue: setCurrentPw, show: showCurrent, setShow: setShowCurrent },
-            { label: "Mật khẩu mới", value: newPw, setValue: setNewPw, show: showNew, setShow: setShowNew },
-            { label: "Xác nhận mật khẩu mới", value: confirmPw, setValue: setConfirmPw, show: showConfirm, setShow: setShowConfirm },
+            { label: p.changePassword.current, value: currentPw, setValue: setCurrentPw, show: showCurrent, setShow: setShowCurrent },
+            { label: p.changePassword.newPw, value: newPw, setValue: setNewPw, show: showNew, setShow: setShowNew },
+            { label: p.changePassword.confirm, value: confirmPw, setValue: setConfirmPw, show: showConfirm, setShow: setShowConfirm },
           ].map(({ label, value, setValue, show, setShow }) => (
             <div key={label} className="space-y-1.5">
               <label className="text-sm text-gray-400">{label}</label>
@@ -1022,11 +1039,11 @@ export default function ProfilePage() {
               className="inline-flex items-center gap-2 bg-[#00E5FF] hover:bg-[#00E5FF]/90 disabled:opacity-60 text-black font-semibold text-sm px-5 py-2.5 rounded-xl transition"
             >
               {pwSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {pwSaving ? "Đang cập nhật..." : "Cập nhật mật khẩu"}
+              {pwSaving ? p.changePassword.updating : p.changePassword.update}
             </button>
             {pwSaved && (
               <span className="flex items-center gap-1.5 text-emerald-400 text-sm">
-                <CheckCircle2 className="w-4 h-4" /> Đã cập nhật!
+                <CheckCircle2 className="w-4 h-4" /> {p.changePassword.updated}
               </span>
             )}
           </div>
@@ -1037,49 +1054,73 @@ export default function ProfilePage() {
       <section>
         <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <Bell className="w-5 h-5 text-[#00E5FF]" />
-          Thông báo
+          {p.notifications.title}
         </h2>
         <div className="bg-white/5 border border-white/10 rounded-2xl divide-y divide-white/10">
-          {[
-            {
-              label: "Thông báo qua email",
-              desc: "Nhận cập nhật về tiến độ học và tính năng mới.",
-              value: emailNotif,
-              toggle: () => setEmailNotif(!emailNotif),
-            },
-            {
-              label: "Nhắc nhở chuỗi ngày học",
-              desc: "Nhận thông báo khi bạn sắp mất chuỗi ngày học liên tiếp.",
-              value: streakReminder,
-              toggle: () => setStreakReminder(!streakReminder),
-            },
-          ].map(({ label, desc, value, toggle }) => (
-            <div key={label} className="flex items-center justify-between px-5 py-4 gap-4">
-              <div className="flex items-start gap-3">
-                {value ? (
-                  <Bell className="w-5 h-5 text-[#00E5FF] mt-0.5 flex-shrink-0" />
-                ) : (
-                  <BellOff className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
-                )}
-                <div>
-                  <p className="text-white text-sm font-medium">{label}</p>
-                  <p className="text-gray-500 text-xs mt-0.5">{desc}</p>
-                </div>
+          {/* Email general notification (local only) */}
+          <div className="flex items-center justify-between px-5 py-4 gap-4">
+            <div className="flex items-start gap-3">
+              {emailNotif
+                ? <Bell className="w-5 h-5 text-[#00E5FF] mt-0.5 flex-shrink-0" />
+                : <BellOff className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
+              }
+              <div>
+                <p className="text-white text-sm font-medium">{p.notifications.emailLabel}</p>
+                <p className="text-gray-500 text-xs mt-0.5">{p.notifications.emailDesc}</p>
               </div>
-              <button
-                onClick={toggle}
-                className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
-                  value ? "bg-[#00E5FF]" : "bg-white/20"
-                }`}
-              >
-                <span
-                  className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                    value ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </button>
             </div>
-          ))}
+            <button
+              onClick={() => setEmailNotif(!emailNotif)}
+              className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${emailNotif ? "bg-[#00E5FF]" : "bg-white/20"}`}
+            >
+              <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${emailNotif ? "translate-x-5" : "translate-x-0"}`} />
+            </button>
+          </div>
+
+          {/* Streak reminder — persisted to backend */}
+          <div className="flex items-center justify-between px-5 py-4 gap-4">
+            <div className="flex items-start gap-3">
+              {streakReminder
+                ? <Bell className="w-5 h-5 text-[#00E5FF] mt-0.5 flex-shrink-0" />
+                : <BellOff className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
+              }
+              <div>
+                <p className="text-white text-sm font-medium">{p.notifications.streakLabel}</p>
+                <p className="text-gray-500 text-xs mt-0.5">
+                  {p.notifications.streakDesc}
+                </p>
+                {streakReminder && (
+                  <p className="text-[#00E5FF] text-xs mt-1 flex items-center gap-1">
+                    {p.notifications.streakEnabled}
+                  </p>
+                )}
+                {streakReminder && (
+                  <div className="mt-2 flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={handleSendTestEmail}
+                      disabled={testEmailSending}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 px-3 py-1.5 rounded-lg transition disabled:opacity-60"
+                    >
+                      {testEmailSending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Mail className="w-3 h-3" />}
+                      Gửi email test ngay
+                    </button>
+                    {testEmailMsg && (
+                      <span className={`text-xs ${testEmailMsg.startsWith("Lỗi") || testEmailMsg.startsWith("Bạn") ? "text-red-400" : "text-emerald-400"}`}>
+                        {testEmailMsg}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={handleToggleStreakReminder}
+              disabled={notifSaving}
+              className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-60 ${streakReminder ? "bg-[#00E5FF]" : "bg-white/20"}`}
+            >
+              <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${streakReminder ? "translate-x-5" : "translate-x-0"}`} />
+            </button>
+          </div>
         </div>
       </section>
 
@@ -1087,13 +1128,13 @@ export default function ProfilePage() {
       <section>
         <h2 className="text-lg font-semibold text-red-400 mb-4 flex items-center gap-2">
           <AlertTriangle className="w-5 h-5" />
-          Vùng nguy hiểm
+          {p.danger.title}
         </h2>
         <div className="bg-red-500/5 border border-red-500/30 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <p className="text-white font-medium">Xóa tài khoản</p>
+            <p className="text-white font-medium">{p.danger.deleteAccount}</p>
             <p className="text-gray-400 text-sm mt-0.5">
-              Xóa vĩnh viễn tài khoản, toàn bộ video, từ vựng và dữ liệu học tập của bạn.
+              {p.danger.deleteDesc}
             </p>
           </div>
           <button
@@ -1101,7 +1142,7 @@ export default function ProfilePage() {
             className="inline-flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/40 font-semibold text-sm px-5 py-2.5 rounded-xl transition whitespace-nowrap flex-shrink-0"
           >
             <Trash2 className="w-4 h-4" />
-            Xóa tài khoản
+            {p.danger.deleteAccount}
           </button>
         </div>
       </section>
@@ -1114,11 +1155,10 @@ export default function ProfilePage() {
               <div className="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center">
                 <Trash2 className="w-5 h-5 text-red-400" />
               </div>
-              <h3 className="text-lg font-bold text-white">Xác nhận xóa tài khoản</h3>
+              <h3 className="text-lg font-bold text-white">{p.danger.modal.title}</h3>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Hành động này <span className="text-red-400 font-semibold">không thể hoàn tác</span>. Toàn bộ dữ liệu của bạn sẽ bị xóa vĩnh viễn. Nhập{" "}
-              <span className="font-mono text-white bg-white/10 px-1.5 py-0.5 rounded">XOA TAI KHOAN</span> để xác nhận.
+              {p.danger.modal.body}
             </p>
             <input
               type="text"
@@ -1135,13 +1175,13 @@ export default function ProfilePage() {
                 }}
                 className="flex-1 bg-white/10 hover:bg-white/15 text-white font-semibold text-sm py-2.5 rounded-xl transition"
               >
-                Hủy
+                {p.danger.modal.cancel}
               </button>
               <button
                 disabled={deleteConfirmText !== "XOA TAI KHOAN"}
                 className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm py-2.5 rounded-xl transition"
               >
-                Xóa vĩnh viễn
+                {p.danger.modal.confirm}
               </button>
             </div>
           </div>

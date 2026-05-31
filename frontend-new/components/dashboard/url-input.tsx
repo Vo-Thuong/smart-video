@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Bookmark } from "lucide-react";
 import { SaveVideoModal, VideoInfo } from "./save-video-modal";
+import { useLang } from "@/lib/i18n";
 
 function extractVideoId(url: string): string | null {
   const match = url.match(
@@ -19,6 +20,7 @@ export function UrlInput() {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const router = useRouter();
+  const { t } = useLang();
 
   const handleSubmit = async () => {
     const trimmed = url.trim();
@@ -26,7 +28,7 @@ export function UrlInput() {
 
     const id = extractVideoId(trimmed);
     if (!id) {
-      setError("URL YouTube không hợp lệ");
+      setError(t.dashboard.urlInput.invalidUrl);
       return;
     }
 
@@ -64,7 +66,7 @@ export function UrlInput() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            placeholder="Paste a YouTube video URL here..."
+            placeholder={t.dashboard.urlInput.placeholder}
             className="w-full bg-transparent border-none outline-none shadow-none text-white placeholder:text-gray-400 focus:ring-0"
           />
         </div>
@@ -72,7 +74,7 @@ export function UrlInput() {
           onClick={handleSubmit}
           className="rounded-full bg-[#00E5FF] hover:bg-[#00BCCC] text-black font-semibold px-8 h-12"
         >
-          Start Lesson
+          {t.dashboard.urlInput.start}
         </Button>
       </div>
 
@@ -107,14 +109,14 @@ export function UrlInput() {
                 }
               >
                 <BookOpen className="w-4 h-4" />
-                Luyện tập
+                {t.dashboard.urlInput.practice}
               </Button>
               <Button
                 className="rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-white gap-2 h-9 px-4"
                 onClick={() => setShowModal(true)}
               >
                 <Bookmark className="w-4 h-4" />
-                Lưu video
+                {t.dashboard.urlInput.saveVideo}
               </Button>
             </div>
           </div>

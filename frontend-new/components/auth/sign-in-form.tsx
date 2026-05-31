@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { useGoogleLogin } from "@react-oauth/google";
 import {
   Mail,
   Lock,
@@ -20,10 +21,61 @@ export const SignInForm = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+
+  const handleGoogleLogin = useGoogleLogin({
+    flow: "implicit",
+    onSuccess: async (tokenResponse) => {
+      setIsGoogleLoading(true);
+      setError(null);
+      try {
+        // Lấy user info từ Google
+        const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+        const userInfo = await userInfoRes.json();
+
+        // Gửi id_token lên backend – dùng access_token để lấy credential
+        const res = await fetch("http://localhost:5000/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ credential: tokenResponse.access_token, userInfo }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          // Xóa cache pro của user cũ trước khi set user mới
+          localStorage.removeItem("smartvideo_pro_plan");
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+          toast.success("Đăng nhập Google thành công!", {
+            description: `Chào mừng ${data.user.fullname} đến với SmartVideo!`,
+          });
+          if (data.user?.onboardingCompleted === false) {
+            router.push("/onboarding");
+          } else {
+            router.push("/dashboard");
+          }
+        } else {
+          setError(data.message);
+          toast.error("Lỗi đăng nhập Google", { description: data.message });
+        }
+      } catch {
+        const msg = "Không thể kết nối đến server.";
+        setError(msg);
+        toast.error("Lỗi hệ thống", { description: msg });
+      } finally {
+        setIsGoogleLoading(false);
+      }
+    },
+    onError: () => {
+      toast.error("Đăng nhập Google thất bại", { description: "Vui lòng thử lại." });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +97,8 @@ export const SignInForm = () => {
       const data = await response.json();
 
       if (data.success) {
+        // Xóa cache pro của user cũ trước khi set user mới
+        localStorage.removeItem("smartvideo_pro_plan");
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
 
@@ -191,13 +245,23 @@ export const SignInForm = () => {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <button className="flex items-center justify-center gap-2 border border-border rounded-2xl py-2.5 hover:bg-secondary/80 transition-all active:scale-95 group">
-            <Image
-              src="https://www.svgrepo.com/show/475656/google-color.svg"
-              width={20}
-              height={20}
-              alt="Google"
-            />
+          <button
+            type="button"
+            onClick={() => handleGoogleLogin()}
+            disabled={isGoogleLoading}
+            className="flex items-center justify-center gap-2 border border-border rounded-2xl py-2.5 hover:bg-secondary/80 transition-all active:scale-95 group disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {isGoogleLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                <path fill="none" d="M0 0h48v48H0z"/>
+              </svg>
+            )}
             <span className="text-sm font-semibold text-foreground">
               Google
             </span>

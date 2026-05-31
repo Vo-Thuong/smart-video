@@ -17,7 +17,18 @@ const userSchema = new mongoose.Schema(
     },
     password_hash: {
       type: String,
-      required: true,
+      required: false,
+      default: null,
+    },
+    googleId: {
+      type: String,
+      default: null,
+      sparse: true,
+    },
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
     },
     fullname: {
       type: String,
@@ -50,6 +61,17 @@ const userSchema = new mongoose.Schema(
     onboardingCompleted: {
       type: Boolean,
       default: false,
+    },
+    streakReminderEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    premiumPlan: {
+      planId:      { type: String, default: null },
+      label:       { type: String, default: null },
+      price:       { type: Number, default: null },
+      unit:        { type: String, default: null },
+      activatedAt: { type: String, default: null },
     },
     survey: {
       age: { type: Number, default: null },

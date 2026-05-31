@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner"; // 1. Import thư viện thông báo
+import { useGoogleLogin } from "@react-oauth/google";
 import {
   Mail,
   Lock,
@@ -23,6 +24,7 @@ export const SignUpForm = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,6 +32,55 @@ export const SignUpForm = () => {
   const usernameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+
+  const handleGoogleSignUp = useGoogleLogin({
+    flow: "implicit",
+    onSuccess: async (tokenResponse) => {
+      setIsGoogleLoading(true);
+      setError(null);
+      try {
+        const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+        const userInfo = await userInfoRes.json();
+
+        const res = await fetch("http://localhost:5000/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ credential: tokenResponse.access_token, userInfo }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          localStorage.removeItem("smartvideo_pro_plan");
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+          if (data.isNewUser) {
+            toast.success("Đăng ký Google thành công! 🎉", {
+              description: `Chào mừng ${data.user.fullname}! Email xác nhận đã được gửi đến Gmail của bạn.`,
+            });
+          } else {
+            toast.success("Đăng nhập Google thành công!", {
+              description: `Chào mừng trở lại, ${data.user.fullname}!`,
+            });
+          }
+          router.push("/onboarding");
+        } else {
+          setError(data.message);
+          toast.error("Lỗi đăng ký Google", { description: data.message });
+        }
+      } catch {
+        const msg = "Không thể kết nối đến server.";
+        setError(msg);
+        toast.error("Lỗi hệ thống", { description: msg });
+      } finally {
+        setIsGoogleLoading(false);
+      }
+    },
+    onError: () => {
+      toast.error("Đăng ký Google thất bại", { description: "Vui lòng thử lại." });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +106,7 @@ export const SignUpForm = () => {
       const data = await response.json();
 
       if (data.success) {
+        localStorage.removeItem("smartvideo_pro_plan");
         localStorage.setItem("token", data.token);
 
         // 2. Thông báo đăng ký thành công
@@ -268,13 +320,22 @@ export const SignUpForm = () => {
 
         {/* Social Options */}
         <div className="grid grid-cols-2 gap-4">
-          <button className="flex items-center justify-center gap-3 border border-border/60 rounded-2xl py-3 hover:bg-secondary/80 dark:hover:bg-zinc-800 transition-all active:scale-95 group">
-            <Image
-              src="https://www.svgrepo.com/show/475656/google-color.svg"
-              width={20}
-              height={20}
-              alt="Google"
-            />
+          <button
+            type="button"
+            onClick={() => handleGoogleSignUp()}
+            disabled={isGoogleLoading}
+            className="flex items-center justify-center gap-3 border border-border/60 rounded-2xl py-3 hover:bg-secondary/80 dark:hover:bg-zinc-800 transition-all active:scale-95 group disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {isGoogleLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Image
+                src="https://www.svgrepo.com/show/475656/google-color.svg"
+                width={20}
+                height={20}
+                alt="Google"
+              />
+            )}
             <span className="text-sm font-bold text-foreground">Google</span>
           </button>
           <button className="flex items-center justify-center gap-3 border border-border/60 rounded-2xl py-3 hover:bg-secondary/80 dark:hover:bg-zinc-800 transition-all active:scale-95 group">
