@@ -1,5 +1,6 @@
 import { DashboardHeader } from "@/components/dashboard/header";
 import { UrlInput } from "@/components/dashboard/url-input";
+import { UploadVideoCard } from "@/components/dashboard/upload-video-card";
 import { VideoRecommendations } from "@/components/dashboard/video-recommendations";
 
 export default function DashboardPage() {
@@ -7,6 +8,7 @@ export default function DashboardPage() {
     <div className="max-w-5xl mx-auto space-y-10">
       <DashboardHeader />
       <UrlInput />
+      <UploadVideoCard />
       <VideoRecommendations />
     </div>
   );

@@ -10,6 +10,10 @@ const savedVideoRoutes = require("./routes/savedVideoRoutes");
 const dictionaryRoutes = require("./routes/dictionaryRoutes");
 const vocabularyRoutes = require("./routes/vocabularyRoutes");
 const recommendRoutes = require("./routes/recommendRoutes");
+const postRoutes = require("./routes/postRoutes");
+const commentRoutes = require("./routes/commentRoutes");
+const friendRoutes = require("./routes/friendRoutes");
+const { startReminderScheduler } = require("./services/reminderScheduler");
 
 const app = express();
 
@@ -34,8 +38,12 @@ app.use("/api/saved-video", savedVideoRoutes);
 app.use("/api/dictionary", dictionaryRoutes);
 app.use("/api/vocabulary", vocabularyRoutes);
 app.use("/api/recommendations", recommendRoutes);
+app.use("/api/posts", postRoutes);
+app.use("/api/comments", commentRoutes);
+app.use("/api/friends", friendRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
+  startReminderScheduler();
 });

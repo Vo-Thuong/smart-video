@@ -93,6 +93,38 @@ exports.deleteVideo = async (req, res) => {
   }
 };
 
+// POST /api/saved-video/:id/local-practice  — record practice for a local uploaded video
+exports.recordLocalPractice = async (req, res) => {
+  try {
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+    const yesterday = new Date(now - 86400000).toISOString().slice(0, 10);
+
+    await Video.findOneAndUpdate(
+      { _id: req.params.id, userId: req.userId, isLocal: true },
+      { $set: { lastPracticed: now, lastWatchedAt: now } }
+    );
+
+    const user = await User.findById(req.userId);
+    let newStreak = user.study_streak || 0;
+    if (user.last_study_date === today) {
+      // already practiced today
+    } else if (user.last_study_date === yesterday) {
+      newStreak += 1;
+    } else {
+      newStreak = 1;
+    }
+
+    await User.findByIdAndUpdate(req.userId, {
+      $set: { study_streak: newStreak, last_study_date: today },
+    });
+
+    res.status(200).json({ success: true, study_streak: newStreak });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 exports.recordPractice = async (req, res) => {
   try {
     const now = new Date();
@@ -105,7 +137,7 @@ exports.recordPractice = async (req, res) => {
     await Video.findOneAndUpdate(
       { youtubeId, userId: req.userId },
       {
-        $set: { lastPracticed: now },
+        $set: { lastPracticed: now, lastWatchedAt: now },
         $setOnInsert: {
           userId: req.userId,
           youtubeUrl: `https://www.youtube.com/watch?v=${youtubeId}`,
@@ -133,6 +165,102 @@ exports.recordPractice = async (req, res) => {
     });
 
     res.status(200).json({ success: true, study_streak: newStreak });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// PATCH /api/saved-video/:youtubeId/progress  — save playback position
+exports.saveProgress = async (req, res) => {
+  try {
+    const { progressTime, progressSegment, duration } = req.body;
+    const youtubeId = req.params.youtubeId;
+    const time = Math.max(0, Math.floor(Number(progressTime) || 0));
+    const dur = Math.max(0, Math.floor(Number(duration) || 0));
+
+    // Compute progress percentage and completion status
+    const pct = dur > 0 ? Math.min(100, Math.round((time / dur) * 100)) : 0;
+    const completed = pct >= 95;
+
+    const update = {
+      $set: {
+        progressTime: time,
+        progressSegment: progressSegment || "",
+        lastWatchedAt: new Date(),
+        ...(dur > 0 && { duration: dur }),
+        progressPercent: pct,
+        isCompleted: completed,
+      },
+    };
+
+    await Video.findOneAndUpdate({ youtubeId, userId: req.userId }, update, { upsert: false });
+
+    res.json({ success: true, progressPercent: pct, isCompleted: completed });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// PATCH /api/saved-video/:id/local-progress  — save playback position for local videos
+exports.saveLocalProgress = async (req, res) => {
+  try {
+    const { progressTime, progressSegment, duration } = req.body;
+    const time = Math.max(0, Math.floor(Number(progressTime) || 0));
+    const dur = Math.max(0, Math.floor(Number(duration) || 0));
+
+    const pct = dur > 0 ? Math.min(100, Math.round((time / dur) * 100)) : 0;
+    const completed = pct >= 95;
+
+    const update = {
+      $set: {
+        progressTime: time,
+        progressSegment: progressSegment || "",
+        lastWatchedAt: new Date(),
+        ...(dur > 0 && { duration: dur }),
+        progressPercent: pct,
+        isCompleted: completed,
+      },
+    };
+
+    await Video.findOneAndUpdate(
+      { _id: req.params.id, userId: req.userId, isLocal: true },
+      update,
+      { upsert: false }
+    );
+
+    res.json({ success: true, progressPercent: pct, isCompleted: completed });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// GET /api/saved-video/:youtubeId/progress-get  — get saved playback position
+exports.getProgress = async (req, res) => {
+  try {
+    const video = await Video.findOne({ youtubeId: req.params.youtubeId, userId: req.userId })
+      .select("progressTime progressSegment duration progressPercent isCompleted");
+    res.json({
+      success: true,
+      progressTime: video?.progressTime ?? 0,
+      progressSegment: video?.progressSegment ?? "",
+      duration: video?.duration ?? 0,
+      progressPercent: video?.progressPercent ?? 0,
+      isCompleted: video?.isCompleted ?? false,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// GET /api/saved-video/history  — videos the user has started watching
+exports.getHistory = async (req, res) => {
+  try {
+    const videos = await Video.find({ userId: req.userId, lastWatchedAt: { $ne: null } })
+      .select("youtubeId title thumbnail progressTime duration progressPercent isCompleted lastWatchedAt progressSegment isLocal")
+      .sort({ lastWatchedAt: -1 })
+      .limit(20);
+
+    res.json({ success: true, videos });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

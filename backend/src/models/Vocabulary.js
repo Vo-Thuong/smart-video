@@ -13,6 +13,9 @@ const vocabularySchema = new mongoose.Schema(
     videoUrl: { type: String, trim: true, default: "" },
     segmentTime: { type: String, trim: true, default: "" },
     learned: { type: Boolean, default: false },
+    isFavorite: { type: Boolean, default: false },
+    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category", default: null },
+    source: { type: String, enum: ["vocabulary", "collection"], default: "vocabulary" },
   },
   { timestamps: true }
 );

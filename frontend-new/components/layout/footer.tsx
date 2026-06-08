@@ -4,9 +4,12 @@ import React from "react";
 import Link from "next/link";
 import { Facebook, Github, Youtube, Mail, Globe, Send } from "lucide-react";
 import Image from "next/image";
+import { useLang } from "@/lib/i18n";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { t } = useLang();
+  const fc = t.footer.columns;
 
   return (
     <footer className="w-full bg-background border-t border-border mt-20 transition-colors duration-300">
@@ -29,9 +32,7 @@ const Footer = () => {
               </span>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              An intelligent language learning platform leveraging AI and
-              Dictation methods to help you master listening and writing skills
-              naturally and effectively.
+              {t.footer.brandDesc}
             </p>
             <div className="flex items-center gap-4 mt-2">
               <Link
@@ -58,96 +59,42 @@ const Footer = () => {
 
           {/* Column 2: Product */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Product</h3>
+            <h3 className="font-semibold text-foreground mb-4">{fc.product.heading}</h3>
             <ul className="flex flex-col gap-3 text-sm">
-              <li>
-                <Link
-                  href="/explore"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Explore Videos
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/dictation"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Dictation Practice
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/pricing"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Pro Plan (AI Premium)
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/mobile-app"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Download Flutter App
-                </Link>
-              </li>
+              {fc.product.links.map((label) => (
+                <li key={label}>
+                  <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Column 3: Resources */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Resources</h3>
+            <h3 className="font-semibold text-foreground mb-4">{fc.resources.heading}</h3>
             <ul className="flex flex-col gap-3 text-sm">
-              <li>
-                <Link
-                  href="/docs"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Documentation
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/feedback"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Feedback & Ideas
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/terms"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/privacy"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
+              {fc.resources.links.map((label) => (
+                <li key={label}>
+                  <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Column 4: Newsletter */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Newsletter</h3>
+            <h3 className="font-semibold text-foreground mb-4">{fc.contact.newsletter}</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Get the latest AI-driven language learning methods delivered to
-              your inbox.
+              {t.footer.brandDesc}
             </p>
-            <form
-              className="relative group"
-              onSubmit={(e) => e.preventDefault()}
-            >
+            <form className="relative group" onSubmit={(e) => e.preventDefault()}>
               <input
                 type="email"
-                placeholder="Your email address..."
+                placeholder={fc.contact.newsletterPlaceholder}
                 className="w-full bg-secondary/50 border border-border rounded-xl py-2.5 pl-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
               />
               <button className="absolute right-1.5 top-1.5 p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
@@ -160,7 +107,7 @@ const Footer = () => {
         {/* Copyright & Metadata */}
         <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            © {currentYear} Smart-Video Engine.
+            © {currentYear} Smart-Video Engine. {t.footer.copyright}
           </p>
           <div className="flex items-center gap-6 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors">

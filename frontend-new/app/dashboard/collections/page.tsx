@@ -1,14 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FolderOpen, Plus, Pencil, Trash2, Check, X, Loader2, Video } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { FolderOpen, Plus, Pencil, Trash2, Check, X, Loader2, Video, BookOpen } from "lucide-react";
 import { toast } from "sonner";
+import { useLang } from "@/lib/i18n";
 
 interface Category {
   _id: string;
   name: string;
   color: string;
   videoCount?: number;
+  vocabCount?: number;
 }
 
 const PRESET_COLORS = [
@@ -18,6 +21,9 @@ const PRESET_COLORS = [
 ];
 
 export default function CollectionsPage() {
+  const router = useRouter();
+  const { t } = useLang();
+  const p = t.collections;
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,28 +46,44 @@ export default function CollectionsPage() {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const headers = { Authorization: `Bearer ${token ?? ""}`, "Content-Type": "application/json" };
 
-  // Fetch categories + video count per category
+  // Fetch categories + video count + vocab count per category
   useEffect(() => {
     if (!token) { setLoading(false); return; }
     Promise.all([
       fetch("http://localhost:5000/api/category", { headers }).then((r) => r.json()),
       fetch("http://localhost:5000/api/saved-video", { headers }).then((r) => r.json()),
+      fetch("http://localhost:5000/api/vocabulary?source=collection", { headers }).then((r) => r.json()),
     ])
-      .then(([catData, videoData]) => {
+      .then(([catData, videoData, vocabData]) => {
         if (!catData.success) return;
         const cats: Category[] = catData.categories;
+
+        const videoCountMap: Record<string, number> = {};
         if (videoData.success) {
-          const countMap: Record<string, number> = {};
           for (const v of videoData.videos) {
             if (v.categoryId?._id) {
-              countMap[v.categoryId._id] = (countMap[v.categoryId._id] || 0) + 1;
+              videoCountMap[v.categoryId._id] = (videoCountMap[v.categoryId._id] || 0) + 1;
             }
           }
-          cats.forEach((c) => { c.videoCount = countMap[c._id] || 0; });
         }
+
+        const vocabCountMap: Record<string, number> = {};
+        if (vocabData.success) {
+          for (const v of vocabData.vocabulary) {
+            if (v.categoryId) {
+              const id = typeof v.categoryId === "object" ? v.categoryId._id : v.categoryId;
+              vocabCountMap[id] = (vocabCountMap[id] || 0) + 1;
+            }
+          }
+        }
+
+        cats.forEach((c) => {
+          c.videoCount = videoCountMap[c._id] || 0;
+          c.vocabCount = vocabCountMap[c._id] || 0;
+        });
         setCategories(cats);
       })
-      .catch(() => toast.error("Không thể tải danh sách chủ đề"))
+      .catch(() => toast.error(p.loadErr))
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -81,9 +103,9 @@ export default function CollectionsPage() {
       setCreateName("");
       setCreateColor(PRESET_COLORS[0]);
       setShowCreate(false);
-      toast.success("Đã tạo chủ đề mới");
+      toast.success(p.created);
     } catch {
-      toast.error("Lỗi khi tạo chủ đề");
+      toast.error(p.createErr);
     } finally {
       setCreating(false);
     }
@@ -113,9 +135,9 @@ export default function CollectionsPage() {
         prev.map((c) => (c._id === id ? { ...c, name: data.category.name, color: data.category.color } : c))
       );
       cancelEdit();
-      toast.success("Đã lưu thay đổi");
+      toast.success(p.saved);
     } catch {
-      toast.error("Lỗi khi lưu chủ đề");
+      toast.error(p.saveErr);
     } finally {
       setSaving(false);
     }
@@ -133,9 +155,9 @@ export default function CollectionsPage() {
       if (!data.success) { toast.error(data.message); return; }
       setCategories((prev) => prev.filter((c) => c._id !== id));
       setDeleteId(null);
-      toast.success("Đã xóa chủ đề");
+      toast.success(p.deleted);
     } catch {
-      toast.error("Lỗi khi xóa chủ đề");
+      toast.error(p.deleteErr);
     } finally {
       setDeleting(false);
     }
@@ -146,15 +168,15 @@ export default function CollectionsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight text-white mb-1">Chủ đề</h1>
-          <p className="text-gray-400">Quản lý các bộ sưu tập video của bạn</p>
+          <h1 className="text-4xl font-bold tracking-tight text-white mb-1">{p.title}</h1>
+          <p className="text-gray-400">{p.subtitle}</p>
         </div>
         <button
           onClick={() => { setShowCreate(true); setEditId(null); }}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00E5FF] hover:bg-[#00BCCC] text-black text-sm font-semibold transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Tạo chủ đề
+          {p.newBtn}
         </button>
       </div>
 
@@ -163,7 +185,7 @@ export default function CollectionsPage() {
         <div className="bg-[#1C1132] border border-[#00E5FF]/30 rounded-2xl p-5 space-y-4">
           <h2 className="text-white font-semibold flex items-center gap-2">
             <FolderOpen className="w-4 h-4 text-[#00E5FF]" />
-            Tạo chủ đề mới
+            {p.createTitle}
           </h2>
           <input
             autoFocus
@@ -171,11 +193,11 @@ export default function CollectionsPage() {
             value={createName}
             onChange={(e) => setCreateName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-            placeholder="Tên chủ đề..."
+            placeholder={p.namePlaceholder}
             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-gray-500 outline-none focus:border-[#00E5FF]/50 text-sm"
           />
           <div>
-            <p className="text-gray-400 text-xs mb-2">Chọn màu</p>
+            <p className="text-gray-400 text-xs mb-2">{p.chooseColor}</p>
             <div className="flex gap-2 flex-wrap">
               {PRESET_COLORS.map((c) => (
                 <button
@@ -192,14 +214,14 @@ export default function CollectionsPage() {
               onClick={() => { setShowCreate(false); setCreateName(""); setCreateColor(PRESET_COLORS[0]); }}
               className="px-4 py-2 rounded-xl border border-white/10 text-gray-400 hover:text-white text-sm transition-colors"
             >
-              Hủy
+              {p.cancel}
             </button>
             <button
               onClick={handleCreate}
               disabled={creating || !createName.trim()}
               className="px-4 py-2 rounded-xl bg-[#00E5FF] hover:bg-[#00BCCC] text-black text-sm font-semibold disabled:opacity-50 transition-colors"
             >
-              {creating ? "Đang tạo..." : "Tạo"}
+              {creating ? p.creating : p.create}
             </button>
           </div>
         </div>
@@ -213,8 +235,8 @@ export default function CollectionsPage() {
       ) : categories.length === 0 ? (
         <div className="text-center py-20 text-gray-500">
           <FolderOpen className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p>Chưa có chủ đề nào</p>
-          <p className="text-sm mt-1">Bấm "Tạo chủ đề" để bắt đầu</p>
+          <p>{p.empty}</p>
+          <p className="text-sm mt-1">{p.emptyHint}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -265,19 +287,30 @@ export default function CollectionsPage() {
               ) : (
                 /* ── View mode ── */
                 <div className="flex items-center gap-4">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${cat.color}20`, border: `1px solid ${cat.color}40` }}
+                  <button
+                    onClick={() => router.push(`/dashboard/collections/${cat._id}`)}
+                    className="flex items-center gap-4 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
                   >
-                    <FolderOpen className="w-5 h-5" style={{ color: cat.color }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium">{cat.name}</p>
-                    <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
-                      <Video className="w-3 h-3" />
-                      {cat.videoCount ?? 0} video
-                    </p>
-                  </div>
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: `${cat.color}20`, border: `1px solid ${cat.color}40` }}
+                    >
+                      <FolderOpen className="w-5 h-5" style={{ color: cat.color }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-medium">{cat.name}</p>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        <span className="text-gray-500 text-xs flex items-center gap-1">
+                          <Video className="w-3 h-3" />
+                          {cat.videoCount ?? 0} video
+                        </span>
+                        <span className="text-gray-500 text-xs flex items-center gap-1">
+                          <BookOpen className="w-3 h-3" />
+                          {p.words.replace("{n}", String(cat.vocabCount ?? 0))}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
                   <div
                     className="w-3 h-3 rounded-full flex-shrink-0"
                     style={{ backgroundColor: cat.color }}
@@ -286,14 +319,14 @@ export default function CollectionsPage() {
                     <button
                       onClick={() => startEdit(cat)}
                       className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-                      title="Sửa"
+                      title={p.editTitle}
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setDeleteId(cat._id)}
                       className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                      title="Xóa"
+                      title={p.deleteTitle}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -309,23 +342,23 @@ export default function CollectionsPage() {
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-[#1C1132] border border-white/10 rounded-2xl p-6 max-w-sm w-full mx-4 space-y-4">
-            <h3 className="text-white font-semibold text-lg">Xóa chủ đề?</h3>
+            <h3 className="text-white font-semibold text-lg">{p.deleteModal.title}</h3>
             <p className="text-gray-400 text-sm">
-              Chủ đề sẽ bị xóa vĩnh viễn. Các video trong chủ đề này sẽ không bị xóa nhưng sẽ không còn thuộc chủ đề nào.
+              {p.deleteModal.body}
             </p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setDeleteId(null)}
                 className="px-4 py-2 rounded-xl border border-white/10 text-gray-400 hover:text-white text-sm transition-colors"
               >
-                Hủy
+                {p.deleteModal.cancel}
               </button>
               <button
                 onClick={() => handleDelete(deleteId)}
                 disabled={deleting}
                 className="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold disabled:opacity-50 transition-colors"
               >
-                {deleting ? "Đang xóa..." : "Xóa"}
+                {deleting ? p.deleteModal.deleting : p.deleteModal.confirm}
               </button>
             </div>
           </div>

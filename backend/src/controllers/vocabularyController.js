@@ -17,10 +17,10 @@ exports.addVocabulary = async (req, res) => {
     const userId = getUserId(req);
     if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
-    const { word, translation, example, note, phonetic, videoId, videoTitle, videoUrl, segmentTime } = req.body;
+    const { word, translation, example, note, phonetic, videoId, videoTitle, videoUrl, segmentTime, categoryId, source } = req.body;
     if (!word?.trim()) return res.status(400).json({ success: false, message: "Word is required" });
 
-    const vocab = await Vocabulary.create({ userId, word: word.trim(), phonetic, translation, example, note, videoId, videoTitle, videoUrl, segmentTime });
+    const vocab = await Vocabulary.create({ userId, word: word.trim(), phonetic, translation, example, note, videoId, videoTitle, videoUrl, segmentTime, ...(categoryId ? { categoryId } : {}), source: source === "collection" ? "collection" : "vocabulary" });
     return res.status(201).json({ success: true, vocabulary: vocab });
   } catch (err) {
     console.error("addVocabulary error:", err.message);
@@ -33,7 +33,20 @@ exports.getVocabulary = async (req, res) => {
     const userId = getUserId(req);
     if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
-    const list = await Vocabulary.find({ userId }).sort({ createdAt: -1 });
+    // If categoryId is provided, return collection vocab for that category
+    if (req.query.categoryId) {
+      const list = await Vocabulary.find({ userId, categoryId: req.query.categoryId, source: "collection" }).sort({ createdAt: -1 });
+      return res.json({ success: true, vocabulary: list });
+    }
+
+    // If source=collection, return all collection-sourced items (for counting)
+    if (req.query.source === "collection") {
+      const list = await Vocabulary.find({ userId, source: "collection" }).sort({ createdAt: -1 });
+      return res.json({ success: true, vocabulary: list });
+    }
+
+    // Default: return only vocabulary-sourced items (not collection)
+    const list = await Vocabulary.find({ userId, source: { $ne: "collection" } }).sort({ createdAt: -1 });
     return res.json({ success: true, vocabulary: list });
   } catch (err) {
     return res.status(500).json({ success: false, message: "Server error" });
