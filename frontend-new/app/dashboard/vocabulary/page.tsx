@@ -2128,7 +2128,7 @@ function ShareVocabModal({
                               src={
                                 f.avatar.startsWith("http")
                                   ? f.avatar
-                                  : `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${f.avatar}`
+                                  : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${f.avatar}`
                               }
                               alt=""
                               className="w-full h-full object-cover"
@@ -2342,7 +2342,7 @@ export default function VocabularyPage() {
     try {
       const token = localStorage.getItem("token");
       await fetch(
-        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/vocabulary/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/vocabulary/${id}`,
         {
           method: "PATCH",
           headers: {
@@ -2370,7 +2370,7 @@ export default function VocabularyPage() {
       try {
         const token = localStorage.getItem("token");
         await fetch(
-          `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/vocabulary/${id}`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/vocabulary/${id}`,
           {
             method: "PATCH",
             headers: {
@@ -2393,7 +2393,7 @@ export default function VocabularyPage() {
       try {
         const token = localStorage.getItem("token");
         await fetch(
-          `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/vocabulary/${id}`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/vocabulary/${id}`,
           {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },

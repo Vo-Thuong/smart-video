@@ -79,7 +79,7 @@ export function VideoRecommendations() {
     const effectiveLimit = overrideLimit ?? limit;
     try {
       const res = await fetch(
-        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recommendations?limit=${effectiveLimit}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recommendations?limit=${effectiveLimit}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -120,7 +120,7 @@ export function VideoRecommendations() {
     setShowQueries(false);
     try {
       const res = await fetch(
-        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recommendations/search?q=${encodeURIComponent(q)}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recommendations/search?q=${encodeURIComponent(q)}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const data = await res.json();

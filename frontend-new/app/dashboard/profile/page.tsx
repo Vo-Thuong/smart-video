@@ -602,7 +602,7 @@ export default function ProfilePage() {
                   src={
                     avatarPreview ??
                     (user.avatar.startsWith("/uploads")
-                      ? `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
+                      ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
                       : user.avatar)
                   }
                   alt={user.fullname}
@@ -725,7 +725,7 @@ export default function ProfilePage() {
                           <img
                             src={
                               v.isLocal
-                                ? `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${v.thumbnail}`
+                                ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${v.thumbnail}`
                                 : v.thumbnail
                             }
                             alt={v.title}
@@ -846,7 +846,7 @@ export default function ProfilePage() {
                       <img
                         src={
                           v.isLocal
-                            ? `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${v.thumbnail}`
+                            ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${v.thumbnail}`
                             : v.thumbnail
                         }
                         alt={v.title}

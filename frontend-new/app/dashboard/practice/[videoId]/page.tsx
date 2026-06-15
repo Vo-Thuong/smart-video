@@ -625,7 +625,7 @@ function DictationPanel({
             );
             if (existing) {
               await fetch(
-                `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${existing._id}/category`,
+                `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${existing._id}/category`,
                 {
                   method: "PATCH",
                   headers: authHeaders,
@@ -681,7 +681,7 @@ function DictationPanel({
       error: null,
     });
     fetch(
-      `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/dictionary/lookup?word=${encodeURIComponent(normalized)}`,
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/dictionary/lookup?word=${encodeURIComponent(normalized)}`,
     )
       .then((r) => r.json())
       .then((data) => {
@@ -1469,7 +1469,7 @@ export default function PracticePage() {
     const token = localStorage.getItem("token");
     if (!token) return;
     fetch(
-      `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${videoId}/progress-get`,
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${videoId}/progress-get`,
       {
         headers: { Authorization: `Bearer ${token}` },
       },
@@ -1508,7 +1508,7 @@ export default function PracticePage() {
       });
       // Always use fetch + keepalive — sendBeacon cannot send Authorization headers
       fetch(
-        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${videoId}/progress`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${videoId}/progress`,
         {
           method: "PATCH",
           headers: {
@@ -1532,7 +1532,7 @@ export default function PracticePage() {
     setTranscriptLoading(true);
     setTranscriptError(null);
     fetch(
-      `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/video/transcript/${videoId}`,
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/video/transcript/${videoId}`,
     )
       .then((r) => r.json())
       .then((data) => {
@@ -1546,7 +1546,7 @@ export default function PracticePage() {
     const token = localStorage.getItem("token");
     if (token) {
       fetch(
-        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${videoId}/practice`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${videoId}/practice`,
         {
           method: "POST",
           headers: {

@@ -46,7 +46,7 @@ function Avatar({ user, size = 44 }: { user: UserInfo; size?: number }) {
   const src = user.avatar?.startsWith("http")
     ? user.avatar
     : user.avatar
-      ? `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
+      ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
       : null;
   return (
     <div
@@ -471,7 +471,7 @@ export default function NotificationsPage() {
                         src={
                           post.userId.avatar.startsWith("http")
                             ? post.userId.avatar
-                            : `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${post.userId.avatar}`
+                            : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${post.userId.avatar}`
                         }
                         alt=""
                         className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10"

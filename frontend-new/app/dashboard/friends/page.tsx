@@ -36,7 +36,7 @@ function Avatar({ user, size = 40 }: { user: UserInfo; size?: number }) {
   const src = user.avatar?.startsWith("http")
     ? user.avatar
     : user.avatar
-      ? `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
+      ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
       : null;
 
   return (

@@ -280,11 +280,11 @@ export default function CollectionDetailPage() {
         r.json(),
       ),
       fetch(
-        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video?categoryId=${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video?categoryId=${id}`,
         { headers },
       ).then((r) => r.json()),
       fetch(
-        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/vocabulary?categoryId=${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/vocabulary?categoryId=${id}`,
         { headers },
       ).then((r) => r.json()),
     ])
@@ -305,7 +305,7 @@ export default function CollectionDetailPage() {
   const deleteVideo = async (videoId: string) => {
     try {
       await fetch(
-        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${videoId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${videoId}`,
         { method: "DELETE", headers },
       );
       setVideos((prev) => prev.filter((v) => v._id !== videoId));
@@ -318,7 +318,7 @@ export default function CollectionDetailPage() {
   const deleteVocab = async (vocabId: string) => {
     try {
       await fetch(
-        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/vocabulary/${vocabId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/vocabulary/${vocabId}`,
         { method: "DELETE", headers },
       );
       setVocabs((prev) => prev.filter((v) => v._id !== vocabId));

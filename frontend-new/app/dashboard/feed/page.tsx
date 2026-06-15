@@ -131,7 +131,7 @@ function Avatar({ user, size = 10 }: { user: Author; size?: number }) {
   const cls = `w-${size} h-${size} rounded-full object-cover flex-shrink-0`;
   if (user.avatar) {
     const src = user.avatar.startsWith("/uploads")
-      ? `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
+      ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
       : user.avatar;
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={src} alt={user.fullname} className={cls} />;
@@ -380,7 +380,7 @@ function UserProfileModal({
   const avatarSrc = user?.avatar
     ? user.avatar.startsWith("http")
       ? user.avatar
-      : `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
+      : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
     : null;
   const initials = user
     ? user.fullname

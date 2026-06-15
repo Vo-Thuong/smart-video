@@ -216,7 +216,7 @@ export function UploadVideoCard() {
           {/* Video preview */}
           <div className="relative w-full aspect-video bg-black">
             <video
-              src={`http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${result.videoUrl}`}
+              src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${result.videoUrl}`}
               className="absolute inset-0 w-full h-full object-contain"
               controls={false}
               muted

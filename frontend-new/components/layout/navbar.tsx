@@ -130,7 +130,7 @@ export const Navbar = () => {
                     <img
                       src={
                         user.avatar.startsWith("/uploads")
-                          ? `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
+                          ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
                           : user.avatar
                       }
                       alt="avatar"

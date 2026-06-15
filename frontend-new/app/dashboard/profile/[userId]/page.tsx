@@ -144,7 +144,7 @@ export default function PublicProfilePage() {
   const avatarSrc = user.avatar
     ? user.avatar.startsWith("http")
       ? user.avatar
-      : `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
+      : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
     : null;
   const initials = user.fullname
     .split(" ")

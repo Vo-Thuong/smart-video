@@ -77,15 +77,15 @@ export default function CollectionsPage() {
     }
     Promise.all([
       fetch(
-        "http://`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api`/api/category",
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/category`,
         { headers },
       ).then((r) => r.json()),
       fetch(
-        "http://`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api`/api/saved-video",
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video`,
         { headers },
       ).then((r) => r.json()),
       fetch(
-        "http://`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api`/api/vocabulary?source=collection",
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/vocabulary?source=collection`,
         { headers },
       ).then((r) => r.json()),
     ])
@@ -132,7 +132,7 @@ export default function CollectionsPage() {
     setCreating(true);
     try {
       const res = await fetch(
-        "http://`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api`/api/category",
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/category`,
         {
           method: "POST",
           headers,
@@ -174,7 +174,7 @@ export default function CollectionsPage() {
     setSaving(true);
     try {
       const res = await fetch(
-        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/category/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/category/${id}`,
         {
           method: "PATCH",
           headers,
@@ -207,7 +207,7 @@ export default function CollectionsPage() {
     setDeleting(true);
     try {
       const res = await fetch(
-        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/category/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/category/${id}`,
         {
           method: "DELETE",
           headers,

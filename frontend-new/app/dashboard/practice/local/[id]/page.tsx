@@ -336,7 +336,7 @@ function DictationPanel({
       error: null,
     });
     fetch(
-      `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/dictionary/lookup?word=${encodeURIComponent(normalized)}`,
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/dictionary/lookup?word=${encodeURIComponent(normalized)}`,
     )
       .then((r) => r.json())
       .then((data) => {
@@ -734,7 +734,7 @@ export default function LocalPracticePage() {
     setTranscriptLoading(true);
     const token = localStorage.getItem("token");
     fetch(
-      `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/video/local/${id}`,
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/video/local/${id}`,
     )
       .then((r) => r.json())
       .then((data) => {
@@ -748,7 +748,7 @@ export default function LocalPracticePage() {
           // Record practice to update lastPracticed + streak
           if (token) {
             fetch(
-              `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${id}/local-practice`,
+              `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${id}/local-practice`,
               {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` },
@@ -866,7 +866,7 @@ export default function LocalPracticePage() {
       const dur = isFinite(video.duration) ? Math.floor(video.duration) : 0;
       const segText = transcript[segIdx]?.text || "";
       fetch(
-        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${id}/local-progress`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${id}/local-progress`,
         {
           method: "PATCH",
           headers: {
