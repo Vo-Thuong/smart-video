@@ -57,7 +57,10 @@ function timeAgo(iso: string) {
 }
 
 function joinedDate(iso: string) {
-  return new Date(iso).toLocaleDateString("vi-VN", { month: "long", year: "numeric" });
+  return new Date(iso).toLocaleDateString("vi-VN", {
+    month: "long",
+    year: "numeric",
+  });
 }
 
 export default function PublicProfilePage() {
@@ -92,7 +95,10 @@ export default function PublicProfilePage() {
         const res = await fetch(`${API}/auth/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (res.status === 404) { setNotFound(true); return; }
+        if (res.status === 404) {
+          setNotFound(true);
+          return;
+        }
         const data = await res.json();
         if (data.success) {
           setUser(data.user);
@@ -122,7 +128,9 @@ export default function PublicProfilePage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#1a0f2e] via-[#1e1235] to-[#160d28] flex flex-col items-center justify-center gap-4">
         <Users className="w-16 h-16 text-white/10" />
-        <p className="text-white/50 text-lg font-medium">Không tìm thấy người dùng</p>
+        <p className="text-white/50 text-lg font-medium">
+          Không tìm thấy người dùng
+        </p>
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-sm text-purple-400 hover:text-purple-300 transition-colors"
@@ -134,9 +142,16 @@ export default function PublicProfilePage() {
   }
 
   const avatarSrc = user.avatar
-    ? user.avatar.startsWith("http") ? user.avatar : `http://localhost:5000${user.avatar}`
+    ? user.avatar.startsWith("http")
+      ? user.avatar
+      : `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
     : null;
-  const initials = user.fullname.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  const initials = user.fullname
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a0f2e] via-[#1e1235] to-[#160d28] p-6 md:p-10">
@@ -191,12 +206,35 @@ export default function PublicProfilePage() {
             {/* Stats row */}
             <div className="grid grid-cols-4 gap-3 mt-5">
               {[
-                { icon: Video, label: "Video", value: stats?.videosCount ?? 0, color: "text-cyan-400" },
-                { icon: BookOpen, label: "Từ vựng", value: stats?.vocabTotal ?? 0, color: "text-purple-400" },
-                { icon: Flame, label: "Streak", value: user.study_streak, color: "text-orange-400" },
-                { icon: Star, label: "Điểm", value: user.total_points, color: "text-yellow-400" },
+                {
+                  icon: Video,
+                  label: "Video",
+                  value: stats?.videosCount ?? 0,
+                  color: "text-cyan-400",
+                },
+                {
+                  icon: BookOpen,
+                  label: "Từ vựng",
+                  value: stats?.vocabTotal ?? 0,
+                  color: "text-purple-400",
+                },
+                {
+                  icon: Flame,
+                  label: "Streak",
+                  value: user.study_streak,
+                  color: "text-orange-400",
+                },
+                {
+                  icon: Star,
+                  label: "Điểm",
+                  value: user.total_points,
+                  color: "text-yellow-400",
+                },
               ].map(({ icon: Icon, label, value, color }) => (
-                <div key={label} className="bg-white/5 rounded-2xl p-3 text-center border border-white/8">
+                <div
+                  key={label}
+                  className="bg-white/5 rounded-2xl p-3 text-center border border-white/8"
+                >
                   <Icon className={`w-4 h-4 mx-auto mb-1 ${color}`} />
                   <p className="text-white font-bold text-base">{value}</p>
                   <p className="text-white/35 text-[11px]">{label}</p>
@@ -208,7 +246,9 @@ export default function PublicProfilePage() {
 
         {/* Recent posts */}
         <div className="mb-3 flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">Bài đăng gần đây</h2>
+          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">
+            Bài đăng gần đây
+          </h2>
           <span className="text-xs text-white/25">({posts.length})</span>
         </div>
 
@@ -234,7 +274,11 @@ export default function PublicProfilePage() {
                     </div>
                   ) : post.thumbnail ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={post.thumbnail} alt="" className="w-16 h-11 object-cover rounded-xl flex-shrink-0" />
+                    <img
+                      src={post.thumbnail}
+                      alt=""
+                      className="w-16 h-11 object-cover rounded-xl flex-shrink-0"
+                    />
                   ) : (
                     <div className="w-16 h-11 rounded-xl bg-white/8 flex-shrink-0 flex items-center justify-center">
                       <PlayCircle className="w-5 h-5 text-white/30" />
@@ -245,16 +289,23 @@ export default function PublicProfilePage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white/85 truncate">
                       {isVocab
-                        ? post.caption || `${post.vocabWords?.length ?? 0} từ vựng`
+                        ? post.caption ||
+                          `${post.vocabWords?.length ?? 0} từ vựng`
                         : post.title || post.caption || "—"}
                     </p>
                     <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs text-white/30">{timeAgo(post.createdAt)}</span>
+                      <span className="text-xs text-white/30">
+                        {timeAgo(post.createdAt)}
+                      </span>
                       {!isVocab && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Video</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                          Video
+                        </span>
                       )}
                       {isVocab && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">Từ vựng</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                          Từ vựng
+                        </span>
                       )}
                     </div>
                   </div>
@@ -262,7 +313,9 @@ export default function PublicProfilePage() {
                   {/* Likes */}
                   {Array.isArray(post.likes) && post.likes.length > 0 && (
                     <div className="flex items-center gap-1 text-pink-400 flex-shrink-0">
-                      <span className="text-xs font-medium">{post.likes.length}</span>
+                      <span className="text-xs font-medium">
+                        {post.likes.length}
+                      </span>
                       <span className="text-xs">❤️</span>
                     </div>
                   )}

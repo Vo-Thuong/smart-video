@@ -52,7 +52,7 @@ export const ProductPreview = () => {
               loop
               playsInline
               // Đã bỏ 'muted' để có âm thanh
-              src="/assets/video/7741407175064.mp4"
+              src="/assets/video/Recording.mp4"
               onTimeUpdate={handleTimeUpdate}
             />
 

@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useRef,
+} from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
@@ -91,19 +97,28 @@ function parseTime(t: string): number {
   return (parts[0] ?? 0) * 60 + (parts[1] ?? 0);
 }
 
-function groupByVideo(items: VocabItem[], unknownVideo: string, unknownSource: string): VideoGroup[] {
+function groupByVideo(
+  items: VocabItem[],
+  unknownVideo: string,
+  unknownSource: string,
+): VideoGroup[] {
   const map = new Map<string, VideoGroup>();
   for (const item of items) {
     // Use videoId as primary key; fall back to videoTitle as a pseudo-key so
     // items imported from different friend posts don't collapse into one "Unknown" group.
-    const key = item.videoId || (item.videoTitle ? `__title__${item.videoTitle}` : "__unknown__");
+    const key =
+      item.videoId ||
+      (item.videoTitle ? `__title__${item.videoTitle}` : "__unknown__");
     const isYouTubeId = !!item.videoId;
     if (!map.has(key)) {
       map.set(key, {
         groupKey: key,
         videoId: item.videoId || "",
-        videoTitle: item.videoTitle || (isYouTubeId ? unknownVideo : unknownSource),
-        thumbnail: isYouTubeId ? `https://img.youtube.com/vi/${item.videoId}/mqdefault.jpg` : null,
+        videoTitle:
+          item.videoTitle || (isYouTubeId ? unknownVideo : unknownSource),
+        thumbnail: isYouTubeId
+          ? `https://img.youtube.com/vi/${item.videoId}/mqdefault.jpg`
+          : null,
         items: [],
       });
     }
@@ -199,33 +214,43 @@ function VideoSegmentDialog({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-white">{sd.originalVideo}</span>
+            <span className="text-sm font-semibold text-white">
+              {sd.originalVideo}
+            </span>
             {transcript && (
               <span className="text-[11px] text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">
                 {sd.audioLoop}
               </span>
             )}
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-white transition-colors"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Video 16:9 */}
-        <div className="relative w-full bg-black" style={{ paddingTop: "56.25%" }}>
+        <div
+          className="relative w-full bg-black"
+          style={{ paddingTop: "56.25%" }}
+        >
           <div id={playerId} className="absolute inset-0 w-full h-full" />
         </div>
 
         {/* Transcript */}
         {transcript && (
           <div className="px-5 py-4 border-t border-white/10">
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">{sd.segmentContent}</p>
+            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">
+              {sd.segmentContent}
+            </p>
             <p className="text-base text-white leading-relaxed">{transcript}</p>
           </div>
         )}
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 
@@ -261,37 +286,64 @@ function EditModal({
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <div className="flex items-center gap-2">
             <Pencil className="w-4 h-4 text-[#7C3AED]" />
-            <span className="text-sm font-semibold text-white">{p.editModal.title}</span>
+            <span className="text-sm font-semibold text-white">
+              {p.editModal.title}
+            </span>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-white transition-colors"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="p-5 flex flex-col gap-3">
-          {(
-            [
-              { label: p.editModal.word, key: "word" as const, placeholder: p.editModal.wordPlaceholder },
-              { label: p.editModal.phonetic, key: "phonetic" as const, placeholder: "/ˈwɜːrd/" },
-              { label: p.editModal.meaning, key: "translation" as const, placeholder: "(noun) nghĩa 1 | (verb) nghĩa 2" },
-              { label: p.editModal.example, key: "example" as const, placeholder: p.editModal.examplePlaceholder },
-              { label: p.editModal.note, key: "note" as const, placeholder: p.editModal.notePlaceholder },
-            ]
-          ).map(({ label, key, placeholder }) => (
+          {[
+            {
+              label: p.editModal.word,
+              key: "word" as const,
+              placeholder: p.editModal.wordPlaceholder,
+            },
+            {
+              label: p.editModal.phonetic,
+              key: "phonetic" as const,
+              placeholder: "/ˈwɜːrd/",
+            },
+            {
+              label: p.editModal.meaning,
+              key: "translation" as const,
+              placeholder: "(noun) nghĩa 1 | (verb) nghĩa 2",
+            },
+            {
+              label: p.editModal.example,
+              key: "example" as const,
+              placeholder: p.editModal.examplePlaceholder,
+            },
+            {
+              label: p.editModal.note,
+              key: "note" as const,
+              placeholder: p.editModal.notePlaceholder,
+            },
+          ].map(({ label, key, placeholder }) => (
             <div key={key} className="flex flex-col gap-1">
               <label className="text-xs text-gray-500">{label}</label>
               {key === "translation" || key === "example" ? (
                 <textarea
                   rows={2}
                   value={form[key]}
-                  onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, [key]: e.target.value }))
+                  }
                   placeholder={placeholder}
                   className="w-full bg-[#2D1F47] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-gray-600 border border-white/10 outline-none focus:border-[#7C3AED] transition-colors resize-none"
                 />
               ) : (
                 <input
                   value={form[key]}
-                  onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, [key]: e.target.value }))
+                  }
                   placeholder={placeholder}
                   className="w-full bg-[#2D1F47] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-gray-600 border border-white/10 outline-none focus:border-[#7C3AED] transition-colors"
                 />
@@ -312,7 +364,16 @@ function EditModal({
             disabled={saving}
             className="flex-1 py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            {saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {p.editModal.saving}</> : <><Save className="w-3.5 h-3.5" /> {p.editModal.save}</>}
+            {saving ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />{" "}
+                {p.editModal.saving}
+              </>
+            ) : (
+              <>
+                <Save className="w-3.5 h-3.5" /> {p.editModal.save}
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -324,14 +385,32 @@ function EditModal({
 
 // ─── Pro Paywall Modal ────────────────────────────────────────────────────────
 
-function ProPaywallModal({ onClose, onUpgrade }: { onClose: () => void; onUpgrade: () => void }) {
+function ProPaywallModal({
+  onClose,
+  onUpgrade,
+}: {
+  onClose: () => void;
+  onUpgrade: () => void;
+}) {
   const { t } = useLang();
   const p = t.vocabulary;
   const games = [
-    { emoji: "🃏", title: p.proModal.flashcard, desc: p.proModal.flashcardDesc },
+    {
+      emoji: "🃏",
+      title: p.proModal.flashcard,
+      desc: p.proModal.flashcardDesc,
+    },
     { emoji: "🧩", title: p.proModal.matching, desc: p.proModal.matchingDesc },
-    { emoji: "🎧", title: p.proModal.listenType, desc: p.proModal.listenTypeDesc },
-    { emoji: "✏️", title: p.proModal.fillBlank, desc: p.proModal.fillBlankDesc },
+    {
+      emoji: "🎧",
+      title: p.proModal.listenType,
+      desc: p.proModal.listenTypeDesc,
+    },
+    {
+      emoji: "✏️",
+      title: p.proModal.fillBlank,
+      desc: p.proModal.fillBlankDesc,
+    },
   ];
 
   return createPortal(
@@ -343,7 +422,10 @@ function ProPaywallModal({ onClose, onUpgrade }: { onClose: () => void; onUpgrad
             <Crown className="w-5 h-5 text-amber-400" />
             <h2 className="text-white font-bold text-lg">{p.proModal.title}</h2>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -354,7 +436,9 @@ function ProPaywallModal({ onClose, onUpgrade }: { onClose: () => void; onUpgrad
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-3">
               <Lock className="w-8 h-8 text-amber-400" />
             </div>
-            <h3 className="text-white font-bold text-base mb-1">{p.proModal.heading}</h3>
+            <h3 className="text-white font-bold text-base mb-1">
+              {p.proModal.heading}
+            </h3>
             <p className="text-gray-400 text-sm">{p.proModal.body}</p>
           </div>
 
@@ -383,11 +467,13 @@ function ProPaywallModal({ onClose, onUpgrade }: { onClose: () => void; onUpgrad
             <Zap className="w-4 h-4" />
             {p.proModal.cta}
           </button>
-          <p className="text-center text-gray-500 text-xs mt-3">{p.proModal.price}</p>
+          <p className="text-center text-gray-500 text-xs mt-3">
+            {p.proModal.price}
+          </p>
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 
@@ -402,7 +488,7 @@ function GameSelector({
   onClose: () => void;
 }) {
   const hasFillBlank = items.some(
-    (v) => v.example && v.example.toLowerCase().includes(v.word.toLowerCase())
+    (v) => v.example && v.example.toLowerCase().includes(v.word.toLowerCase()),
   );
   const { t } = useLang();
   const p = t.vocabulary;
@@ -444,10 +530,17 @@ function GameSelector({
       <div className="w-full max-w-md bg-[#1C1132] border border-white/15 rounded-2xl shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
           <div>
-            <h2 className="text-white font-bold text-lg">{p.gameSelector.title}</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{p.gameSelector.wordsCount.replace("{n}", String(items.length))}</p>
+            <h2 className="text-white font-bold text-lg">
+              {p.gameSelector.title}
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {p.gameSelector.wordsCount.replace("{n}", String(items.length))}
+            </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -468,7 +561,9 @@ function GameSelector({
                 <p className="text-white font-semibold text-sm">{g.title}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{g.desc}</p>
                 {!g.available && g.unavailableHint && (
-                  <p className="text-[10px] text-red-400 mt-0.5">{g.unavailableHint}</p>
+                  <p className="text-[10px] text-red-400 mt-0.5">
+                    {g.unavailableHint}
+                  </p>
                 )}
               </div>
               {g.available && (
@@ -479,7 +574,7 @@ function GameSelector({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 
@@ -509,9 +604,16 @@ function MatchingGame({
   const wordRefs = useRef<Map<string, any>>(new Map());
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const meaningRefs = useRef<Map<string, any>>(new Map());
-  const [svgLines, setSvgLines] = useState<Array<{
-    id: string; x1: number; y1: number; x2: number; y2: number; correct?: boolean;
-  }>>([]);
+  const [svgLines, setSvgLines] = useState<
+    Array<{
+      id: string;
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+      correct?: boolean;
+    }>
+  >([]);
 
   const resetBatch = useCallback((batchItems: VocabItem[]) => {
     setShuffledWords([...batchItems].sort(() => Math.random() - 0.5));
@@ -538,7 +640,12 @@ function MatchingGame({
   const shortMeaning = (item: VocabItem) =>
     item.translation
       .split(" | ")
-      .map((p) => p.replace(/^\([^)]+\)\s*/, "").split(/[,;]/)[0].trim())
+      .map((p) =>
+        p
+          .replace(/^\([^)]+\)\s*/, "")
+          .split(/[,;]/)[0]
+          .trim(),
+      )
       .join(", ");
 
   // Recompute SVG line positions after DOM updates
@@ -565,7 +672,7 @@ function MatchingGame({
       });
     }
     setSvgLines(newLines);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userPairs, checked]);
 
   const handleWordClick = (wordId: string) => {
@@ -599,12 +706,21 @@ function MatchingGame({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-white font-bold text-lg">{p.matching.title}</span>
+            <span className="text-white font-bold text-lg">
+              {p.matching.title}
+            </span>
             <p className="text-xs text-gray-400 mt-0.5">
-              {p.matching.progress.replace("{x}", String(pageIndex + 1)).replace("{y}", String(totalPages)).replace("{a}", String(userPairs.size)).replace("{b}", String(batch.length))}
+              {p.matching.progress
+                .replace("{x}", String(pageIndex + 1))
+                .replace("{y}", String(totalPages))
+                .replace("{a}", String(userPairs.size))
+                .replace("{b}", String(batch.length))}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl bg-white/10 text-gray-300 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl bg-white/10 text-gray-300 hover:text-white transition-colors"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -622,17 +738,26 @@ function MatchingGame({
           {checked ? (
             /* ── Score header ── */
             <div className="flex items-center justify-center gap-3">
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
-                correctCount === batch.length ? "bg-emerald-500/20" : "bg-[#7C3AED]/20"
-              }`}>
-                <span className="text-2xl font-bold text-white">{correctCount}</span>
+              <div
+                className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                  correctCount === batch.length
+                    ? "bg-emerald-500/20"
+                    : "bg-[#7C3AED]/20"
+                }`}
+              >
+                <span className="text-2xl font-bold text-white">
+                  {correctCount}
+                </span>
               </div>
               <div>
                 <p className="text-white font-bold text-lg">/{batch.length}</p>
                 <p className="text-xs text-gray-500">
                   {correctCount === batch.length
                     ? p.matching.allCorrect
-                    : p.matching.incorrect.replace("{n}", String(batch.length - correctCount))}
+                    : p.matching.incorrect.replace(
+                        "{n}",
+                        String(batch.length - correctCount),
+                      )}
                 </p>
               </div>
             </div>
@@ -649,18 +774,21 @@ function MatchingGame({
               <div className="flex flex-col gap-2">
                 {shuffledWords.map((item) => {
                   const isPaired = userPairs.has(item._id);
-                  const isCorrect = checked && userPairs.get(item._id) === item._id;
+                  const isCorrect =
+                    checked && userPairs.get(item._id) === item._id;
                   const isWrong = checked && isPaired && !isCorrect;
                   return checked ? (
                     <div
                       key={item._id}
-                      ref={(el) => { if (el) wordRefs.current.set(item._id, el); }}
+                      ref={(el) => {
+                        if (el) wordRefs.current.set(item._id, el);
+                      }}
                       className={`px-4 py-2.5 rounded-xl text-sm font-semibold border ${
                         isCorrect
                           ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
                           : isWrong
-                          ? "bg-red-500/15 text-red-300 border-red-500/30"
-                          : "bg-[#2D1F47] text-gray-500 border-white/5"
+                            ? "bg-red-500/15 text-red-300 border-red-500/30"
+                            : "bg-[#2D1F47] text-gray-500 border-white/5"
                       }`}
                     >
                       {item.word}
@@ -668,14 +796,16 @@ function MatchingGame({
                   ) : (
                     <button
                       key={item._id}
-                      ref={(el) => { if (el) wordRefs.current.set(item._id, el); }}
+                      ref={(el) => {
+                        if (el) wordRefs.current.set(item._id, el);
+                      }}
                       onClick={() => handleWordClick(item._id)}
                       className={`px-4 py-2.5 rounded-xl text-sm font-semibold text-left transition-all ${
                         selectedWordId === item._id
                           ? "bg-[#7C3AED]/30 text-white border border-[#7C3AED]"
                           : isPaired
-                          ? "bg-[#00E5FF]/10 text-white border border-[#00E5FF]/40"
-                          : "bg-[#2D1F47] text-white border border-white/10 hover:border-white/30 hover:bg-[#3E2465]"
+                            ? "bg-[#00E5FF]/10 text-white border border-[#00E5FF]/40"
+                            : "bg-[#2D1F47] text-white border border-white/10 hover:border-white/30 hover:bg-[#3E2465]"
                       }`}
                     >
                       {item.word}
@@ -689,20 +819,24 @@ function MatchingGame({
                 {shuffledMeanings.map((item) => {
                   const isUsed = [...userPairs.values()].includes(item._id);
                   const pairedWordId = checked
-                    ? [...userPairs.entries()].find(([, mId]) => mId === item._id)?.[0]
+                    ? [...userPairs.entries()].find(
+                        ([, mId]) => mId === item._id,
+                      )?.[0]
                     : undefined;
                   const isCorrect = checked && pairedWordId === item._id;
                   const isWrong = checked && isUsed && !isCorrect;
                   return checked ? (
                     <div
                       key={item._id}
-                      ref={(el) => { if (el) meaningRefs.current.set(item._id, el); }}
+                      ref={(el) => {
+                        if (el) meaningRefs.current.set(item._id, el);
+                      }}
                       className={`px-4 py-2.5 rounded-xl text-sm border ${
                         isCorrect
                           ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
                           : isWrong
-                          ? "bg-red-500/15 text-red-300 border-red-500/30"
-                          : "bg-[#2D1F47] text-gray-500 border-white/5"
+                            ? "bg-red-500/15 text-red-300 border-red-500/30"
+                            : "bg-[#2D1F47] text-gray-500 border-white/5"
                       }`}
                     >
                       {shortMeaning(item)}
@@ -710,14 +844,16 @@ function MatchingGame({
                   ) : (
                     <button
                       key={item._id}
-                      ref={(el) => { if (el) meaningRefs.current.set(item._id, el); }}
+                      ref={(el) => {
+                        if (el) meaningRefs.current.set(item._id, el);
+                      }}
                       onClick={() => handleMeaningClick(item._id)}
                       className={`px-4 py-2.5 rounded-xl text-sm text-left transition-all ${
                         isUsed
                           ? "bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/30"
                           : selectedWordId
-                          ? "bg-[#2D1F47] text-gray-200 border border-white/10 hover:border-[#7C3AED]/60 hover:bg-[#3E2465]"
-                          : "bg-[#2D1F47] text-gray-200 border border-white/10"
+                            ? "bg-[#2D1F47] text-gray-200 border border-white/10 hover:border-[#7C3AED]/60 hover:bg-[#3E2465]"
+                            : "bg-[#2D1F47] text-gray-200 border border-white/10"
                       }`}
                     >
                       {shortMeaning(item)}
@@ -738,8 +874,8 @@ function MatchingGame({
                   line.correct === true
                     ? "#10b981"
                     : line.correct === false
-                    ? "#ef4444"
-                    : "#00E5FF";
+                      ? "#ef4444"
+                      : "#00E5FF";
                 return (
                   <path
                     key={line.id}
@@ -756,20 +892,27 @@ function MatchingGame({
           </div>
 
           {/* Wrong pair corrections (shown after check) */}
-          {checked && [...userPairs.entries()].some(([wId, mId]) => wId !== mId) && (
-            <div className="flex flex-col gap-1.5 pt-1 border-t border-white/10">
-              <p className="text-[10px] uppercase tracking-wider text-gray-500">{p.matching.correctAnswers}</p>
-              {shuffledWords
-                .filter((w) => userPairs.get(w._id) !== w._id)
-                .map((w) => (
-                  <p key={w._id} className="text-xs text-gray-300">
-                    <span className="text-red-400 font-semibold">{w.word}</span>
-                    <span className="text-gray-500"> → </span>
-                    <span className="text-emerald-400">{shortMeaning(w)}</span>
-                  </p>
-                ))}
-            </div>
-          )}
+          {checked &&
+            [...userPairs.entries()].some(([wId, mId]) => wId !== mId) && (
+              <div className="flex flex-col gap-1.5 pt-1 border-t border-white/10">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500">
+                  {p.matching.correctAnswers}
+                </p>
+                {shuffledWords
+                  .filter((w) => userPairs.get(w._id) !== w._id)
+                  .map((w) => (
+                    <p key={w._id} className="text-xs text-gray-300">
+                      <span className="text-red-400 font-semibold">
+                        {w.word}
+                      </span>
+                      <span className="text-gray-500"> → </span>
+                      <span className="text-emerald-400">
+                        {shortMeaning(w)}
+                      </span>
+                    </p>
+                  ))}
+              </div>
+            )}
 
           {/* Action buttons */}
           {checked ? (
@@ -802,7 +945,12 @@ function MatchingGame({
               disabled={!allPaired}
               className="w-full py-3 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              {allPaired ? p.matching.checkBtn : p.matching.remainingPairs.replace("{n}", String(batch.length - userPairs.size))}
+              {allPaired
+                ? p.matching.checkBtn
+                : p.matching.remainingPairs.replace(
+                    "{n}",
+                    String(batch.length - userPairs.size),
+                  )}
             </button>
           )}
         </div>
@@ -866,17 +1014,32 @@ function ListenTypeGame({
         <div className="w-full max-w-md bg-[#1C1132] border border-white/15 rounded-2xl p-8 flex flex-col items-center gap-6">
           <span className="text-5xl">🎧</span>
           <div className="text-center">
-            <h3 className="text-xl font-bold text-white">{p.listenType.done}</h3>
-            <p className="text-gray-400 text-sm mt-1">{p.listenType.score.replace("{score}", String(score)).replace("{total}", String(items.length))}</p>
+            <h3 className="text-xl font-bold text-white">
+              {p.listenType.done}
+            </h3>
+            <p className="text-gray-400 text-sm mt-1">
+              {p.listenType.score
+                .replace("{score}", String(score))
+                .replace("{total}", String(items.length))}
+            </p>
           </div>
           <div className="flex gap-3 w-full">
             <button
-              onClick={() => { setIndex(0); setInput(""); setStatus("idle"); setDone(false); setScore(0); }}
+              onClick={() => {
+                setIndex(0);
+                setInput("");
+                setStatus("idle");
+                setDone(false);
+                setScore(0);
+              }}
               className="flex-1 py-3 rounded-xl border border-white/15 text-gray-300 hover:bg-white/5 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
             >
               <RotateCcw className="w-4 h-4" /> {p.matching.retry}
             </button>
-            <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-[#7C3AED] text-white font-semibold text-sm">
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 rounded-xl bg-[#7C3AED] text-white font-semibold text-sm"
+            >
               {p.matching.close}
             </button>
           </div>
@@ -889,8 +1052,13 @@ function ListenTypeGame({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div className="w-full max-w-md flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-400">{index + 1} / {items.length}</span>
-          <button onClick={onClose} className="p-2 rounded-xl bg-white/10 text-gray-300 hover:text-white transition-colors">
+          <span className="text-sm text-gray-400">
+            {index + 1} / {items.length}
+          </span>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl bg-white/10 text-gray-300 hover:text-white transition-colors"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -928,8 +1096,8 @@ function ListenTypeGame({
                 status === "correct"
                   ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-400"
                   : status === "wrong"
-                  ? "bg-red-500/10 border-red-500/50 text-red-400"
-                  : "bg-[#2D1F47] border-white/10 focus:border-[#00E5FF]"
+                    ? "bg-red-500/10 border-red-500/50 text-red-400"
+                    : "bg-[#2D1F47] border-white/10 focus:border-[#00E5FF]"
               }`}
             />
             {status === "correct" && (
@@ -939,7 +1107,8 @@ function ListenTypeGame({
             )}
             {status === "wrong" && (
               <p className="text-red-400 text-sm text-center">
-                {p.listenType.wrongAnswer}<span className="font-bold text-white">{current.word}</span>
+                {p.listenType.wrongAnswer}
+                <span className="font-bold text-white">{current.word}</span>
               </p>
             )}
           </div>
@@ -957,7 +1126,9 @@ function ListenTypeGame({
               onClick={nextWord}
               className="w-full py-3 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold text-sm transition-colors"
             >
-              {index + 1 >= items.length ? p.listenType.seeResults : p.listenType.next}
+              {index + 1 >= items.length
+                ? p.listenType.seeResults
+                : p.listenType.next}
             </button>
           )}
         </div>
@@ -980,7 +1151,7 @@ function FillBlankGame({
   onLearned: (id: string, learned: boolean) => void;
 }) {
   const validItems = items.filter(
-    (v) => v.example && v.example.toLowerCase().includes(v.word.toLowerCase())
+    (v) => v.example && v.example.toLowerCase().includes(v.word.toLowerCase()),
   );
 
   const [index, setIndex] = useState(0);
@@ -996,11 +1167,16 @@ function FillBlankGame({
   useEffect(() => {
     const item = validItems[index];
     if (!item) return;
-    const others = allItems.filter((v) => v.word.toLowerCase() !== item.word.toLowerCase());
-    const wrong = [...others].sort(() => Math.random() - 0.5).slice(0, 3).map((v) => v.word);
+    const others = allItems.filter(
+      (v) => v.word.toLowerCase() !== item.word.toLowerCase(),
+    );
+    const wrong = [...others]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3)
+      .map((v) => v.word);
     setChoices([...wrong, item.word].sort(() => Math.random() - 0.5));
     setSelectedAnswer(null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index]); // only re-run when question index changes, not on every render
 
   const blankSentence = (example: string, word: string) =>
@@ -1028,7 +1204,12 @@ function FillBlankGame({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
         <div className="w-full max-w-md bg-[#1C1132] border border-white/15 rounded-2xl p-8 text-center flex flex-col gap-4">
           <p className="text-white">{p.fillBlank.noWords}</p>
-          <button onClick={onClose} className="px-6 py-2.5 rounded-xl bg-[#7C3AED] text-white text-sm">{p.matching.close}</button>
+          <button
+            onClick={onClose}
+            className="px-6 py-2.5 rounded-xl bg-[#7C3AED] text-white text-sm"
+          >
+            {p.matching.close}
+          </button>
         </div>
       </div>
     );
@@ -1040,17 +1221,31 @@ function FillBlankGame({
         <div className="w-full max-w-md bg-[#1C1132] border border-white/15 rounded-2xl p-8 flex flex-col items-center gap-6">
           <span className="text-5xl">✏️</span>
           <div className="text-center">
-            <h3 className="text-xl font-bold text-white">{p.listenType.done}</h3>
-            <p className="text-gray-400 text-sm mt-1">{p.fillBlank.score.replace("{score}", String(score)).replace("{total}", String(validItems.length))}</p>
+            <h3 className="text-xl font-bold text-white">
+              {p.listenType.done}
+            </h3>
+            <p className="text-gray-400 text-sm mt-1">
+              {p.fillBlank.score
+                .replace("{score}", String(score))
+                .replace("{total}", String(validItems.length))}
+            </p>
           </div>
           <div className="flex gap-3 w-full">
             <button
-              onClick={() => { setIndex(0); setSelectedAnswer(null); setDone(false); setScore(0); }}
+              onClick={() => {
+                setIndex(0);
+                setSelectedAnswer(null);
+                setDone(false);
+                setScore(0);
+              }}
               className="flex-1 py-3 rounded-xl border border-white/15 text-gray-300 hover:bg-white/5 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
             >
               <RotateCcw className="w-4 h-4" /> {p.matching.retry}
             </button>
-            <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-[#7C3AED] text-white font-semibold text-sm">
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 rounded-xl bg-[#7C3AED] text-white font-semibold text-sm"
+            >
               {p.matching.close}
             </button>
           </div>
@@ -1063,8 +1258,13 @@ function FillBlankGame({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div className="w-full max-w-lg flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-400">{index + 1} / {validItems.length}</span>
-          <button onClick={onClose} className="p-2 rounded-xl bg-white/10 text-gray-300 hover:text-white transition-colors">
+          <span className="text-sm text-gray-400">
+            {index + 1} / {validItems.length}
+          </span>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl bg-white/10 text-gray-300 hover:text-white transition-colors"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -1076,7 +1276,9 @@ function FillBlankGame({
         </div>
 
         <div className="bg-[#1C1132] border border-white/15 rounded-2xl p-6 flex flex-col gap-5">
-          <p className="text-[10px] uppercase tracking-wider text-gray-500 text-center">{p.fillBlank.title}</p>
+          <p className="text-[10px] uppercase tracking-wider text-gray-500 text-center">
+            {p.fillBlank.title}
+          </p>
 
           {/* Sentence */}
           <p className="text-white text-lg leading-relaxed text-center min-h-[3rem]">
@@ -1091,7 +1293,8 @@ function FillBlankGame({
           {/* 4 choices */}
           <div className="grid grid-cols-2 gap-2">
             {choices.map((choice) => {
-              const isCorrect = choice.toLowerCase() === current.word.toLowerCase();
+              const isCorrect =
+                choice.toLowerCase() === current.word.toLowerCase();
               const isSelected = selectedAnswer === choice;
               return (
                 <button
@@ -1103,8 +1306,8 @@ function FillBlankGame({
                       ? isCorrect
                         ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-400"
                         : isSelected
-                        ? "bg-red-500/20 border border-red-500/50 text-red-400"
-                        : "bg-[#2D1F47] border border-white/5 text-gray-500 opacity-50"
+                          ? "bg-red-500/20 border border-red-500/50 text-red-400"
+                          : "bg-[#2D1F47] border border-white/5 text-gray-500 opacity-50"
                       : "bg-[#2D1F47] border border-white/15 text-white hover:border-white/30 hover:bg-[#3E2465]"
                   }`}
                 >
@@ -1117,11 +1320,13 @@ function FillBlankGame({
           {/* Feedback + Next button */}
           {selectedAnswer && (
             <div className="flex flex-col gap-3">
-              <p className={`text-center text-sm font-medium ${
-                selectedAnswer.toLowerCase() === current.word.toLowerCase()
-                  ? "text-emerald-400"
-                  : "text-red-400"
-              }`}>
+              <p
+                className={`text-center text-sm font-medium ${
+                  selectedAnswer.toLowerCase() === current.word.toLowerCase()
+                    ? "text-emerald-400"
+                    : "text-red-400"
+                }`}
+              >
                 {selectedAnswer.toLowerCase() === current.word.toLowerCase()
                   ? p.fillBlank.correct
                   : p.fillBlank.wrong.replace("{word}", current.word)}
@@ -1130,7 +1335,9 @@ function FillBlankGame({
                 onClick={next}
                 className="w-full py-3 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold text-sm transition-colors"
               >
-                {index + 1 >= validItems.length ? p.fillBlank.seeResults : p.fillBlank.next}
+                {index + 1 >= validItems.length
+                  ? p.fillBlank.seeResults
+                  : p.fillBlank.next}
               </button>
             </div>
           )}
@@ -1181,12 +1388,20 @@ function PracticeMode({
             <CheckCircle2 className="w-8 h-8 text-emerald-400" />
           </div>
           <div className="text-center">
-            <h3 className="text-xl font-bold text-white mb-1">{p.listenType.done}</h3>
-            <p className="text-sm text-gray-400">{p.practice.done.replace("{n}", String(items.length))}</p>
+            <h3 className="text-xl font-bold text-white mb-1">
+              {p.listenType.done}
+            </h3>
+            <p className="text-sm text-gray-400">
+              {p.practice.done.replace("{n}", String(items.length))}
+            </p>
           </div>
           <div className="flex gap-3 w-full">
             <button
-              onClick={() => { setIndex(0); setFlipped(false); setDone(false); }}
+              onClick={() => {
+                setIndex(0);
+                setFlipped(false);
+                setDone(false);
+              }}
               className="flex-1 py-3 rounded-xl border border-white/15 text-gray-300 hover:bg-white/5 text-sm font-medium transition-colors flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-4 h-4" /> {p.practice.again}
@@ -1208,8 +1423,13 @@ function PracticeMode({
       <div className="w-full max-w-lg flex flex-col gap-4">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-400">{index + 1} / {items.length}</span>
-          <button onClick={onClose} className="p-2 rounded-xl bg-white/10 text-gray-300 hover:text-white transition-colors">
+          <span className="text-sm text-gray-400">
+            {index + 1} / {items.length}
+          </span>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl bg-white/10 text-gray-300 hover:text-white transition-colors"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -1238,32 +1458,46 @@ function PracticeMode({
               style={{ backfaceVisibility: "hidden" }}
             >
               <h2 className="text-4xl font-bold text-white">{current.word}</h2>
-              {current.phonetic && <p className="text-base text-[#00E5FF]">{current.phonetic}</p>}
+              {current.phonetic && (
+                <p className="text-base text-[#00E5FF]">{current.phonetic}</p>
+              )}
               {extractPos(current.translation) && (
                 <span className="text-xs italic text-[#7C3AED] bg-[#7C3AED]/15 px-3 py-1 rounded-full">
                   {extractPos(current.translation)}
                 </span>
               )}
               <button
-                onClick={(e) => { e.stopPropagation(); speak(current.word); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  speak(current.word);
+                }}
                 className="mt-2 p-3 rounded-xl bg-[#1C1132] border border-white/10 text-[#00E5FF] hover:bg-[#00E5FF]/10 transition-colors"
               >
                 <Volume2 className="w-5 h-5" />
               </button>
-              <p className="text-xs text-gray-500 mt-2 flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> {p.practice.flipHint}</p>
+              <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                <Eye className="w-3.5 h-3.5" /> {p.practice.flipHint}
+              </p>
             </div>
 
             {/* Back */}
             <div
               className="absolute inset-0 bg-[#1C1132] border border-[#7C3AED]/50 rounded-2xl p-8 flex flex-col items-center justify-center gap-4 min-h-[260px]"
-              style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+              style={{
+                backfaceVisibility: "hidden",
+                transform: "rotateY(180deg)",
+              }}
             >
-              <p className="text-[10px] uppercase tracking-widest text-gray-500">{p.practice.meaning}</p>
+              <p className="text-[10px] uppercase tracking-widest text-gray-500">
+                {p.practice.meaning}
+              </p>
               <p className="text-lg text-white font-medium text-center leading-relaxed whitespace-pre-line">
                 {formatTranslation(current.translation)}
               </p>
               {current.example && (
-                <p className="text-sm text-[#00E5FF] italic text-center">"{current.example}"</p>
+                <p className="text-sm text-[#00E5FF] italic text-center">
+                  "{current.example}"
+                </p>
               )}
             </div>
           </div>
@@ -1279,13 +1513,19 @@ function PracticeMode({
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
-            onClick={() => { onLearned(current._id, false); next(); }}
+            onClick={() => {
+              onLearned(current._id, false);
+              next();
+            }}
             className="flex-1 py-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/25 text-sm font-medium transition-colors"
           >
             {p.practice.dontKnow}
           </button>
           <button
-            onClick={() => { onLearned(current._id, true); next(); }}
+            onClick={() => {
+              onLearned(current._id, true);
+              next();
+            }}
             className="flex-1 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 text-sm font-medium transition-colors"
           >
             {p.practice.gotIt}
@@ -1337,10 +1577,17 @@ function VocabCard({
             : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
         }`}
       >
-        {item.learned ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
+        {item.learned ? (
+          <CheckCircle2 className="w-3.5 h-3.5" />
+        ) : (
+          <Circle className="w-3.5 h-3.5" />
+        )}
       </button>
       <button
-        onClick={() => { onEdit(item); setFlipped(false); }}
+        onClick={() => {
+          onEdit(item);
+          setFlipped(false);
+        }}
         className="p-2 rounded-xl bg-white/5 text-gray-400 hover:bg-[#7C3AED]/20 hover:text-[#7C3AED] transition-colors"
         title={p.card.editTitle}
       >
@@ -1388,7 +1635,9 @@ function VocabCard({
           {/* Word row */}
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h3 className="text-2xl font-bold text-white leading-tight">{item.word}</h3>
+              <h3 className="text-2xl font-bold text-white leading-tight">
+                {item.word}
+              </h3>
               {item.phonetic && (
                 <p className="text-sm text-[#00E5FF] mt-0.5">{item.phonetic}</p>
               )}
@@ -1399,7 +1648,10 @@ function VocabCard({
               )}
             </div>
             <button
-              onClick={(e) => { e.stopPropagation(); speak(item.word); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                speak(item.word);
+              }}
               className="p-2.5 rounded-xl bg-[#1C1132] border border-white/10 text-[#00E5FF] hover:bg-[#00E5FF]/10 transition-colors flex-shrink-0"
               title={p.card.listenTitle}
             >
@@ -1414,7 +1666,10 @@ function VocabCard({
             <p className="text-[11px] text-gray-600">{p.card.hint}</p>
             {item.videoId && (
               <button
-                onClick={(e) => { e.stopPropagation(); onVideoPlay(item); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVideoPlay(item);
+                }}
                 className="text-xs text-[#7C3AED] hover:text-[#a78bfa] flex items-center gap-1 transition-colors flex-shrink-0"
               >
                 🎬 {item.segmentTime ?? p.segmentDialog.originalVideo}
@@ -1437,24 +1692,38 @@ function VocabCard({
         {/* ── BACK ── */}
         <div
           className="bg-[#1C1132] border border-[#7C3AED]/40 rounded-2xl p-5 flex flex-col gap-3 min-h-[220px]"
-          style={{ gridArea: "card", backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+          style={{
+            gridArea: "card",
+            backfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
+          }}
         >
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1.5">{p.card.meaningLabel}</p>
+            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1.5">
+              {p.card.meaningLabel}
+            </p>
             <p className="text-sm text-white leading-relaxed whitespace-pre-line">
               {formatTranslation(item.translation)}
             </p>
           </div>
           {item.example && (
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1.5">{p.card.exampleLabel}</p>
-              <p className="text-sm text-[#00E5FF] italic leading-relaxed">"{item.example}"</p>
+              <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1.5">
+                {p.card.exampleLabel}
+              </p>
+              <p className="text-sm text-[#00E5FF] italic leading-relaxed">
+                "{item.example}"
+              </p>
             </div>
           )}
           {item.note && (
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">{p.card.noteLabel}</p>
-              <p className="text-xs text-gray-300 leading-relaxed">{item.note}</p>
+              <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                {p.card.noteLabel}
+              </p>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                {item.note}
+              </p>
             </div>
           )}
 
@@ -1494,7 +1763,10 @@ function VideoVocabModal({
   const p = t.vocabulary;
 
   return createPortal(
-    <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <div
         className="w-full sm:max-w-5xl max-h-[90vh] bg-[#1C1132] border border-white/15 rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -1502,11 +1774,21 @@ function VideoVocabModal({
         {/* Header */}
         <div className="flex items-center gap-4 px-6 py-4 border-b border-white/10 flex-shrink-0">
           {group.thumbnail && (
-            <img src={group.thumbnail} alt={group.videoTitle} className="w-20 h-[45px] rounded-lg object-cover bg-black flex-shrink-0" />
+            <img
+              src={group.thumbnail}
+              alt={group.videoTitle}
+              className="w-20 h-[45px] rounded-lg object-cover bg-black flex-shrink-0"
+            />
           )}
           <div className="flex-1 min-w-0">
-            <h2 className="text-white font-semibold text-sm leading-snug line-clamp-1">{group.videoTitle}</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{p.modal.learnedCount.replace("{n}", String(group.items.length)).replace("{m}", String(learnedCount))}</p>
+            <h2 className="text-white font-semibold text-sm leading-snug line-clamp-1">
+              {group.videoTitle}
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {p.modal.learnedCount
+                .replace("{n}", String(group.items.length))
+                .replace("{m}", String(learnedCount))}
+            </p>
           </div>
           <button
             onClick={onPracticeVocab}
@@ -1514,7 +1796,10 @@ function VideoVocabModal({
           >
             <Dumbbell className="w-3.5 h-3.5" /> {p.modal.practiceBtn}
           </button>
-          <button onClick={onClose} className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex-shrink-0">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex-shrink-0"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -1536,7 +1821,7 @@ function VideoVocabModal({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 
@@ -1579,17 +1864,16 @@ function VideoSection({
 
       {/* Title + stats */}
       <div className="flex-1 min-w-0">
-        <button
-          onClick={onOpenCards}
-          className="text-left group w-full"
-        >
+        <button onClick={onOpenCards} className="text-left group w-full">
           <h3 className="text-white font-semibold text-sm leading-snug line-clamp-2 group-hover:text-[#00E5FF] transition-colors underline-offset-2 group-hover:underline">
             {group.videoTitle}
           </h3>
         </button>
         <div className="flex items-center gap-3 mt-1.5 flex-wrap">
           <span className="text-xs text-gray-500">
-            {p.modal.learnedCount.replace("{n}", String(group.items.length)).replace("{m}", String(learnedCount))}
+            {p.modal.learnedCount
+              .replace("{n}", String(group.items.length))
+              .replace("{m}", String(learnedCount))}
           </span>
           <button
             onClick={onPracticeVocab}
@@ -1623,7 +1907,10 @@ function VideoSection({
       {/* Delete group button */}
       {confirmDelete ? (
         <button
-          onClick={() => { setConfirmDelete(false); onDeleteGroup(); }}
+          onClick={() => {
+            setConfirmDelete(false);
+            onDeleteGroup();
+          }}
           onBlur={() => setTimeout(() => setConfirmDelete(false), 200)}
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500 text-white text-xs font-semibold transition-colors flex-shrink-0 whitespace-nowrap"
           autoFocus
@@ -1646,7 +1933,12 @@ function VideoSection({
 
 // ─── Share Vocab Modal ───────────────────────────────────────────────────────
 
-interface Friend { _id: string; fullname: string; username: string; avatar?: string; }
+interface Friend {
+  _id: string;
+  fullname: string;
+  username: string;
+  avatar?: string;
+}
 
 function ShareVocabModal({
   group,
@@ -1657,15 +1949,20 @@ function ShareVocabModal({
 }) {
   const { t } = useLang();
   const sm = t.vocabulary.shareModal;
-  const [selected, setSelected] = useState<Set<string>>(new Set(group.items.map((i) => i._id)));
+  const [selected, setSelected] = useState<Set<string>>(
+    new Set(group.items.map((i) => i._id)),
+  );
   const [caption, setCaption] = useState("");
   const [visibility, setVisibility] = useState<"public" | "friends">("public");
   const [friends, setFriends] = useState<Friend[]>([]);
-  const [selectedFriends, setSelectedFriends] = useState<Set<string>>(new Set());
+  const [selectedFriends, setSelectedFriends] = useState<Set<string>>(
+    new Set(),
+  );
   const [loading, setLoading] = useState(false);
   const [posted, setPosted] = useState(false);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : "";
 
   useEffect(() => {
     if (visibility === "friends") {
@@ -1681,7 +1978,8 @@ function ShareVocabModal({
   function toggleWord(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -1689,7 +1987,8 @@ function ShareVocabModal({
   function toggleFriend(id: string) {
     setSelectedFriends((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -1701,7 +2000,12 @@ function ShareVocabModal({
     try {
       const vocabWords = group.items
         .filter((i) => selected.has(i._id))
-        .map(({ word, phonetic, translation, example }) => ({ word, phonetic, translation, example }));
+        .map(({ word, phonetic, translation, example }) => ({
+          word,
+          phonetic,
+          translation,
+          example,
+        }));
 
       const body: Record<string, unknown> = {
         caption,
@@ -1712,7 +2016,10 @@ function ShareVocabModal({
 
       const res = await fetch("http://localhost:5000/api/posts/vocab", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(body),
       });
       if (res.ok) setPosted(true);
@@ -1732,12 +2039,15 @@ function ShareVocabModal({
           <p className="text-gray-400 text-sm mb-6">
             {visibility === "public" ? sm.sharedFeed : sm.sharedFriends}
           </p>
-          <button onClick={onClose} className="w-full py-2.5 rounded-xl bg-[#7C3AED] text-white font-semibold text-sm hover:bg-[#6D28D9] transition-colors">
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-xl bg-[#7C3AED] text-white font-semibold text-sm hover:bg-[#6D28D9] transition-colors"
+          >
             {sm.cancel}
           </button>
         </div>
       </div>,
-      document.body
+      document.body,
     );
   }
 
@@ -1750,7 +2060,10 @@ function ShareVocabModal({
             <Share2 className="w-5 h-5 text-[#a78bfa]" />
             <span className="text-white font-bold">{sm.title}</span>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -1758,7 +2071,9 @@ function ShareVocabModal({
         <div className="p-6 space-y-5">
           {/* Visibility toggle */}
           <div>
-            <p className="text-xs text-gray-400 uppercase tracking-widest mb-2.5 font-semibold">{sm.shareWith}</p>
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-2.5 font-semibold">
+              {sm.shareWith}
+            </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setVisibility("public")}
@@ -1786,9 +2101,13 @@ function ShareVocabModal({
           {/* Friend selector */}
           {visibility === "friends" && (
             <div>
-              <p className="text-xs text-gray-400 uppercase tracking-widest mb-2.5 font-semibold">{sm.chooseFriends}</p>
+              <p className="text-xs text-gray-400 uppercase tracking-widest mb-2.5 font-semibold">
+                {sm.chooseFriends}
+              </p>
               {friends.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">{sm.noFriends}</p>
+                <p className="text-sm text-gray-500 text-center py-4">
+                  {sm.noFriends}
+                </p>
               ) : (
                 <div className="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1">
                   {friends.map((f) => {
@@ -1798,17 +2117,35 @@ function ShareVocabModal({
                         key={f._id}
                         onClick={() => toggleFriend(f._id)}
                         className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all ${
-                          checked ? "border-[#7C3AED] bg-[#7C3AED]/10" : "border-white/10 hover:border-white/20"
+                          checked
+                            ? "border-[#7C3AED] bg-[#7C3AED]/10"
+                            : "border-white/10 hover:border-white/20"
                         }`}
                       >
                         <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 overflow-hidden">
-                          {f.avatar ? <img src={f.avatar.startsWith("http") ? f.avatar : `http://localhost:5000${f.avatar}`} alt="" className="w-full h-full object-cover" /> : f.fullname.charAt(0).toUpperCase()}
+                          {f.avatar ? (
+                            <img
+                              src={
+                                f.avatar.startsWith("http")
+                                  ? f.avatar
+                                  : `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${f.avatar}`
+                              }
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            f.fullname.charAt(0).toUpperCase()
+                          )}
                         </div>
                         <div className="flex-1 text-left">
-                          <p className="text-white text-sm font-medium">{f.fullname}</p>
+                          <p className="text-white text-sm font-medium">
+                            {f.fullname}
+                          </p>
                           <p className="text-gray-500 text-xs">@{f.username}</p>
                         </div>
-                        {checked && <Check className="w-4 h-4 text-[#a78bfa] flex-shrink-0" />}
+                        {checked && (
+                          <Check className="w-4 h-4 text-[#a78bfa] flex-shrink-0" />
+                        )}
                       </button>
                     );
                   })}
@@ -1820,7 +2157,11 @@ function ShareVocabModal({
           {/* Word selection */}
           <div>
             <div className="flex items-center justify-between mb-2.5">
-              <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">{sm.selectWords.replace("{selected}", String(selected.size)).replace("{total}", String(group.items.length))}</p>
+              <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">
+                {sm.selectWords
+                  .replace("{selected}", String(selected.size))
+                  .replace("{total}", String(group.items.length))}
+              </p>
               <button
                 onClick={() =>
                   selected.size === group.items.length
@@ -1829,7 +2170,9 @@ function ShareVocabModal({
                 }
                 className="text-xs text-[#a78bfa] hover:underline"
               >
-                {selected.size === group.items.length ? sm.deselectAll : sm.selectAll}
+                {selected.size === group.items.length
+                  ? sm.deselectAll
+                  : sm.selectAll}
               </button>
             </div>
             <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-1">
@@ -1840,7 +2183,9 @@ function ShareVocabModal({
                     key={item._id}
                     onClick={() => toggleWord(item._id)}
                     className={`px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${
-                      active ? "border-[#7C3AED] bg-[#7C3AED]/15 text-[#c4b5fd]" : "border-white/10 text-gray-400 hover:border-white/20"
+                      active
+                        ? "border-[#7C3AED] bg-[#7C3AED]/15 text-[#c4b5fd]"
+                        : "border-white/10 text-gray-400 hover:border-white/20"
                     }`}
                   >
                     {item.word}
@@ -1852,7 +2197,9 @@ function ShareVocabModal({
 
           {/* Caption */}
           <div>
-            <p className="text-xs text-gray-400 uppercase tracking-widest mb-2 font-semibold">{sm.note}</p>
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-2 font-semibold">
+              {sm.note}
+            </p>
             <textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
@@ -1864,20 +2211,33 @@ function ShareVocabModal({
 
           {/* Actions */}
           <div className="flex gap-3 pt-1">
-            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:bg-white/5 text-sm font-medium transition-colors">{sm.cancel}</button>
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:bg-white/5 text-sm font-medium transition-colors"
+            >
+              {sm.cancel}
+            </button>
             <button
               onClick={handleShare}
-              disabled={loading || selected.size === 0 || (visibility === "friends" && selectedFriends.size === 0)}
+              disabled={
+                loading ||
+                selected.size === 0 ||
+                (visibility === "friends" && selectedFriends.size === 0)
+              }
               className="flex-1 py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Share2 className="w-4 h-4" />
+              )}
               {sm.share}
             </button>
           </div>
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 
@@ -1900,11 +2260,16 @@ export default function VocabularyPage() {
   const [expandedVideos, setExpandedVideos] = useState<Set<string>>(new Set());
   const [editItem, setEditItem] = useState<VocabItem | null>(null);
   const [practiceItems, setPracticeItems] = useState<VocabItem[] | null>(null);
-  const [gameType, setGameType] = useState<"matching" | "listen" | "fillblank" | null>(null);
+  const [gameType, setGameType] = useState<
+    "matching" | "listen" | "fillblank" | null
+  >(null);
   const [selectedGroup, setSelectedGroup] = useState<VideoGroup | null>(null);
   const [shareGroup, setShareGroup] = useState<VideoGroup | null>(null);
   const [videoDialog, setVideoDialog] = useState<{
-    videoId: string; startSec: number; endSec: number; transcript: string;
+    videoId: string;
+    startSec: number;
+    endSec: number;
+    transcript: string;
   } | null>(null);
   const [isPro, setIsPro] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
@@ -1917,18 +2282,32 @@ export default function VocabularyPage() {
     } catch {}
   }, []);
 
-  const tryPractice = useCallback((vocabItems: VocabItem[]) => {
-    if (!isPro) { setShowPaywall(true); return; }
-    setPracticeItems([...vocabItems].sort(() => Math.random() - 0.5));
-    setGameType(null);
-  }, [isPro]);
+  const tryPractice = useCallback(
+    (vocabItems: VocabItem[]) => {
+      if (!isPro) {
+        setShowPaywall(true);
+        return;
+      }
+      setPracticeItems([...vocabItems].sort(() => Math.random() - 0.5));
+      setGameType(null);
+    },
+    [isPro],
+  );
 
   const openVideoDialog = useCallback((item: VocabItem) => {
     if (!item.videoId) return;
     const startSec = parseTime(item.segmentTime ?? "0");
-    const words = (item.example ?? "").trim().split(/\s+/).filter(Boolean).length;
+    const words = (item.example ?? "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length;
     const endSec = startSec + Math.max(4, Math.ceil(words / 2.2) + 1);
-    setVideoDialog({ videoId: item.videoId, startSec, endSec, transcript: item.example ?? "" });
+    setVideoDialog({
+      videoId: item.videoId,
+      startSec,
+      endSec,
+      transcript: item.example ?? "",
+    });
   }, []);
 
   const fetchVocab = useCallback(async () => {
@@ -1945,7 +2324,9 @@ export default function VocabularyPage() {
     }
   }, []);
 
-  useEffect(() => { fetchVocab(); }, [fetchVocab]);
+  useEffect(() => {
+    fetchVocab();
+  }, [fetchVocab]);
 
   const toggleExpand = useCallback((videoId: string) => {
     setExpandedVideos((prev) => {
@@ -1960,45 +2341,70 @@ export default function VocabularyPage() {
     setItems((prev) => prev.map((v) => (v._id === id ? { ...v, learned } : v)));
     try {
       const token = localStorage.getItem("token");
-      await fetch(`http://localhost:5000/api/vocabulary/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ learned }),
-      });
+      await fetch(
+        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/vocabulary/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ learned }),
+        },
+      );
     } catch {
-      setItems((prev) => prev.map((v) => (v._id === id ? { ...v, learned: !learned } : v)));
+      setItems((prev) =>
+        prev.map((v) => (v._id === id ? { ...v, learned: !learned } : v)),
+      );
     }
   }, []);
 
-  const saveEdit = useCallback(async (updated: Partial<VocabItem>) => {
-    if (!editItem) return;
-    const id = editItem._id;
-    setItems((prev) => prev.map((v) => (v._id === id ? { ...v, ...updated } : v)));
-    setEditItem(null);
-    try {
-      const token = localStorage.getItem("token");
-      await fetch(`http://localhost:5000/api/vocabulary/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(updated),
-      });
-    } catch {
-      fetchVocab();
-    }
-  }, [editItem, fetchVocab]);
+  const saveEdit = useCallback(
+    async (updated: Partial<VocabItem>) => {
+      if (!editItem) return;
+      const id = editItem._id;
+      setItems((prev) =>
+        prev.map((v) => (v._id === id ? { ...v, ...updated } : v)),
+      );
+      setEditItem(null);
+      try {
+        const token = localStorage.getItem("token");
+        await fetch(
+          `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/vocabulary/${id}`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(updated),
+          },
+        );
+      } catch {
+        fetchVocab();
+      }
+    },
+    [editItem, fetchVocab],
+  );
 
-  const deleteItem = useCallback(async (id: string) => {
-    setItems((prev) => prev.filter((v) => v._id !== id));
-    try {
-      const token = localStorage.getItem("token");
-      await fetch(`http://localhost:5000/api/vocabulary/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    } catch {
-      fetchVocab();
-    }
-  }, [fetchVocab]);
+  const deleteItem = useCallback(
+    async (id: string) => {
+      setItems((prev) => prev.filter((v) => v._id !== id));
+      try {
+        const token = localStorage.getItem("token");
+        await fetch(
+          `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/vocabulary/${id}`,
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+      } catch {
+        fetchVocab();
+      }
+    },
+    [fetchVocab],
+  );
 
   const filtered = items.filter((v) => {
     if (tab === "learned") return v.learned;
@@ -2018,7 +2424,13 @@ export default function VocabularyPage() {
           {p.title}
         </h1>
         <p className="text-sm text-gray-400 mt-1">
-          {p.stats.replace("{words}", String(items.length)).replace("{learned}", String(items.filter((v) => v.learned).length)).replace("{videos}", String(new Set(items.map((v) => v.videoId).filter(Boolean)).size))}
+          {p.stats
+            .replace("{words}", String(items.length))
+            .replace("{learned}", String(items.filter((v) => v.learned).length))
+            .replace(
+              "{videos}",
+              String(new Set(items.map((v) => v.videoId).filter(Boolean)).size),
+            )}
         </p>
       </div>
 
@@ -2026,10 +2438,13 @@ export default function VocabularyPage() {
       <div className="flex items-center gap-1 bg-[#1C1132]/60 rounded-2xl p-1 mb-8 w-fit">
         {TABS.map(({ id, label }) => {
           const count =
-            id === "all" ? items.length
-            : id === "learned" ? items.filter((v) => v.learned).length
-            : id === "favorite" ? items.filter((v) => v.isFavorite).length
-            : items.filter((v) => !v.learned).length;
+            id === "all"
+              ? items.length
+              : id === "learned"
+                ? items.filter((v) => v.learned).length
+                : id === "favorite"
+                  ? items.filter((v) => v.isFavorite).length
+                  : items.filter((v) => !v.learned).length;
           return (
             <button
               key={id}
@@ -2041,7 +2456,9 @@ export default function VocabularyPage() {
               }`}
             >
               {label}
-              <span className={`text-xs px-1.5 py-0.5 rounded-full ${tab === id ? "bg-white/20" : "bg-white/10"}`}>
+              <span
+                className={`text-xs px-1.5 py-0.5 rounded-full ${tab === id ? "bg-white/20" : "bg-white/10"}`}
+              >
                 {count}
               </span>
             </button>
@@ -2062,10 +2479,13 @@ export default function VocabularyPage() {
           </div>
           <div>
             <p className="text-white font-medium">
-              {tab === "learned" ? p.empty.unlearned
-               : tab === "unlearned" ? p.empty.learned
-               : tab === "favorite" ? p.empty.favorite
-               : p.empty.all}
+              {tab === "learned"
+                ? p.empty.unlearned
+                : tab === "unlearned"
+                  ? p.empty.learned
+                  : tab === "favorite"
+                    ? p.empty.favorite
+                    : p.empty.all}
             </p>
             {(tab === "all" || tab === "favorite") && (
               <p className="text-sm text-gray-400 mt-1">
@@ -2084,7 +2504,7 @@ export default function VocabularyPage() {
               onPracticeVocab={() => tryPractice(group.items)}
               onPracticeListening={() =>
                 router.push(
-                  `/dashboard/practice/${group.videoId}?title=${encodeURIComponent(group.videoTitle)}`
+                  `/dashboard/practice/${group.videoId}?title=${encodeURIComponent(group.videoTitle)}`,
                 )
               }
               onShare={() => setShareGroup(group)}
@@ -2109,7 +2529,10 @@ export default function VocabularyPage() {
         <VideoVocabModal
           group={selectedGroup}
           onClose={() => setSelectedGroup(null)}
-          onPracticeVocab={() => { tryPractice(selectedGroup.items); setSelectedGroup(null); }}
+          onPracticeVocab={() => {
+            tryPractice(selectedGroup.items);
+            setSelectedGroup(null);
+          }}
           onLearned={toggleLearned}
           onEdit={setEditItem}
           onDelete={deleteItem}
@@ -2139,7 +2562,10 @@ export default function VocabularyPage() {
         <GameSelector
           items={practiceItems}
           onSelect={setGameType}
-          onClose={() => { setPracticeItems(null); setGameType(null); }}
+          onClose={() => {
+            setPracticeItems(null);
+            setGameType(null);
+          }}
         />
       )}
       {practiceItems && gameType === "matching" && (

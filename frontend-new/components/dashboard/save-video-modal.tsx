@@ -5,7 +5,14 @@ import { Heart, X, Plus, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-const CATEGORY_COLORS = ["#7C3AED", "#2563EB", "#059669", "#DC2626", "#D97706", "#DB2777"];
+const CATEGORY_COLORS = [
+  "#7C3AED",
+  "#2563EB",
+  "#059669",
+  "#DC2626",
+  "#D97706",
+  "#DB2777",
+];
 
 interface Category {
   _id: string;
@@ -35,16 +42,22 @@ export function SaveVideoModal({ videoInfo, onClose, onSaved }: Props) {
   const [newCategoryColor, setNewCategoryColor] = useState(CATEGORY_COLORS[0]);
   const [saving, setSaving] = useState(false);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 
   useEffect(() => {
     if (!token) return;
     fetch("http://localhost:5000/api/category", {
-      headers: { ...authHeader, "Content-Type": "application/json" },
+      headers: {
+        ...authHeader,
+        "Content-Type": "application/json",
+      } as HeadersInit,
     })
       .then((r) => r.json())
-      .then((d) => { if (d.success) setCategories(d.categories); })
+      .then((d) => {
+        if (d.success) setCategories(d.categories);
+      })
       .catch(() => {});
   }, []);
 
@@ -53,8 +66,14 @@ export function SaveVideoModal({ videoInfo, onClose, onSaved }: Props) {
     try {
       const res = await fetch("http://localhost:5000/api/category", {
         method: "POST",
-        headers: { ...authHeader, "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newCategoryName.trim(), color: newCategoryColor }),
+        headers: {
+          ...authHeader,
+          "Content-Type": "application/json",
+        } as HeadersInit,
+        body: JSON.stringify({
+          name: newCategoryName.trim(),
+          color: newCategoryColor,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -80,7 +99,10 @@ export function SaveVideoModal({ videoInfo, onClose, onSaved }: Props) {
     try {
       const res = await fetch("http://localhost:5000/api/saved-video", {
         method: "POST",
-        headers: { ...authHeader, "Content-Type": "application/json" },
+        headers: {
+          ...authHeader,
+          "Content-Type": "application/json",
+        } as HeadersInit,
         body: JSON.stringify({
           youtubeUrl: videoInfo.youtubeUrl,
           youtubeId: videoInfo.videoId,
@@ -110,7 +132,10 @@ export function SaveVideoModal({ videoInfo, onClose, onSaved }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-white/10">
           <h2 className="text-white font-semibold text-lg">Lưu video</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -123,7 +148,9 @@ export function SaveVideoModal({ videoInfo, onClose, onSaved }: Props) {
               alt={videoInfo.title}
               className="w-28 h-16 object-cover rounded-lg flex-shrink-0 bg-[#2D1F47]"
             />
-            <p className="text-white text-sm font-medium line-clamp-3">{videoInfo.title}</p>
+            <p className="text-white text-sm font-medium line-clamp-3">
+              {videoInfo.title}
+            </p>
           </div>
 
           {/* Favorite toggle */}
@@ -160,12 +187,17 @@ export function SaveVideoModal({ videoInfo, onClose, onSaved }: Props) {
                   key={cat._id}
                   onClick={() => setSelectedCategoryId(cat._id)}
                   className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                    selectedCategoryId === cat._id ? "text-white" : "text-gray-400 hover:text-white"
+                    selectedCategoryId === cat._id
+                      ? "text-white"
+                      : "text-gray-400 hover:text-white"
                   }`}
                   style={{
-                    borderColor: selectedCategoryId === cat._id ? cat.color : undefined,
+                    borderColor:
+                      selectedCategoryId === cat._id ? cat.color : undefined,
                     backgroundColor:
-                      selectedCategoryId === cat._id ? `${cat.color}20` : undefined,
+                      selectedCategoryId === cat._id
+                        ? `${cat.color}20`
+                        : undefined,
                   }}
                 >
                   {cat.name}
@@ -195,7 +227,9 @@ export function SaveVideoModal({ videoInfo, onClose, onSaved }: Props) {
                       key={c}
                       onClick={() => setNewCategoryColor(c)}
                       className={`w-6 h-6 rounded-full border-2 transition-transform ${
-                        newCategoryColor === c ? "border-white scale-110" : "border-transparent"
+                        newCategoryColor === c
+                          ? "border-white scale-110"
+                          : "border-transparent"
                       }`}
                       style={{ backgroundColor: c }}
                     />

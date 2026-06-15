@@ -2,7 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FolderOpen, Plus, Pencil, Trash2, Check, X, Loader2, Video, BookOpen } from "lucide-react";
+import {
+  FolderOpen,
+  Plus,
+  Pencil,
+  Trash2,
+  Check,
+  X,
+  Loader2,
+  Video,
+  BookOpen,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useLang } from "@/lib/i18n";
 
@@ -15,9 +25,18 @@ interface Category {
 }
 
 const PRESET_COLORS = [
-  "#00E5FF", "#7C3AED", "#10B981", "#F59E0B",
-  "#EF4444", "#EC4899", "#3B82F6", "#84CC16",
-  "#F97316", "#8B5CF6", "#06B6D4", "#A3E635",
+  "#00E5FF",
+  "#7C3AED",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#EC4899",
+  "#3B82F6",
+  "#84CC16",
+  "#F97316",
+  "#8B5CF6",
+  "#06B6D4",
+  "#A3E635",
 ];
 
 export default function CollectionsPage() {
@@ -43,16 +62,32 @@ export default function CollectionsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  const headers = { Authorization: `Bearer ${token ?? ""}`, "Content-Type": "application/json" };
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const headers = {
+    Authorization: `Bearer ${token ?? ""}`,
+    "Content-Type": "application/json",
+  };
 
   // Fetch categories + video count + vocab count per category
   useEffect(() => {
-    if (!token) { setLoading(false); return; }
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     Promise.all([
-      fetch("http://localhost:5000/api/category", { headers }).then((r) => r.json()),
-      fetch("http://localhost:5000/api/saved-video", { headers }).then((r) => r.json()),
-      fetch("http://localhost:5000/api/vocabulary?source=collection", { headers }).then((r) => r.json()),
+      fetch(
+        "http://`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api`/api/category",
+        { headers },
+      ).then((r) => r.json()),
+      fetch(
+        "http://`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api`/api/saved-video",
+        { headers },
+      ).then((r) => r.json()),
+      fetch(
+        "http://`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api`/api/vocabulary?source=collection",
+        { headers },
+      ).then((r) => r.json()),
     ])
       .then(([catData, videoData, vocabData]) => {
         if (!catData.success) return;
@@ -62,7 +97,8 @@ export default function CollectionsPage() {
         if (videoData.success) {
           for (const v of videoData.videos) {
             if (v.categoryId?._id) {
-              videoCountMap[v.categoryId._id] = (videoCountMap[v.categoryId._id] || 0) + 1;
+              videoCountMap[v.categoryId._id] =
+                (videoCountMap[v.categoryId._id] || 0) + 1;
             }
           }
         }
@@ -71,7 +107,10 @@ export default function CollectionsPage() {
         if (vocabData.success) {
           for (const v of vocabData.vocabulary) {
             if (v.categoryId) {
-              const id = typeof v.categoryId === "object" ? v.categoryId._id : v.categoryId;
+              const id =
+                typeof v.categoryId === "object"
+                  ? v.categoryId._id
+                  : v.categoryId;
               vocabCountMap[id] = (vocabCountMap[id] || 0) + 1;
             }
           }
@@ -92,13 +131,19 @@ export default function CollectionsPage() {
     if (!createName.trim()) return;
     setCreating(true);
     try {
-      const res = await fetch("http://localhost:5000/api/category", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ name: createName.trim(), color: createColor }),
-      });
+      const res = await fetch(
+        "http://`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api`/api/category",
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ name: createName.trim(), color: createColor }),
+        },
+      );
       const data = await res.json();
-      if (!data.success) { toast.error(data.message); return; }
+      if (!data.success) {
+        toast.error(data.message);
+        return;
+      }
       setCategories((prev) => [...prev, { ...data.category, videoCount: 0 }]);
       setCreateName("");
       setCreateColor(PRESET_COLORS[0]);
@@ -118,21 +163,35 @@ export default function CollectionsPage() {
     setEditColor(cat.color);
   };
 
-  const cancelEdit = () => { setEditId(null); setEditName(""); setEditColor(""); };
+  const cancelEdit = () => {
+    setEditId(null);
+    setEditName("");
+    setEditColor("");
+  };
 
   const handleSave = async (id: string) => {
     if (!editName.trim()) return;
     setSaving(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/category/${id}`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({ name: editName.trim(), color: editColor }),
-      });
+      const res = await fetch(
+        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/category/${id}`,
+        {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ name: editName.trim(), color: editColor }),
+        },
+      );
       const data = await res.json();
-      if (!data.success) { toast.error(data.message); return; }
+      if (!data.success) {
+        toast.error(data.message);
+        return;
+      }
       setCategories((prev) =>
-        prev.map((c) => (c._id === id ? { ...c, name: data.category.name, color: data.category.color } : c))
+        prev.map((c) =>
+          c._id === id
+            ? { ...c, name: data.category.name, color: data.category.color }
+            : c,
+        ),
       );
       cancelEdit();
       toast.success(p.saved);
@@ -147,12 +206,18 @@ export default function CollectionsPage() {
   const handleDelete = async (id: string) => {
     setDeleting(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/category/${id}`, {
-        method: "DELETE",
-        headers,
-      });
+      const res = await fetch(
+        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/category/${id}`,
+        {
+          method: "DELETE",
+          headers,
+        },
+      );
       const data = await res.json();
-      if (!data.success) { toast.error(data.message); return; }
+      if (!data.success) {
+        toast.error(data.message);
+        return;
+      }
       setCategories((prev) => prev.filter((c) => c._id !== id));
       setDeleteId(null);
       toast.success(p.deleted);
@@ -168,11 +233,16 @@ export default function CollectionsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight text-white mb-1">{p.title}</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-white mb-1">
+            {p.title}
+          </h1>
           <p className="text-gray-400">{p.subtitle}</p>
         </div>
         <button
-          onClick={() => { setShowCreate(true); setEditId(null); }}
+          onClick={() => {
+            setShowCreate(true);
+            setEditId(null);
+          }}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00E5FF] hover:bg-[#00BCCC] text-black text-sm font-semibold transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -204,14 +274,21 @@ export default function CollectionsPage() {
                   key={c}
                   onClick={() => setCreateColor(c)}
                   className="w-7 h-7 rounded-full border-2 transition-all hover:scale-110"
-                  style={{ backgroundColor: c, borderColor: createColor === c ? "white" : "transparent" }}
+                  style={{
+                    backgroundColor: c,
+                    borderColor: createColor === c ? "white" : "transparent",
+                  }}
                 />
               ))}
             </div>
           </div>
           <div className="flex gap-2 justify-end">
             <button
-              onClick={() => { setShowCreate(false); setCreateName(""); setCreateColor(PRESET_COLORS[0]); }}
+              onClick={() => {
+                setShowCreate(false);
+                setCreateName("");
+                setCreateColor(PRESET_COLORS[0]);
+              }}
               className="px-4 py-2 rounded-xl border border-white/10 text-gray-400 hover:text-white text-sm transition-colors"
             >
               {p.cancel}
@@ -253,7 +330,10 @@ export default function CollectionsPage() {
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleSave(cat._id); if (e.key === "Escape") cancelEdit(); }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSave(cat._id);
+                      if (e.key === "Escape") cancelEdit();
+                    }}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white outline-none focus:border-[#00E5FF]/50 text-sm"
                   />
                   <div className="flex items-center gap-3">
@@ -263,7 +343,11 @@ export default function CollectionsPage() {
                           key={c}
                           onClick={() => setEditColor(c)}
                           className="w-6 h-6 rounded-full border-2 transition-all hover:scale-110"
-                          style={{ backgroundColor: c, borderColor: editColor === c ? "white" : "transparent" }}
+                          style={{
+                            backgroundColor: c,
+                            borderColor:
+                              editColor === c ? "white" : "transparent",
+                          }}
                         />
                       ))}
                     </div>
@@ -279,7 +363,11 @@ export default function CollectionsPage() {
                         disabled={saving || !editName.trim()}
                         className="p-1.5 rounded-lg text-[#00E5FF] hover:bg-[#00E5FF]/10 disabled:opacity-50 transition-colors"
                       >
-                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                        {saving ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Check className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -288,14 +376,22 @@ export default function CollectionsPage() {
                 /* ── View mode ── */
                 <div className="flex items-center gap-4">
                   <button
-                    onClick={() => router.push(`/dashboard/collections/${cat._id}`)}
+                    onClick={() =>
+                      router.push(`/dashboard/collections/${cat._id}`)
+                    }
                     className="flex items-center gap-4 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
                   >
                     <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: `${cat.color}20`, border: `1px solid ${cat.color}40` }}
+                      style={{
+                        backgroundColor: `${cat.color}20`,
+                        border: `1px solid ${cat.color}40`,
+                      }}
                     >
-                      <FolderOpen className="w-5 h-5" style={{ color: cat.color }} />
+                      <FolderOpen
+                        className="w-5 h-5"
+                        style={{ color: cat.color }}
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-white font-medium">{cat.name}</p>
@@ -342,10 +438,10 @@ export default function CollectionsPage() {
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-[#1C1132] border border-white/10 rounded-2xl p-6 max-w-sm w-full mx-4 space-y-4">
-            <h3 className="text-white font-semibold text-lg">{p.deleteModal.title}</h3>
-            <p className="text-gray-400 text-sm">
-              {p.deleteModal.body}
-            </p>
+            <h3 className="text-white font-semibold text-lg">
+              {p.deleteModal.title}
+            </h3>
+            <p className="text-gray-400 text-sm">{p.deleteModal.body}</p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setDeleteId(null)}

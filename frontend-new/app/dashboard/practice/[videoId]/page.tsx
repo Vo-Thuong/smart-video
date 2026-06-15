@@ -52,9 +52,19 @@ function parseTime(t: string): number {
 const normalizeWord = (w: string) => w.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 // ─── Dictionary types ───────────────────────────────────────────────────────
-interface DictPhonetic { text?: string; audio?: string; }
-interface DictMeaning { partOfSpeech: string; definitions: { definition: string }[]; }
-interface DictEntry { word: string; phonetics: DictPhonetic[]; meanings: DictMeaning[]; }
+interface DictPhonetic {
+  text?: string;
+  audio?: string;
+}
+interface DictMeaning {
+  partOfSpeech: string;
+  definitions: { definition: string }[];
+}
+interface DictEntry {
+  word: string;
+  phonetics: DictPhonetic[];
+  meanings: DictMeaning[];
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -69,7 +79,15 @@ interface LeftPanelProps {
   completedSegments: Set<number>;
 }
 
-function LeftPanel({ transcript, loading, error, activeIndex, onSeek, onReview, completedSegments }: LeftPanelProps) {
+function LeftPanel({
+  transcript,
+  loading,
+  error,
+  activeIndex,
+  onSeek,
+  onReview,
+  completedSegments,
+}: LeftPanelProps) {
   const [checked, setChecked] = useState<Record<number, boolean>>({});
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -100,7 +118,9 @@ function LeftPanel({ transcript, loading, error, activeIndex, onSeek, onReview, 
     setChecked((prev) => ({ ...prev, [i]: !prev[i] }));
   };
 
-  const checkedCount = transcript.filter((_, i) => !!checked[i] || completedSegments.has(i)).length;
+  const checkedCount = transcript.filter(
+    (_, i) => !!checked[i] || completedSegments.has(i),
+  ).length;
 
   return (
     <div className="flex flex-col h-full">
@@ -109,12 +129,17 @@ function LeftPanel({ transcript, loading, error, activeIndex, onSeek, onReview, 
         <FileText className="w-4 h-4 text-[#00E5FF]" />
         <span className="text-sm font-medium text-white">Transcript</span>
         {!loading && transcript.length > 0 && (
-          <span className="ml-auto text-xs text-gray-500">{transcript.length} đoạn</span>
+          <span className="ml-auto text-xs text-gray-500">
+            {transcript.length} đoạn
+          </span>
         )}
       </div>
 
       {/* Content */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-2">
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-2"
+      >
         {loading ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3 text-gray-400">
             <Loader2 className="w-6 h-6 animate-spin text-[#00E5FF]" />
@@ -124,7 +149,9 @@ function LeftPanel({ transcript, loading, error, activeIndex, onSeek, onReview, 
           <div className="flex flex-col items-center justify-center h-40 gap-3 text-center px-2">
             <AlertCircle className="w-6 h-6 text-red-400" />
             <p className="text-xs text-red-400">{error}</p>
-            <p className="text-xs text-gray-500">Video này có thể không có phụ đề tự động</p>
+            <p className="text-xs text-gray-500">
+              Video này có thể không có phụ đề tự động
+            </p>
           </div>
         ) : (
           <>
@@ -140,7 +167,9 @@ function LeftPanel({ transcript, loading, error, activeIndex, onSeek, onReview, 
             <div className="w-full bg-white/10 rounded-full h-1 mb-4">
               <div
                 className="bg-[#00E5FF] h-1 rounded-full transition-all duration-300"
-                style={{ width: `${transcript.length ? (checkedCount / transcript.length) * 100 : 0}%` }}
+                style={{
+                  width: `${transcript.length ? (checkedCount / transcript.length) * 100 : 0}%`,
+                }}
               />
             </div>
 
@@ -151,25 +180,35 @@ function LeftPanel({ transcript, loading, error, activeIndex, onSeek, onReview, 
               return (
                 <div
                   key={i}
-                  ref={(el) => { itemRefs.current[i] = el; }}
-                  onClick={() => isComplete ? onReview(i) : onSeek(parseTime(line.time))}
+                  ref={(el) => {
+                    itemRefs.current[i] = el;
+                  }}
+                  onClick={() =>
+                    isComplete ? onReview(i) : onSeek(parseTime(line.time))
+                  }
                   className={`flex gap-3 rounded-xl p-3 cursor-pointer transition-all select-none border ${
                     isActive
                       ? "bg-[#00E5FF]/15 border-[#00E5FF] shadow-[0_0_12px_rgba(0,229,255,0.2)]"
                       : isChecked
-                      ? "bg-[#00E5FF]/10 border-[#00E5FF]/30"
-                      : "bg-[#2D1F47]/40 border-transparent hover:bg-white/5 hover:border-white/10"
+                        ? "bg-[#00E5FF]/10 border-[#00E5FF]/30"
+                        : "bg-[#2D1F47]/40 border-transparent hover:bg-white/5 hover:border-white/10"
                   }`}
                 >
                   {/* Checkbox */}
                   <div
                     onClick={(e) => toggleCheck(i, e)}
                     className={`w-5 h-5 rounded border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
-                      isChecked ? "border-[#00E5FF] bg-[#00E5FF]" : "border-gray-500 hover:border-gray-300"
+                      isChecked
+                        ? "border-[#00E5FF] bg-[#00E5FF]"
+                        : "border-gray-500 hover:border-gray-300"
                     }`}
                   >
                     {isChecked && (
-                      <svg className="w-3 h-3 text-black" viewBox="0 0 12 12" fill="none">
+                      <svg
+                        className="w-3 h-3 text-black"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                      >
                         <path
                           d="M2 6l3 3 5-5"
                           stroke="currentColor"
@@ -184,9 +223,11 @@ function LeftPanel({ transcript, loading, error, activeIndex, onSeek, onReview, 
                   {/* Number + content */}
                   <div className="flex-1 min-w-0 space-y-0.5">
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs font-mono font-bold ${
-                        isActive ? "text-[#00E5FF]" : "text-gray-500"
-                      }`}>
+                      <span
+                        className={`text-xs font-mono font-bold ${
+                          isActive ? "text-[#00E5FF]" : "text-gray-500"
+                        }`}
+                      >
                         #{i + 1}
                       </span>
                       <span
@@ -194,14 +235,16 @@ function LeftPanel({ transcript, loading, error, activeIndex, onSeek, onReview, 
                           isActive
                             ? "bg-[#00E5FF] text-black"
                             : isChecked
-                            ? "bg-[#00E5FF]/20 text-[#00E5FF]"
-                            : "bg-white/10 text-gray-400"
+                              ? "bg-[#00E5FF]/20 text-[#00E5FF]"
+                              : "bg-white/10 text-gray-400"
                         }`}
                       >
                         {line.time}
                       </span>
                       {isActive && (
-                        <span className="text-[10px] text-[#00E5FF] font-bold animate-pulse">▶</span>
+                        <span className="text-[10px] text-[#00E5FF] font-bold animate-pulse">
+                          ▶
+                        </span>
                       )}
                     </div>
                     <p
@@ -209,8 +252,8 @@ function LeftPanel({ transcript, loading, error, activeIndex, onSeek, onReview, 
                         isActive
                           ? "text-white font-medium"
                           : isChecked
-                          ? "text-gray-400 line-through"
-                          : "text-gray-200"
+                            ? "text-gray-400 line-through"
+                            : "text-gray-200"
                       }`}
                     >
                       {isComplete ? line.text : line.text.replace(/\S/g, "*")}
@@ -239,7 +282,18 @@ interface DictationPanelProps {
   completedSegments: Set<number>;
 }
 
-function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying, onPlayPause, onReplay, onSkip, onSegmentComplete, completedSegments }: DictationPanelProps) {
+function DictationPanel({
+  videoId,
+  videoTitle,
+  studyIndex,
+  transcript,
+  isPlaying,
+  onPlayPause,
+  onReplay,
+  onSkip,
+  onSegmentComplete,
+  completedSegments,
+}: DictationPanelProps) {
   const [input, setInput] = useState("");
   const [revealedWords, setRevealedWords] = useState<Set<number>>(new Set());
   const [translation, setTranslation] = useState<string | null>(null);
@@ -257,16 +311,27 @@ function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying
   } | null>(null);
 
   const [vocabDialog, setVocabDialog] = useState<{
-    word: string; phonetic: string; translation: string; example: string; note: string;
-    videoId: string; videoTitle: string; videoUrl: string; segmentTime: string;
-    saving: boolean; saved: boolean;
+    word: string;
+    phonetic: string;
+    translation: string;
+    example: string;
+    note: string;
+    videoId: string;
+    videoTitle: string;
+    videoUrl: string;
+    segmentTime: string;
+    saving: boolean;
+    saved: boolean;
   } | null>(null);
 
   const openVocabDialog = () => {
     if (!wordDetail) return;
-    const trans = wordDetail.dictMeanings.length > 0
-      ? wordDetail.dictMeanings.map((m) => `(${m.partOfSpeech}) ${m.translations.join(", ")}`).join(" | ")
-      : wordDetail.translation ?? "";
+    const trans =
+      wordDetail.dictMeanings.length > 0
+        ? wordDetail.dictMeanings
+            .map((m) => `(${m.partOfSpeech}) ${m.translations.join(", ")}`)
+            .join(" | ")
+        : (wordDetail.translation ?? "");
     const seg = studyIndex >= 0 ? transcript[studyIndex] : null;
     setVocabDialog({
       word: wordDetail.word,
@@ -290,7 +355,10 @@ function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying
       const token = localStorage.getItem("token");
       await fetch("http://localhost:5000/api/vocabulary", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           word: vocabDialog.word,
           phonetic: vocabDialog.phonetic,
@@ -315,8 +383,15 @@ function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying
     // save type
     saveType: "vocab" | "video";
     // vocab fields
-    word: string; phonetic: string; translation: string; example: string; note: string;
-    videoId: string; videoTitle: string; videoUrl: string; segmentTime: string;
+    word: string;
+    phonetic: string;
+    translation: string;
+    example: string;
+    note: string;
+    videoId: string;
+    videoTitle: string;
+    videoUrl: string;
+    segmentTime: string;
     // collection
     categoryId: string;
     categories: { _id: string; name: string; color: string }[];
@@ -326,20 +401,29 @@ function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying
     // sharing
     shareMode: "none" | "feed" | "friends";
     caption: string;
-    friends: { _id: string; username: string; fullname: string; avatar: string }[];
+    friends: {
+      _id: string;
+      username: string;
+      fullname: string;
+      avatar: string;
+    }[];
     loadingFriends: boolean;
     selectedFriends: string[];
     // state
     saving: boolean;
     saved: boolean;
   }
-  const [collectionDialog, setCollectionDialog] = useState<CollectionDialogState | null>(null);
+  const [collectionDialog, setCollectionDialog] =
+    useState<CollectionDialogState | null>(null);
 
   const openCollectionDialog = () => {
     if (!wordDetail) return;
-    const trans = wordDetail.dictMeanings.length > 0
-      ? wordDetail.dictMeanings.map((m) => `(${m.partOfSpeech}) ${m.translations.join(", ")}`).join(" | ")
-      : wordDetail.translation ?? "";
+    const trans =
+      wordDetail.dictMeanings.length > 0
+        ? wordDetail.dictMeanings
+            .map((m) => `(${m.partOfSpeech}) ${m.translations.join(", ")}`)
+            .join(" | ")
+        : (wordDetail.translation ?? "");
     const seg = studyIndex >= 0 ? transcript[studyIndex] : null;
     const token = localStorage.getItem("token");
     const headers = { Authorization: `Bearer ${token ?? ""}` };
@@ -375,17 +459,26 @@ function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying
       .then((r) => r.json())
       .then((d) => {
         if (d.success) {
-          setCollectionDialog((prev) => prev && {
-            ...prev,
-            categories: d.categories,
-            categoryId: d.categories[0]?._id ?? "",
-            loadingCategories: false,
-          });
+          setCollectionDialog(
+            (prev) =>
+              prev && {
+                ...prev,
+                categories: d.categories,
+                categoryId: d.categories[0]?._id ?? "",
+                loadingCategories: false,
+              },
+          );
         } else {
-          setCollectionDialog((prev) => prev && { ...prev, loadingCategories: false });
+          setCollectionDialog(
+            (prev) => prev && { ...prev, loadingCategories: false },
+          );
         }
       })
-      .catch(() => setCollectionDialog((prev) => prev && { ...prev, loadingCategories: false }));
+      .catch(() =>
+        setCollectionDialog(
+          (prev) => prev && { ...prev, loadingCategories: false },
+        ),
+      );
   };
 
   const createCategoryInline = async () => {
@@ -395,45 +488,70 @@ function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying
     try {
       const res = await fetch("http://localhost:5000/api/category", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ name: collectionDialog.newCategoryName.trim(), color: "#00E5FF" }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: collectionDialog.newCategoryName.trim(),
+          color: "#00E5FF",
+        }),
       });
       const data = await res.json();
       if (data.success) {
-        setCollectionDialog((prev) => prev && {
-          ...prev,
-          categories: [...prev.categories, data.category],
-          categoryId: data.category._id,
-          newCategoryName: "",
-          creatingCategory: false,
-        });
+        setCollectionDialog(
+          (prev) =>
+            prev && {
+              ...prev,
+              categories: [...prev.categories, data.category],
+              categoryId: data.category._id,
+              newCategoryName: "",
+              creatingCategory: false,
+            },
+        );
       } else {
-        setCollectionDialog((prev) => prev && { ...prev, creatingCategory: false });
+        setCollectionDialog(
+          (prev) => prev && { ...prev, creatingCategory: false },
+        );
       }
     } catch {
-      setCollectionDialog((prev) => prev && { ...prev, creatingCategory: false });
+      setCollectionDialog(
+        (prev) => prev && { ...prev, creatingCategory: false },
+      );
     }
   };
 
   const loadFriends = () => {
     if (!collectionDialog) return;
-    if (collectionDialog.friends.length > 0 || collectionDialog.loadingFriends) return;
+    if (collectionDialog.friends.length > 0 || collectionDialog.loadingFriends)
+      return;
     setCollectionDialog((prev) => prev && { ...prev, loadingFriends: true });
     const token = localStorage.getItem("token");
-    fetch("http://localhost:5000/api/friends/list", { headers: { Authorization: `Bearer ${token ?? ""}` } })
+    fetch("http://localhost:5000/api/friends/list", {
+      headers: { Authorization: `Bearer ${token ?? ""}` },
+    })
       .then((r) => r.json())
       .then((d) => {
         const list = Array.isArray(d) ? d : [];
-        setCollectionDialog((prev) => prev && { ...prev, friends: list, loadingFriends: false });
+        setCollectionDialog(
+          (prev) => prev && { ...prev, friends: list, loadingFriends: false },
+        );
       })
-      .catch(() => setCollectionDialog((prev) => prev && { ...prev, loadingFriends: false }));
+      .catch(() =>
+        setCollectionDialog(
+          (prev) => prev && { ...prev, loadingFriends: false },
+        ),
+      );
   };
 
   const saveToCollection = async () => {
     if (!collectionDialog || !collectionDialog.categoryId) return;
     setCollectionDialog((prev) => prev && { ...prev, saving: true });
     const token = localStorage.getItem("token");
-    const authHeaders = { "Content-Type": "application/json", Authorization: `Bearer ${token ?? ""}` };
+    const authHeaders = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token ?? ""}`,
+    };
     try {
       if (collectionDialog.saveType === "vocab") {
         // Save vocabulary with categoryId
@@ -461,14 +579,20 @@ function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying
             headers: authHeaders,
             body: JSON.stringify({
               caption: collectionDialog.caption,
-              vocabWords: [{
-                word: collectionDialog.word,
-                phonetic: collectionDialog.phonetic,
-                translation: collectionDialog.translation,
-                example: collectionDialog.example,
-              }],
-              visibility: collectionDialog.shareMode === "feed" ? "public" : "friends",
-              sharedWith: collectionDialog.shareMode === "friends" ? collectionDialog.selectedFriends : [],
+              vocabWords: [
+                {
+                  word: collectionDialog.word,
+                  phonetic: collectionDialog.phonetic,
+                  translation: collectionDialog.translation,
+                  example: collectionDialog.example,
+                },
+              ],
+              visibility:
+                collectionDialog.shareMode === "feed" ? "public" : "friends",
+              sharedWith:
+                collectionDialog.shareMode === "friends"
+                  ? collectionDialog.selectedFriends
+                  : [],
             }),
           });
         }
@@ -490,16 +614,26 @@ function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying
         // If already saved, just update the category
         if (!saveData.success && saveRes.status === 400) {
           // Video already saved — update its category
-          const listRes = await fetch("http://localhost:5000/api/saved-video", { headers: { Authorization: `Bearer ${token ?? ""}` } });
+          const listRes = await fetch("http://localhost:5000/api/saved-video", {
+            headers: { Authorization: `Bearer ${token ?? ""}` },
+          });
           const listData = await listRes.json();
           if (listData.success) {
-            const existing = listData.videos.find((v: { youtubeId: string; _id: string }) => v.youtubeId === collectionDialog.videoId);
+            const existing = listData.videos.find(
+              (v: { youtubeId: string; _id: string }) =>
+                v.youtubeId === collectionDialog.videoId,
+            );
             if (existing) {
-              await fetch(`http://localhost:5000/api/saved-video/${existing._id}/category`, {
-                method: "PATCH",
-                headers: authHeaders,
-                body: JSON.stringify({ categoryId: collectionDialog.categoryId }),
-              });
+              await fetch(
+                `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${existing._id}/category`,
+                {
+                  method: "PATCH",
+                  headers: authHeaders,
+                  body: JSON.stringify({
+                    categoryId: collectionDialog.categoryId,
+                  }),
+                },
+              );
             }
           }
         }
@@ -515,14 +649,20 @@ function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying
               title: collectionDialog.videoTitle,
               thumbnail,
               sourceType: "practiced",
-              visibility: collectionDialog.shareMode === "feed" ? "public" : "friends",
-              sharedWith: collectionDialog.shareMode === "friends" ? collectionDialog.selectedFriends : [],
+              visibility:
+                collectionDialog.shareMode === "feed" ? "public" : "friends",
+              sharedWith:
+                collectionDialog.shareMode === "friends"
+                  ? collectionDialog.selectedFriends
+                  : [],
             }),
           });
         }
       }
 
-      setCollectionDialog((prev) => prev && { ...prev, saving: false, saved: true });
+      setCollectionDialog(
+        (prev) => prev && { ...prev, saving: false, saved: true },
+      );
       setTimeout(() => setCollectionDialog(null), 800);
     } catch {
       setCollectionDialog((prev) => prev && { ...prev, saving: false });
@@ -532,33 +672,60 @@ function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying
   const handleWordClick = (word: string) => {
     const normalized = word.toLowerCase().replace(/[^a-z'-]/g, "");
     if (!normalized) return;
-        setWordDetail({ word: normalized, phonetic: null, dictMeanings: [], translation: null, loading: true, error: null });
-    fetch(`http://localhost:5000/api/dictionary/lookup?word=${encodeURIComponent(normalized)}`)
+    setWordDetail({
+      word: normalized,
+      phonetic: null,
+      dictMeanings: [],
+      translation: null,
+      loading: true,
+      error: null,
+    });
+    fetch(
+      `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/dictionary/lookup?word=${encodeURIComponent(normalized)}`,
+    )
       .then((r) => r.json())
       .then((data) => {
         if (!data.success) {
-          setWordDetail({ word: normalized, phonetic: null, dictMeanings: [], translation: null, loading: false, error: "Lỗi kết nối server" });
+          setWordDetail({
+            word: normalized,
+            phonetic: null,
+            dictMeanings: [],
+            translation: null,
+            loading: false,
+            error: "Lỗi kết nối server",
+          });
           return;
         }
         setWordDetail({
           word: normalized,
           phonetic: data.phonetic ?? null,
-          dictMeanings: (data.dictMeanings as { partOfSpeech: string; translations: string[] }[]) ?? [],
+          dictMeanings:
+            (data.dictMeanings as {
+              partOfSpeech: string;
+              translations: string[];
+            }[]) ?? [],
           translation: data.translation ?? null,
           loading: false,
           error: null,
         });
       })
       .catch(() => {
-        setWordDetail({ word: normalized, phonetic: null, dictMeanings: [], translation: null, loading: false, error: "Lỗi kết nối server" });
+        setWordDetail({
+          word: normalized,
+          phonetic: null,
+          dictMeanings: [],
+          translation: null,
+          loading: false,
+          error: "Lỗi kết nối server",
+        });
       });
   };
 
   const currentSegment = studyIndex >= 0 ? transcript[studyIndex] : null;
   // Strip leading/trailing punctuation from each word so ".hello," → "hello"
-  const words = (currentSegment?.text.trim().split(/\s+/) ?? []).map((w) =>
-    w.replace(/^[.,!?;:'"()\[\]—…\-]+|[.,!?;:'"()\[\]—…\-]+$/g, "")
-  ).filter(Boolean);
+  const words = (currentSegment?.text.trim().split(/\s+/) ?? [])
+    .map((w) => w.replace(/^[.,!?;:'"()\[\]—…\-]+|[.,!?;:'"()\[\]—…\-]+$/g, ""))
+    .filter(Boolean);
 
   // Reset state when study segment changes
   useEffect(() => {
@@ -576,9 +743,11 @@ function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying
     if (!completedSegments.has(studyIndex) || studyIndex < 0) return;
     const seg = transcript[studyIndex];
     if (!seg) return;
-    const ws = (seg.text.trim().split(/\s+/) ?? []).map((w) =>
-      w.replace(/^[.,!?;:'"()\[\]—…\-]+|[.,!?;:'"()\[\]—…\-]+$/g, "")
-    ).filter(Boolean);
+    const ws = (seg.text.trim().split(/\s+/) ?? [])
+      .map((w) =>
+        w.replace(/^[.,!?;:'"()\[\]—…\-]+|[.,!?;:'"()\[\]—…\-]+$/g, ""),
+      )
+      .filter(Boolean);
     const all = new Set<number>(ws.map((_, i) => i));
     revealedRef.current = all;
     setRevealedWords(all);
@@ -587,11 +756,13 @@ function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying
     setTranslationLoading(true);
     setTranslation(null);
     fetch(
-      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=vi&dt=t&q=${encodeURIComponent(seg.text)}`
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=vi&dt=t&q=${encodeURIComponent(seg.text)}`,
     )
       .then((r) => r.json())
       .then((data) => {
-        const translated = (data[0] as Array<[string]>).map((item) => item[0]).join("");
+        const translated = (data[0] as Array<[string]>)
+          .map((item) => item[0])
+          .join("");
         setTranslation(translated);
       })
       .catch(() => setTranslation("(Không thể dịch)"))
@@ -625,7 +796,9 @@ function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying
     }
   };
 
-  const handleNext = () => { onSkip(); };
+  const handleNext = () => {
+    onSkip();
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -649,454 +822,629 @@ function DictationPanel({ videoId, videoTitle, studyIndex, transcript, isPlaying
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5">
-        {/* Media controls */}
-        <div className="flex items-center justify-center gap-3 pt-1">
-          <button
-            onClick={onReplay}
-            title="Replay đoạn này"
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white transition-all text-sm"
-          >
-            <RotateCcw className="w-4 h-4" /> Replay
-          </button>
-          <button
-            onClick={onPlayPause}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white transition-all text-sm"
-          >
-            {isPlaying
-              ? <><Pause className="w-4 h-4" /> Pause</>
-              : <><Play className="w-4 h-4" /> Play</>}
-          </button>
-          <button
-            onClick={onSkip}
-            title="Đoạn tiếp theo"
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white transition-all text-sm"
-          >
-            <SkipForward className="w-4 h-4" /> Skip
-          </button>
-        </div>
+          {/* Media controls */}
+          <div className="flex items-center justify-center gap-3 pt-1">
+            <button
+              onClick={onReplay}
+              title="Replay đoạn này"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white transition-all text-sm"
+            >
+              <RotateCcw className="w-4 h-4" /> Replay
+            </button>
+            <button
+              onClick={onPlayPause}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white transition-all text-sm"
+            >
+              {isPlaying ? (
+                <>
+                  <Pause className="w-4 h-4" /> Pause
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4" /> Play
+                </>
+              )}
+            </button>
+            <button
+              onClick={onSkip}
+              title="Đoạn tiếp theo"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white transition-all text-sm"
+            >
+              <SkipForward className="w-4 h-4" /> Skip
+            </button>
+          </div>
 
-        {/* Input */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-gray-500">Nhập những gì bạn nghe được</label>
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => handleInputChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            rows={3}
-            placeholder="Gõ ở đây..."
-            className="w-full bg-[#2D1F47] rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-600 resize-none border border-white/10 outline-none focus:border-[#7C3AED] leading-relaxed transition-colors"
-          />
-        </div>
+          {/* Input */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-gray-500">
+              Nhập những gì bạn nghe được
+            </label>
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              rows={3}
+              placeholder="Gõ ở đây..."
+              className="w-full bg-[#2D1F47] rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-600 resize-none border border-white/10 outline-none focus:border-[#7C3AED] leading-relaxed transition-colors"
+            />
+          </div>
 
-        {/* Next button */}
-        <button
-          onClick={handleNext}
-          className="w-full py-2.5 rounded-xl bg-[#00E5FF] text-black font-semibold text-sm hover:bg-[#00BCCC] active:scale-95 transition-all flex items-center justify-center gap-2"
-        >
-          Tiếp theo <SkipForward className="w-4 h-4" />
-        </button>
+          {/* Next button */}
+          <button
+            onClick={handleNext}
+            className="w-full py-2.5 rounded-xl bg-[#00E5FF] text-black font-semibold text-sm hover:bg-[#00BCCC] active:scale-95 transition-all flex items-center justify-center gap-2"
+          >
+            Tiếp theo <SkipForward className="w-4 h-4" />
+          </button>
 
-        {/* Current segment — words split */}
-        <div className="flex flex-col gap-2">
-          <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
-            {isCompleted ? "Đã hoàn thành" : "Đoạn đang phát"}
-          </p>
-          {currentSegment ? (
-            <div className="flex flex-wrap gap-1.5">
-              {words.map((word, i) => (
+          {/* Current segment — words split */}
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
+              {isCompleted ? "Đã hoàn thành" : "Đoạn đang phát"}
+            </p>
+            {currentSegment ? (
+              <div className="flex flex-wrap gap-1.5">
+                {words.map((word, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      handleWordClick(word);
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-sm border leading-none transition-all duration-300 cursor-pointer hover:opacity-80 ${
+                      revealedWords.has(i)
+                        ? "bg-[#00E5FF]/10 border-[#00E5FF]/40 text-white font-medium"
+                        : "bg-[#2D1F47] border-white/10 text-gray-200 font-mono tracking-widest"
+                    }`}
+                  >
+                    {revealedWords.has(i) ? word : "*".repeat(word.length)}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-white/10 p-5 text-center">
+                <p className="text-xs text-gray-600">
+                  Phát video để bắt đầu luyện tập
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Word detail card */}
+          {wordDetail && (
+            <div className="rounded-xl border border-white/15 bg-[#2D1F47] p-3 flex flex-col gap-2 relative">
+              {/* Close */}
+              <button
+                onClick={() => setWordDetail(null)}
+                className="absolute top-2 right-2 text-gray-500 hover:text-white transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Word + phonetic + audio */}
+              <div className="flex items-center gap-2 pr-5">
+                <span className="text-base font-bold text-white">
+                  {wordDetail.word}
+                </span>
+                {wordDetail.phonetic && (
+                  <span className="text-xs text-gray-400">
+                    {wordDetail.phonetic}
+                  </span>
+                )}
                 <button
-                  key={i}
                   onClick={() => {
-                    handleWordClick(word);
+                    window.speechSynthesis.cancel();
+                    const u = new SpeechSynthesisUtterance(wordDetail.word);
+                    u.lang = "en-US";
+                    u.rate = 0.8;
+                    window.speechSynthesis.speak(u);
                   }}
-                  className={`px-2.5 py-1 rounded-lg text-sm border leading-none transition-all duration-300 cursor-pointer hover:opacity-80 ${
-                    revealedWords.has(i)
-                      ? "bg-[#00E5FF]/10 border-[#00E5FF]/40 text-white font-medium"
-                      : "bg-[#2D1F47] border-white/10 text-gray-200 font-mono tracking-widest"
-                  }`}
+                  className="ml-auto text-[#00E5FF] hover:opacity-80 transition-opacity flex-shrink-0"
+                  title="Phát âm"
                 >
-                  {revealedWords.has(i) ? word : "*".repeat(word.length)}
+                  <Volume2 className="w-3.5 h-3.5" />
                 </button>
-              ))}
+              </div>
+
+              {wordDetail.loading ? (
+                <div className="flex items-center gap-1.5 text-gray-500 text-xs">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Đang tải...
+                </div>
+              ) : wordDetail.error ? (
+                <p className="text-xs text-red-400">{wordDetail.error}</p>
+              ) : (
+                <>
+                  {/* Bilingual dictionary meanings by part of speech */}
+                  {wordDetail.dictMeanings.length > 0 ? (
+                    <div className="flex flex-col gap-1.5">
+                      {wordDetail.dictMeanings.map((m, mi) => (
+                        <div key={mi} className="flex items-baseline gap-2">
+                          <span className="text-[10px] italic text-[#7C3AED] font-medium flex-shrink-0">
+                            {m.partOfSpeech}
+                          </span>
+                          <span className="text-xs text-white leading-relaxed">
+                            {m.translations.join(", ")}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : wordDetail.translation ? (
+                    <p className="text-xs text-[#00E5FF] font-medium">
+                      {wordDetail.translation}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-500 italic">
+                      Không tìm thấy từ này
+                    </p>
+                  )}
+                </>
+              )}
+
+              {/* Add to vocabulary buttons */}
+              {!wordDetail.loading && (
+                <div className="mt-1 flex items-center gap-3 flex-wrap">
+                  <button
+                    onClick={openVocabDialog}
+                    className="flex items-center gap-1.5 text-xs text-[#7C3AED] hover:text-[#9D5CF6] transition-colors font-medium"
+                  >
+                    <BookmarkPlus className="w-3.5 h-3.5" /> Thêm vào từ vựng
+                  </button>
+                  <span className="text-gray-700 text-xs">|</span>
+                  <button
+                    onClick={openCollectionDialog}
+                    className="flex items-center gap-1.5 text-xs text-[#00E5FF] hover:text-[#00BCCC] transition-colors font-medium"
+                  >
+                    <FolderPlus className="w-3.5 h-3.5" /> Thêm vào bộ chủ đề
+                  </button>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-white/10 p-5 text-center">
-              <p className="text-xs text-gray-600">Phát video để bắt đầu luyện tập</p>
+          )}
+
+          {/* Transcript + translation — shown compactly after completion */}
+          {isCompleted && (
+            <div className="flex flex-col gap-1.5 border-t border-white/10 pt-3">
+              <p className="text-xs text-gray-400 leading-relaxed">
+                {currentSegment?.text}
+              </p>
+              <div className="flex items-start gap-1.5">
+                {translationLoading ? (
+                  <div className="flex items-center gap-1.5 text-gray-500 text-xs">
+                    <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" />{" "}
+                    Đang dịch...
+                  </div>
+                ) : translation ? (
+                  <p className="text-xs text-[#00E5FF]/80 leading-relaxed">
+                    {translation}
+                  </p>
+                ) : null}
+              </div>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Word detail card */}
-        {wordDetail && (
-          <div className="rounded-xl border border-white/15 bg-[#2D1F47] p-3 flex flex-col gap-2 relative">
-            {/* Close */}
-            <button
-              onClick={() => setWordDetail(null)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-white transition-colors"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Word + phonetic + audio */}
-            <div className="flex items-center gap-2 pr-5">
-              <span className="text-base font-bold text-white">{wordDetail.word}</span>
-              {wordDetail.phonetic && (
-                <span className="text-xs text-gray-400">{wordDetail.phonetic}</span>
-              )}
-              <button
-                onClick={() => {
-                  window.speechSynthesis.cancel();
-                  const u = new SpeechSynthesisUtterance(wordDetail.word);
-                  u.lang = "en-US";
-                  u.rate = 0.8;
-                  window.speechSynthesis.speak(u);
-                }}
-                className="ml-auto text-[#00E5FF] hover:opacity-80 transition-opacity flex-shrink-0"
-                title="Phát âm"
-              >
-                <Volume2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {wordDetail.loading ? (
-              <div className="flex items-center gap-1.5 text-gray-500 text-xs">
-                <Loader2 className="w-3 h-3 animate-spin" /> Đang tải...
+      {/* ── Vocabulary Dialog ── */}
+      {vocabDialog &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="w-full max-w-sm bg-[#1C1132] border border-white/15 rounded-2xl shadow-2xl overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <BookmarkPlus className="w-4 h-4 text-[#7C3AED]" />
+                  <span className="text-sm font-semibold text-white">
+                    Add to Vocabulary
+                  </span>
+                </div>
+                <button
+                  onClick={() => setVocabDialog(null)}
+                  className="text-gray-500 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-            ) : wordDetail.error ? (
-              <p className="text-xs text-red-400">{wordDetail.error}</p>
-            ) : (
-              <>
-                {/* Bilingual dictionary meanings by part of speech */}
-                {wordDetail.dictMeanings.length > 0 ? (
-                  <div className="flex flex-col gap-1.5">
-                    {wordDetail.dictMeanings.map((m, mi) => (
-                      <div key={mi} className="flex items-baseline gap-2">
-                        <span className="text-[10px] italic text-[#7C3AED] font-medium flex-shrink-0">{m.partOfSpeech}</span>
-                        <span className="text-xs text-white leading-relaxed">{m.translations.join(", ")}</span>
-                      </div>
-                    ))}
+
+              {/* Form */}
+              <div className="p-5 flex flex-col gap-3">
+                {(
+                  [
+                    {
+                      label: "Word",
+                      key: "word",
+                      placeholder: "Enter word...",
+                    },
+                    {
+                      label: "Translation",
+                      key: "translation",
+                      placeholder: "Enter translation...",
+                    },
+                    {
+                      label: "Example sentence",
+                      key: "example",
+                      placeholder: "E.g. She runs every morning.",
+                    },
+                    {
+                      label: "Note",
+                      key: "note",
+                      placeholder: "Optional note...",
+                    },
+                  ] as const
+                ).map(({ label, key, placeholder }) => (
+                  <div key={key} className="flex flex-col gap-1">
+                    <label className="text-xs text-gray-500">{label}</label>
+                    <input
+                      value={vocabDialog[key]}
+                      onChange={(e) =>
+                        setVocabDialog(
+                          (v) => v && { ...v, [key]: e.target.value },
+                        )
+                      }
+                      placeholder={placeholder}
+                      className="w-full bg-[#2D1F47] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-gray-600 border border-white/10 outline-none focus:border-[#7C3AED] transition-colors"
+                    />
                   </div>
-                ) : wordDetail.translation ? (
-                  <p className="text-xs text-[#00E5FF] font-medium">{wordDetail.translation}</p>
-                ) : (
-                  <p className="text-xs text-gray-500 italic">Không tìm thấy từ này</p>
-                )}
-              </>
-            )}
+                ))}
+              </div>
 
-            {/* Add to vocabulary buttons */}
-            {!wordDetail.loading && (
-              <div className="mt-1 flex items-center gap-3 flex-wrap">
+              {/* Buttons */}
+              <div className="px-5 pb-5 flex gap-2">
                 <button
-                  onClick={openVocabDialog}
-                  className="flex items-center gap-1.5 text-xs text-[#7C3AED] hover:text-[#9D5CF6] transition-colors font-medium"
+                  onClick={() => setVocabDialog(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-white/15 text-gray-300 hover:bg-white/5 text-sm transition-colors"
                 >
-                  <BookmarkPlus className="w-3.5 h-3.5" /> Thêm vào từ vựng
+                  Cancel
                 </button>
-                <span className="text-gray-700 text-xs">|</span>
                 <button
-                  onClick={openCollectionDialog}
-                  className="flex items-center gap-1.5 text-xs text-[#00E5FF] hover:text-[#00BCCC] transition-colors font-medium"
+                  onClick={saveVocab}
+                  disabled={vocabDialog.saving || vocabDialog.saved}
+                  className="flex-1 py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                 >
-                  <FolderPlus className="w-3.5 h-3.5" /> Thêm vào bộ chủ đề
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Transcript + translation — shown compactly after completion */}
-        {isCompleted && (
-          <div className="flex flex-col gap-1.5 border-t border-white/10 pt-3">
-            <p className="text-xs text-gray-400 leading-relaxed">{currentSegment?.text}</p>
-            <div className="flex items-start gap-1.5">
-              {translationLoading ? (
-                <div className="flex items-center gap-1.5 text-gray-500 text-xs">
-                  <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" /> Đang dịch...
-                </div>
-              ) : translation ? (
-                <p className="text-xs text-[#00E5FF]/80 leading-relaxed">{translation}</p>
-              ) : null}
-            </div>
-          </div>
-        )}
-        </div>
-      </div>
-
-    {/* ── Vocabulary Dialog ── */}
-    {vocabDialog && typeof document !== "undefined" && createPortal(
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-        <div className="w-full max-w-sm bg-[#1C1132] border border-white/15 rounded-2xl shadow-2xl overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-            <div className="flex items-center gap-2">
-              <BookmarkPlus className="w-4 h-4 text-[#7C3AED]" />
-              <span className="text-sm font-semibold text-white">Add to Vocabulary</span>
-            </div>
-            <button onClick={() => setVocabDialog(null)} className="text-gray-500 hover:text-white transition-colors">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Form */}
-          <div className="p-5 flex flex-col gap-3">
-            {([
-              { label: "Word", key: "word", placeholder: "Enter word..." },
-              { label: "Translation", key: "translation", placeholder: "Enter translation..." },
-              { label: "Example sentence", key: "example", placeholder: "E.g. She runs every morning." },
-              { label: "Note", key: "note", placeholder: "Optional note..." },
-            ] as const).map(({ label, key, placeholder }) => (
-              <div key={key} className="flex flex-col gap-1">
-                <label className="text-xs text-gray-500">{label}</label>
-                <input
-                  value={vocabDialog[key]}
-                  onChange={(e) => setVocabDialog((v) => v && { ...v, [key]: e.target.value })}
-                  placeholder={placeholder}
-                  className="w-full bg-[#2D1F47] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-gray-600 border border-white/10 outline-none focus:border-[#7C3AED] transition-colors"
-                />
-              </div>
-            ))}
-          </div>
-
-          {/* Buttons */}
-          <div className="px-5 pb-5 flex gap-2">
-            <button
-              onClick={() => setVocabDialog(null)}
-              className="flex-1 py-2.5 rounded-xl border border-white/15 text-gray-300 hover:bg-white/5 text-sm transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={saveVocab}
-              disabled={vocabDialog.saving || vocabDialog.saved}
-              className="flex-1 py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-            >
-              {vocabDialog.saving
-                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</>
-                : vocabDialog.saved ? "✓ Saved!" : "Save"}
-            </button>
-          </div>
-        </div>
-      </div>
-    , document.body)}
-
-    {/* ── Collection Dialog ── */}
-    {collectionDialog && typeof document !== "undefined" && createPortal(
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-        <div className="w-full max-w-sm bg-[#1C1132] border border-white/15 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <FolderPlus className="w-4 h-4 text-[#00E5FF]" />
-              <span className="text-sm font-semibold text-white">Thêm vào bộ chủ đề</span>
-            </div>
-            <button onClick={() => setCollectionDialog(null)} className="text-gray-500 hover:text-white transition-colors">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="overflow-y-auto flex-1 p-5 flex flex-col gap-4">
-            {/* Save type toggle */}
-            <div className="flex gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
-              <button
-                onClick={() => setCollectionDialog((prev) => prev && { ...prev, saveType: "vocab" })}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
-                  collectionDialog.saveType === "vocab"
-                    ? "bg-[#7C3AED] text-white shadow"
-                    : "text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                <BookmarkPlus className="w-3.5 h-3.5" /> Dạng từ vựng
-              </button>
-              <button
-                onClick={() => setCollectionDialog((prev) => prev && { ...prev, saveType: "video" })}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
-                  collectionDialog.saveType === "video"
-                    ? "bg-[#00E5FF] text-black shadow"
-                    : "text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                <Play className="w-3.5 h-3.5" /> Dạng video
-              </button>
-            </div>
-
-            {/* Preview */}
-            {collectionDialog.saveType === "vocab" ? (
-              <div className="bg-[#2D1F47] rounded-xl px-4 py-3 flex flex-col gap-1">
-                <span className="text-base font-bold text-white">{collectionDialog.word}</span>
-                {collectionDialog.phonetic && <span className="text-xs text-gray-400">{collectionDialog.phonetic}</span>}
-                {collectionDialog.translation && <span className="text-xs text-[#00E5FF]">{collectionDialog.translation}</span>}
-              </div>
-            ) : (
-              <div className="bg-[#2D1F47] rounded-xl overflow-hidden flex gap-3 items-center pr-3">
-                <img
-                  src={`https://img.youtube.com/vi/${collectionDialog.videoId}/mqdefault.jpg`}
-                  alt=""
-                  className="w-20 h-14 object-cover flex-shrink-0"
-                />
-                <span className="text-sm text-white font-medium line-clamp-2">{collectionDialog.videoTitle}</span>
-              </div>
-            )}
-
-            {/* Category selection */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Chọn bộ chủ đề</label>
-              {collectionDialog.loadingCategories ? (
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang tải...
-                </div>
-              ) : collectionDialog.categories.length === 0 ? (
-                <p className="text-xs text-gray-500 italic">Chưa có bộ chủ đề nào. Tạo mới bên dưới.</p>
-              ) : (
-                <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto">
-                  {collectionDialog.categories.map((cat) => (
-                    <button
-                      key={cat._id}
-                      onClick={() => setCollectionDialog((prev) => prev && { ...prev, categoryId: cat._id })}
-                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border text-sm transition-all ${
-                        collectionDialog.categoryId === cat._id
-                          ? "border-[#00E5FF] bg-[#00E5FF]/10 text-white"
-                          : "border-white/10 bg-white/5 text-gray-300 hover:bg-white/10"
-                      }`}
-                    >
-                      <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
-                      <span className="flex-1 text-left truncate">{cat.name}</span>
-                      {collectionDialog.categoryId === cat._id && <Check className="w-3.5 h-3.5 text-[#00E5FF] flex-shrink-0" />}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Create new category inline */}
-              <div className="flex gap-2 mt-1">
-                <input
-                  value={collectionDialog.newCategoryName}
-                  onChange={(e) => setCollectionDialog((prev) => prev && { ...prev, newCategoryName: e.target.value })}
-                  onKeyDown={(e) => e.key === "Enter" && createCategoryInline()}
-                  placeholder="Tạo bộ chủ đề mới..."
-                  className="flex-1 bg-[#2D1F47] rounded-xl px-3 py-2 text-xs text-white placeholder:text-gray-600 border border-white/10 outline-none focus:border-[#00E5FF] transition-colors"
-                />
-                <button
-                  onClick={createCategoryInline}
-                  disabled={!collectionDialog.newCategoryName.trim() || collectionDialog.creatingCategory}
-                  className="px-3 py-2 rounded-xl bg-[#00E5FF]/20 border border-[#00E5FF]/40 text-[#00E5FF] text-xs font-medium hover:bg-[#00E5FF]/30 transition-colors disabled:opacity-40 flex items-center gap-1"
-                >
-                  {collectionDialog.creatingCategory ? <Loader2 className="w-3 h-3 animate-spin" /> : "+"}
-                </button>
-              </div>
-            </div>
-
-            {/* Sharing options */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Chia sẻ</label>
-              <div className="flex gap-2">
-                {(["none", "feed", "friends"] as const).map((mode) => {
-                  const icons = { none: <Lock className="w-3.5 h-3.5" />, feed: <Globe className="w-3.5 h-3.5" />, friends: <Users className="w-3.5 h-3.5" /> };
-                  const labels = { none: "Không chia sẻ", feed: "Lên feed", friends: "Bạn bè" };
-                  const active = collectionDialog.shareMode === mode;
-                  return (
-                    <button
-                      key={mode}
-                      onClick={() => {
-                        setCollectionDialog((prev) => prev && { ...prev, shareMode: mode });
-                        if (mode === "friends") loadFriends();
-                      }}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border text-xs font-medium transition-all ${
-                        active
-                          ? mode === "feed"
-                            ? "border-[#00E5FF] bg-[#00E5FF]/15 text-[#00E5FF]"
-                            : mode === "friends"
-                            ? "border-[#7C3AED] bg-[#7C3AED]/15 text-[#9D5CF6]"
-                            : "border-white/20 bg-white/5 text-gray-300"
-                          : "border-white/10 bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-300"
-                      }`}
-                    >
-                      {icons[mode]} {labels[mode]}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Caption */}
-              {collectionDialog.shareMode !== "none" && (
-                <textarea
-                  value={collectionDialog.caption}
-                  onChange={(e) => setCollectionDialog((prev) => prev && { ...prev, caption: e.target.value })}
-                  rows={2}
-                  placeholder="Viết caption... (tuỳ chọn)"
-                  className="w-full bg-[#2D1F47] rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-gray-600 border border-white/10 outline-none focus:border-[#7C3AED] resize-none transition-colors"
-                />
-              )}
-
-              {/* Friends selection */}
-              {collectionDialog.shareMode === "friends" && (
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-xs text-gray-500">Chọn bạn bè để chia sẻ:</span>
-                  {collectionDialog.loadingFriends ? (
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                      <Loader2 className="w-3 h-3 animate-spin" /> Đang tải danh sách bạn...
-                    </div>
-                  ) : collectionDialog.friends.length === 0 ? (
-                    <p className="text-xs text-gray-500 italic">Chưa có bạn bè nào.</p>
+                  {vocabDialog.saving ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...
+                    </>
+                  ) : vocabDialog.saved ? (
+                    "✓ Saved!"
                   ) : (
-                    <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
-                      {collectionDialog.friends.map((f) => {
-                        const selected = collectionDialog.selectedFriends.includes(f._id);
-                        return (
-                          <button
-                            key={f._id}
-                            onClick={() => setCollectionDialog((prev) => {
-                              if (!prev) return prev;
-                              return {
-                                ...prev,
-                                selectedFriends: selected
-                                  ? prev.selectedFriends.filter((id) => id !== f._id)
-                                  : [...prev.selectedFriends, f._id],
-                              };
-                            })}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all ${
-                              selected ? "border-[#7C3AED]/60 bg-[#7C3AED]/10 text-white" : "border-white/10 bg-white/5 text-gray-400 hover:bg-white/10"
-                            }`}
-                          >
-                            {f.avatar ? (
-                              <img src={f.avatar} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
-                            ) : (
-                              <div className="w-5 h-5 rounded-full bg-[#7C3AED]/40 flex-shrink-0" />
-                            )}
-                            <span className="flex-1 text-left truncate">{f.fullname || f.username}</span>
-                            {selected && <Check className="w-3 h-3 text-[#7C3AED] flex-shrink-0" />}
-                          </button>
-                        );
-                      })}
+                    "Save"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* ── Collection Dialog ── */}
+      {collectionDialog &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="w-full max-w-sm bg-[#1C1132] border border-white/15 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2">
+                  <FolderPlus className="w-4 h-4 text-[#00E5FF]" />
+                  <span className="text-sm font-semibold text-white">
+                    Thêm vào bộ chủ đề
+                  </span>
+                </div>
+                <button
+                  onClick={() => setCollectionDialog(null)}
+                  className="text-gray-500 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto flex-1 p-5 flex flex-col gap-4">
+                {/* Save type toggle */}
+                <div className="flex gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
+                  <button
+                    onClick={() =>
+                      setCollectionDialog(
+                        (prev) => prev && { ...prev, saveType: "vocab" },
+                      )
+                    }
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      collectionDialog.saveType === "vocab"
+                        ? "bg-[#7C3AED] text-white shadow"
+                        : "text-gray-400 hover:text-gray-200"
+                    }`}
+                  >
+                    <BookmarkPlus className="w-3.5 h-3.5" /> Dạng từ vựng
+                  </button>
+                  <button
+                    onClick={() =>
+                      setCollectionDialog(
+                        (prev) => prev && { ...prev, saveType: "video" },
+                      )
+                    }
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      collectionDialog.saveType === "video"
+                        ? "bg-[#00E5FF] text-black shadow"
+                        : "text-gray-400 hover:text-gray-200"
+                    }`}
+                  >
+                    <Play className="w-3.5 h-3.5" /> Dạng video
+                  </button>
+                </div>
+
+                {/* Preview */}
+                {collectionDialog.saveType === "vocab" ? (
+                  <div className="bg-[#2D1F47] rounded-xl px-4 py-3 flex flex-col gap-1">
+                    <span className="text-base font-bold text-white">
+                      {collectionDialog.word}
+                    </span>
+                    {collectionDialog.phonetic && (
+                      <span className="text-xs text-gray-400">
+                        {collectionDialog.phonetic}
+                      </span>
+                    )}
+                    {collectionDialog.translation && (
+                      <span className="text-xs text-[#00E5FF]">
+                        {collectionDialog.translation}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-[#2D1F47] rounded-xl overflow-hidden flex gap-3 items-center pr-3">
+                    <img
+                      src={`https://img.youtube.com/vi/${collectionDialog.videoId}/mqdefault.jpg`}
+                      alt=""
+                      className="w-20 h-14 object-cover flex-shrink-0"
+                    />
+                    <span className="text-sm text-white font-medium line-clamp-2">
+                      {collectionDialog.videoTitle}
+                    </span>
+                  </div>
+                )}
+
+                {/* Category selection */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+                    Chọn bộ chủ đề
+                  </label>
+                  {collectionDialog.loadingCategories ? (
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang
+                      tải...
+                    </div>
+                  ) : collectionDialog.categories.length === 0 ? (
+                    <p className="text-xs text-gray-500 italic">
+                      Chưa có bộ chủ đề nào. Tạo mới bên dưới.
+                    </p>
+                  ) : (
+                    <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto">
+                      {collectionDialog.categories.map((cat) => (
+                        <button
+                          key={cat._id}
+                          onClick={() =>
+                            setCollectionDialog(
+                              (prev) =>
+                                prev && { ...prev, categoryId: cat._id },
+                            )
+                          }
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border text-sm transition-all ${
+                            collectionDialog.categoryId === cat._id
+                              ? "border-[#00E5FF] bg-[#00E5FF]/10 text-white"
+                              : "border-white/10 bg-white/5 text-gray-300 hover:bg-white/10"
+                          }`}
+                        >
+                          <span
+                            className="w-3 h-3 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                          <span className="flex-1 text-left truncate">
+                            {cat.name}
+                          </span>
+                          {collectionDialog.categoryId === cat._id && (
+                            <Check className="w-3.5 h-3.5 text-[#00E5FF] flex-shrink-0" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Create new category inline */}
+                  <div className="flex gap-2 mt-1">
+                    <input
+                      value={collectionDialog.newCategoryName}
+                      onChange={(e) =>
+                        setCollectionDialog(
+                          (prev) =>
+                            prev && {
+                              ...prev,
+                              newCategoryName: e.target.value,
+                            },
+                        )
+                      }
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && createCategoryInline()
+                      }
+                      placeholder="Tạo bộ chủ đề mới..."
+                      className="flex-1 bg-[#2D1F47] rounded-xl px-3 py-2 text-xs text-white placeholder:text-gray-600 border border-white/10 outline-none focus:border-[#00E5FF] transition-colors"
+                    />
+                    <button
+                      onClick={createCategoryInline}
+                      disabled={
+                        !collectionDialog.newCategoryName.trim() ||
+                        collectionDialog.creatingCategory
+                      }
+                      className="px-3 py-2 rounded-xl bg-[#00E5FF]/20 border border-[#00E5FF]/40 text-[#00E5FF] text-xs font-medium hover:bg-[#00E5FF]/30 transition-colors disabled:opacity-40 flex items-center gap-1"
+                    >
+                      {collectionDialog.creatingCategory ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        "+"
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sharing options */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+                    Chia sẻ
+                  </label>
+                  <div className="flex gap-2">
+                    {(["none", "feed", "friends"] as const).map((mode) => {
+                      const icons = {
+                        none: <Lock className="w-3.5 h-3.5" />,
+                        feed: <Globe className="w-3.5 h-3.5" />,
+                        friends: <Users className="w-3.5 h-3.5" />,
+                      };
+                      const labels = {
+                        none: "Không chia sẻ",
+                        feed: "Lên feed",
+                        friends: "Bạn bè",
+                      };
+                      const active = collectionDialog.shareMode === mode;
+                      return (
+                        <button
+                          key={mode}
+                          onClick={() => {
+                            setCollectionDialog(
+                              (prev) => prev && { ...prev, shareMode: mode },
+                            );
+                            if (mode === "friends") loadFriends();
+                          }}
+                          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border text-xs font-medium transition-all ${
+                            active
+                              ? mode === "feed"
+                                ? "border-[#00E5FF] bg-[#00E5FF]/15 text-[#00E5FF]"
+                                : mode === "friends"
+                                  ? "border-[#7C3AED] bg-[#7C3AED]/15 text-[#9D5CF6]"
+                                  : "border-white/20 bg-white/5 text-gray-300"
+                              : "border-white/10 bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-300"
+                          }`}
+                        >
+                          {icons[mode]} {labels[mode]}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Caption */}
+                  {collectionDialog.shareMode !== "none" && (
+                    <textarea
+                      value={collectionDialog.caption}
+                      onChange={(e) =>
+                        setCollectionDialog(
+                          (prev) =>
+                            prev && { ...prev, caption: e.target.value },
+                        )
+                      }
+                      rows={2}
+                      placeholder="Viết caption... (tuỳ chọn)"
+                      className="w-full bg-[#2D1F47] rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-gray-600 border border-white/10 outline-none focus:border-[#7C3AED] resize-none transition-colors"
+                    />
+                  )}
+
+                  {/* Friends selection */}
+                  {collectionDialog.shareMode === "friends" && (
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs text-gray-500">
+                        Chọn bạn bè để chia sẻ:
+                      </span>
+                      {collectionDialog.loadingFriends ? (
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Đang tải
+                          danh sách bạn...
+                        </div>
+                      ) : collectionDialog.friends.length === 0 ? (
+                        <p className="text-xs text-gray-500 italic">
+                          Chưa có bạn bè nào.
+                        </p>
+                      ) : (
+                        <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
+                          {collectionDialog.friends.map((f) => {
+                            const selected =
+                              collectionDialog.selectedFriends.includes(f._id);
+                            return (
+                              <button
+                                key={f._id}
+                                onClick={() =>
+                                  setCollectionDialog((prev) => {
+                                    if (!prev) return prev;
+                                    return {
+                                      ...prev,
+                                      selectedFriends: selected
+                                        ? prev.selectedFriends.filter(
+                                            (id) => id !== f._id,
+                                          )
+                                        : [...prev.selectedFriends, f._id],
+                                    };
+                                  })
+                                }
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all ${
+                                  selected
+                                    ? "border-[#7C3AED]/60 bg-[#7C3AED]/10 text-white"
+                                    : "border-white/10 bg-white/5 text-gray-400 hover:bg-white/10"
+                                }`}
+                              >
+                                {f.avatar ? (
+                                  <img
+                                    src={f.avatar}
+                                    alt=""
+                                    className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-5 h-5 rounded-full bg-[#7C3AED]/40 flex-shrink-0" />
+                                )}
+                                <span className="flex-1 text-left truncate">
+                                  {f.fullname || f.username}
+                                </span>
+                                {selected && (
+                                  <Check className="w-3 h-3 text-[#7C3AED] flex-shrink-0" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
 
-          {/* Footer buttons */}
-          <div className="px-5 pb-5 pt-3 border-t border-white/10 flex gap-2 flex-shrink-0">
-            <button
-              onClick={() => setCollectionDialog(null)}
-              className="flex-1 py-2.5 rounded-xl border border-white/15 text-gray-300 hover:bg-white/5 text-sm transition-colors"
-            >
-              Huỷ
-            </button>
-            <button
-              onClick={saveToCollection}
-              disabled={!collectionDialog.categoryId || collectionDialog.saving || collectionDialog.saved || (collectionDialog.shareMode === "friends" && collectionDialog.selectedFriends.length === 0)}
-              className="flex-1 py-2.5 rounded-xl bg-[#00E5FF] hover:bg-[#00BCCC] text-black font-semibold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {collectionDialog.saving
-                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang lưu...</>
-                : collectionDialog.saved ? "✓ Đã lưu!" : "Lưu vào bộ chủ đề"}
-            </button>
-          </div>
-        </div>
-      </div>
-    , document.body)}
+              {/* Footer buttons */}
+              <div className="px-5 pb-5 pt-3 border-t border-white/10 flex gap-2 flex-shrink-0">
+                <button
+                  onClick={() => setCollectionDialog(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-white/15 text-gray-300 hover:bg-white/5 text-sm transition-colors"
+                >
+                  Huỷ
+                </button>
+                <button
+                  onClick={saveToCollection}
+                  disabled={
+                    !collectionDialog.categoryId ||
+                    collectionDialog.saving ||
+                    collectionDialog.saved ||
+                    (collectionDialog.shareMode === "friends" &&
+                      collectionDialog.selectedFriends.length === 0)
+                  }
+                  className="flex-1 py-2.5 rounded-xl bg-[#00E5FF] hover:bg-[#00BCCC] text-black font-semibold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {collectionDialog.saving ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang
+                      lưu...
+                    </>
+                  ) : collectionDialog.saved ? (
+                    "✓ Đã lưu!"
+                  ) : (
+                    "Lưu vào bộ chủ đề"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
@@ -1111,7 +1459,7 @@ export default function PracticePage() {
 
   // ── Saved progress (restored on load) ──
   const [savedProgress, setSavedProgress] = useState<number>(0);
-  const savedProgressRef = useRef<number>(0);   // always up-to-date, safe inside closures
+  const savedProgressRef = useRef<number>(0); // always up-to-date, safe inside closures
   const playerReadyRef = useRef<boolean>(false); // true once onReady fired
   const progressSavedRef = useRef(false);
   const durationRef = useRef<number>(0); // total video duration in seconds
@@ -1120,9 +1468,12 @@ export default function PracticePage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    fetch(`http://localhost:5000/api/saved-video/${videoId}/progress-get`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    fetch(
+      `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${videoId}/progress-get`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    )
       .then((r) => r.json())
       .then((d) => {
         if (d.success && d.progressTime > 0) {
@@ -1135,29 +1486,42 @@ export default function PracticePage() {
 
   // If progress-get finishes AFTER player is already ready → seek now
   useEffect(() => {
-    if (savedProgress > 3 && playerReadyRef.current && playerRef.current?.seekTo) {
+    if (
+      savedProgress > 3 &&
+      playerReadyRef.current &&
+      playerRef.current?.seekTo
+    ) {
       playerRef.current.seekTo(savedProgress, true);
     }
   }, [savedProgress]);
 
   // Save progress to backend (called on unmount & periodically)
-  const saveProgressToBackend = useCallback((time: number, segment: string) => {
-    if (time < 3) return; // don't save if barely started
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    const payload = JSON.stringify({
-      progressTime: Math.floor(time),
-      progressSegment: segment,
-      duration: durationRef.current,
-    });
-    // Always use fetch + keepalive — sendBeacon cannot send Authorization headers
-    fetch(`http://localhost:5000/api/saved-video/${videoId}/progress`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: payload,
-      keepalive: true,
-    }).catch(() => {});
-  }, [videoId]);
+  const saveProgressToBackend = useCallback(
+    (time: number, segment: string) => {
+      if (time < 3) return; // don't save if barely started
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      const payload = JSON.stringify({
+        progressTime: Math.floor(time),
+        progressSegment: segment,
+        duration: durationRef.current,
+      });
+      // Always use fetch + keepalive — sendBeacon cannot send Authorization headers
+      fetch(
+        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${videoId}/progress`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: payload,
+          keepalive: true,
+        },
+      ).catch(() => {});
+    },
+    [videoId],
+  );
 
   // ── Transcript ──
   const [transcript, setTranscript] = useState<TranscriptItem[]>([]);
@@ -1167,7 +1531,9 @@ export default function PracticePage() {
   useEffect(() => {
     setTranscriptLoading(true);
     setTranscriptError(null);
-    fetch(`http://localhost:5000/api/video/transcript/${videoId}`)
+    fetch(
+      `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/video/transcript/${videoId}`,
+    )
       .then((r) => r.json())
       .then((data) => {
         if (data.success) setTranscript(data.transcript);
@@ -1179,14 +1545,20 @@ export default function PracticePage() {
     // Record practice session — updates lastPracticed & study streak
     const token = localStorage.getItem("token");
     if (token) {
-      fetch(`http://localhost:5000/api/saved-video/${videoId}/practice`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          title,
-          thumbnail: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
-        }),
-      }).catch(() => {});
+      fetch(
+        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/saved-video/${videoId}/practice`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title,
+            thumbnail: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
+          }),
+        },
+      ).catch(() => {});
     }
   }, [videoId]);
 
@@ -1196,9 +1568,13 @@ export default function PracticePage() {
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [studyIndex, setStudyIndex] = useState(-1);
-  const [completedSegments, setCompletedSegments] = useState<Set<number>>(new Set());
+  const [completedSegments, setCompletedSegments] = useState<Set<number>>(
+    new Set(),
+  );
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const autoSaveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoSaveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
   const prevActiveRef = useRef(-1);
   const transcriptRef = useRef<TranscriptItem[]>([]);
   transcriptRef.current = transcript;
@@ -1211,13 +1587,17 @@ export default function PracticePage() {
         const tr = transcriptRef.current;
         let seg = "";
         for (let i = tr.length - 1; i >= 0; i--) {
-          if (parseTime(tr[i].time) <= ct) { seg = tr[i].text; break; }
+          if (parseTime(tr[i].time) <= ct) {
+            seg = tr[i].text;
+            break;
+          }
         }
         saveProgressToBackend(ct, seg);
       }
     }, 10000);
     return () => {
-      if (autoSaveIntervalRef.current) clearInterval(autoSaveIntervalRef.current);
+      if (autoSaveIntervalRef.current)
+        clearInterval(autoSaveIntervalRef.current);
     };
   }, [saveProgressToBackend]);
 
@@ -1264,7 +1644,14 @@ export default function PracticePage() {
       if (playerRef.current?.destroy) playerRef.current.destroy();
       playerRef.current = new window.YT.Player("yt-player", {
         videoId,
-        playerVars: { autoplay: 1, rel: 0, modestbranding: 1, cc_load_policy: 0, cc_lang_pref: "none", iv_load_policy: 3 },
+        playerVars: {
+          autoplay: 1,
+          rel: 0,
+          modestbranding: 1,
+          cc_load_policy: 0,
+          cc_lang_pref: "none",
+          iv_load_policy: 3,
+        },
         events: {
           onReady: () => {
             playerReadyRef.current = true;
@@ -1306,7 +1693,10 @@ export default function PracticePage() {
         const tr = transcriptRef.current;
         let seg = "";
         for (let i = tr.length - 1; i >= 0; i--) {
-          if (parseTime(tr[i].time) <= ct) { seg = tr[i].text; break; }
+          if (parseTime(tr[i].time) <= ct) {
+            seg = tr[i].text;
+            break;
+          }
         }
         saveProgressToBackend(ct, seg);
       }
@@ -1319,18 +1709,21 @@ export default function PracticePage() {
   }, -1);
 
   // Seek (left panel click)
-  const handleSeek = useCallback((seconds: number) => {
-    if (!playerRef.current?.seekTo) return;
-    playerRef.current.seekTo(seconds, true);
-    playerRef.current?.playVideo?.();
-    // Find which segment this time belongs to and set as study segment
-    let target = 0;
-    for (let i = 0; i < transcript.length; i++) {
-      if (parseTime(transcript[i].time) <= seconds) target = i;
-    }
-    setStudyIndex(target);
-    prevActiveRef.current = target; // treat as starting fresh from this segment
-  }, [transcript]);
+  const handleSeek = useCallback(
+    (seconds: number) => {
+      if (!playerRef.current?.seekTo) return;
+      playerRef.current.seekTo(seconds, true);
+      playerRef.current?.playVideo?.();
+      // Find which segment this time belongs to and set as study segment
+      let target = 0;
+      for (let i = 0; i < transcript.length; i++) {
+        if (parseTime(transcript[i].time) <= seconds) target = i;
+      }
+      setStudyIndex(target);
+      prevActiveRef.current = target; // treat as starting fresh from this segment
+    },
+    [transcript],
+  );
 
   // Dictation controls
   const handlePlayPause = useCallback(() => {
@@ -1364,13 +1757,16 @@ export default function PracticePage() {
     // Don’t auto-advance — DictationPanel will show translation, user clicks Tiếp theo
   }, []);
   // Review a completed segment from the left panel (no auto-play)
-  const handleReview = useCallback((idx: number) => {
-    setStudyIndex(idx);
-    prevActiveRef.current = idx;
-    if (transcript[idx]) {
-      playerRef.current?.seekTo?.(parseTime(transcript[idx].time), true);
-    }
-  }, [transcript]);
+  const handleReview = useCallback(
+    (idx: number) => {
+      setStudyIndex(idx);
+      prevActiveRef.current = idx;
+      if (transcript[idx]) {
+        playerRef.current?.seekTo?.(parseTime(transcript[idx].time), true);
+      }
+    },
+    [transcript],
+  );
   return (
     <div className="flex h-full bg-gradient-to-br from-[#3E2465] to-[#1C1642]">
       {/* ── LEFT PANEL ── */}
@@ -1411,7 +1807,9 @@ export default function PracticePage() {
         {/* Bottom bar */}
         <div className="flex-shrink-0 bg-[#1C1132]/80 border-t border-white/10 px-6 py-3 flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
-          <p className="text-white text-sm font-medium line-clamp-1 flex-1">{title}</p>
+          <p className="text-white text-sm font-medium line-clamp-1 flex-1">
+            {title}
+          </p>
           <span className="text-xs text-gray-500 flex items-center gap-1">
             <MessageSquare className="w-3 h-3" /> Chế độ luyện tập
           </span>

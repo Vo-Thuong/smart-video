@@ -67,7 +67,11 @@ const transcribeWithGemini = async (audioPath) => {
     displayName: "audio_transcript",
   });
 
-  const MODELS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
+  const MODELS = [
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+  ];
   const PROMPT = `Transcribe this audio. Output ONLY lines in this exact format:\nM:SS sentence text here\nwhere M:SS is the start time (e.g. 0:00, 1:23, 12:05). Split into natural sentences of 5-15 words. No headers, no explanation, just the timestamped lines.`;
 
   try {
@@ -76,7 +80,12 @@ const transcribeWithGemini = async (audioPath) => {
       try {
         const model = genAI.getGenerativeModel({ model: modelName });
         const result = await model.generateContent([
-          { fileData: { mimeType: uploadResult.file.mimeType, fileUri: uploadResult.file.uri } },
+          {
+            fileData: {
+              mimeType: uploadResult.file.mimeType,
+              fileUri: uploadResult.file.uri,
+            },
+          },
           { text: PROMPT },
         ]);
         const text = result.response.text();
@@ -85,7 +94,9 @@ const transcribeWithGemini = async (audioPath) => {
           const match = line.match(/^(\d+:\d{2})\s+(.+)$/);
           if (match) transcript.push({ time: match[1], text: match[2].trim() });
         }
-        console.log(`✅ Transcript OK — model: ${modelName} (${transcript.length} segments)`);
+        console.log(
+          `✅ Transcript OK — model: ${modelName} (${transcript.length} segments)`,
+        );
         return transcript;
       } catch (err) {
         console.warn(`Model ${modelName} failed: ${err.message.slice(0, 120)}`);
@@ -110,9 +121,12 @@ const transcribeWithDeepgram = async (audioPath) => {
     "https://api.deepgram.com/v1/listen?punctuate=true&utterances=true&model=nova-3&language=en",
     {
       method: "POST",
-      headers: { Authorization: `Token ${apiKey}`, "Content-Type": "audio/mpeg" },
+      headers: {
+        Authorization: `Token ${apiKey}`,
+        "Content-Type": "audio/mpeg",
+      },
       body: audioData,
-    }
+    },
   );
 
   if (!response.ok) {
@@ -124,7 +138,10 @@ const transcribeWithDeepgram = async (audioPath) => {
   const utterances = data.results?.utterances || [];
   const transcript = utterances.map((utt) => {
     const s = Math.floor(utt.start);
-    return { time: `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`, text: utt.transcript.trim() };
+    return {
+      time: `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`,
+      text: utt.transcript.trim(),
+    };
   });
 
   console.log(`✅ Transcript OK — Deepgram (${transcript.length} segments)`);
@@ -233,7 +250,9 @@ const downloadVideo = async (req, res) => {
 // ─── Upload local video from user's machine ──────────────────────────────────
 const uploadLocalVideo = async (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ success: false, message: "Không có file video" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Không có file video" });
   }
 
   const { originalname, filename, path: filePath } = req.file;
@@ -246,7 +265,8 @@ const uploadLocalVideo = async (req, res) => {
 
   // Extract thumbnail
   const thumbnailDir = path.join(__dirname, "../../uploads/thumbnails");
-  if (!fs.existsSync(thumbnailDir)) fs.mkdirSync(thumbnailDir, { recursive: true });
+  if (!fs.existsSync(thumbnailDir))
+    fs.mkdirSync(thumbnailDir, { recursive: true });
   const thumbnailFilename = `${path.parse(filename).name}.jpg`;
   const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
   const thumbnailUrl = `/uploads/thumbnails/${thumbnailFilename}`;
@@ -298,7 +318,9 @@ const uploadLocalVideo = async (req, res) => {
     });
   } catch (dbErr) {
     console.error("DB save error:", dbErr);
-    res.status(500).json({ success: false, message: "Lỗi lưu video: " + dbErr.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi lưu video: " + dbErr.message });
   }
 };
 
@@ -307,13 +329,15 @@ const getLocalVideo = async (req, res) => {
   try {
     const video = await Video.findById(req.params.id);
     if (!video || !video.isLocal) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy video" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy video" });
     }
     res.json({
       success: true,
       id: video._id,
       title: video.title,
-      videoUrl: `http://localhost:5000${video.youtubeUrl}`,
+      videoUrl: `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${video.youtubeUrl}`,
       transcript: video.transcript,
     });
   } catch (err) {
@@ -326,7 +350,9 @@ const generateLocalThumbnail = async (req, res) => {
   try {
     const video = await Video.findOne({ _id: req.params.id, isLocal: true });
     if (!video) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy video" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy video" });
     }
 
     // Return existing thumbnail if already generated
@@ -336,16 +362,24 @@ const generateLocalThumbnail = async (req, res) => {
 
     const filename = video.localFilename;
     if (!filename) {
-      return res.status(400).json({ success: false, message: "Không có thông tin file video" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Không có thông tin file video" });
     }
 
     const videoPath = path.join(__dirname, "../../uploads/videos", filename);
     if (!fs.existsSync(videoPath)) {
-      return res.status(404).json({ success: false, message: "File video không tồn tại trên server" });
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "File video không tồn tại trên server",
+        });
     }
 
     const thumbnailDir = path.join(__dirname, "../../uploads/thumbnails");
-    if (!fs.existsSync(thumbnailDir)) fs.mkdirSync(thumbnailDir, { recursive: true });
+    if (!fs.existsSync(thumbnailDir))
+      fs.mkdirSync(thumbnailDir, { recursive: true });
     const thumbnailFilename = `${path.parse(filename).name}.jpg`;
     const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
     const thumbnailUrl = `/uploads/thumbnails/${thumbnailFilename}`;
@@ -361,6 +395,11 @@ const generateLocalThumbnail = async (req, res) => {
   }
 };
 
-module.exports = { streamVideo, downloadVideo, videoUpload, uploadLocalVideo, getLocalVideo, generateLocalThumbnail };
-
-
+module.exports = {
+  streamVideo,
+  downloadVideo,
+  videoUpload,
+  uploadLocalVideo,
+  getLocalVideo,
+  generateLocalThumbnail,
+};

@@ -2,7 +2,18 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Play, BookOpen, Loader2, RefreshCw, Sparkles, Crown, Lock, Search, X, ArrowLeft } from "lucide-react";
+import {
+  Play,
+  BookOpen,
+  Loader2,
+  RefreshCw,
+  Sparkles,
+  Crown,
+  Lock,
+  Search,
+  X,
+  ArrowLeft,
+} from "lucide-react";
 import { useLang } from "@/lib/i18n";
 
 const FREE_LIMIT = 8;
@@ -52,17 +63,27 @@ export function VideoRecommendations() {
 
   const limit = isPro ? PRO_LIMIT : FREE_LIMIT;
 
-  const fetchRecommendations = async (isRefresh = false, overrideLimit?: number) => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!token) { setLoading(false); return; }
+  const fetchRecommendations = async (
+    isRefresh = false,
+    overrideLimit?: number,
+  ) => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     setError("");
     const effectiveLimit = overrideLimit ?? limit;
     try {
-      const res = await fetch(`http://localhost:5000/api/recommendations?limit=${effectiveLimit}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recommendations?limit=${effectiveLimit}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       const data = await res.json();
       if (data.success) setVideos(data.videos);
       else setError(r.loadError);
@@ -83,7 +104,7 @@ export function VideoRecommendations() {
     } catch {}
     setIsPro(pro);
     fetchRecommendations(false, pro ? PRO_LIMIT : FREE_LIMIT);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSearch = async () => {
@@ -99,8 +120,8 @@ export function VideoRecommendations() {
     setShowQueries(false);
     try {
       const res = await fetch(
-        `http://localhost:5000/api/recommendations/search?q=${encodeURIComponent(q)}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recommendations/search?q=${encodeURIComponent(q)}`,
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       const data = await res.json();
       if (data.success) {
@@ -138,7 +159,11 @@ export function VideoRecommendations() {
       <div className="relative aspect-video bg-[#2D1F47] flex-shrink-0">
         {video.thumbnail ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+          <img
+            src={video.thumbnail}
+            alt={video.title}
+            className="w-full h-full object-cover"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Play className="w-8 h-8 text-gray-600" />
@@ -160,12 +185,18 @@ export function VideoRecommendations() {
         )}
       </div>
       <div className="p-3 flex flex-col flex-1 gap-1.5">
-        <p className="text-white text-xs font-medium line-clamp-2 flex-1 leading-snug">{video.title}</p>
+        <p className="text-white text-xs font-medium line-clamp-2 flex-1 leading-snug">
+          {video.title}
+        </p>
         {video.channel && (
           <p className="text-gray-500 text-[11px] truncate">{video.channel}</p>
         )}
         <button
-          onClick={() => router.push(`/dashboard/practice/${video.youtubeId}?title=${encodeURIComponent(video.title)}`)}
+          onClick={() =>
+            router.push(
+              `/dashboard/practice/${video.youtubeId}?title=${encodeURIComponent(video.title)}`,
+            )
+          }
           className="mt-1 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-[#00E5FF]/10 hover:bg-[#00E5FF]/20 text-[#00E5FF] text-xs font-medium transition-colors"
         >
           <BookOpen className="w-3.5 h-3.5" />
@@ -190,23 +221,30 @@ export function VideoRecommendations() {
           ) : null}
           <h2 className="text-xl font-bold text-white flex items-center gap-2 truncate">
             <Sparkles className="w-5 h-5 text-[#00E5FF] flex-shrink-0" />
-            {searchMode
-              ? searchedKeyword
-                ? <>{r.searchResults} <span className="text-[#00E5FF]">{searchedKeyword}</span></>
-                : r.searchTitle
-              : r.title
-            }
+            {searchMode ? (
+              searchedKeyword ? (
+                <>
+                  {r.searchResults}{" "}
+                  <span className="text-[#00E5FF]">{searchedKeyword}</span>
+                </>
+              ) : (
+                r.searchTitle
+              )
+            ) : (
+              r.title
+            )}
           </h2>
           {!searchMode && (
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 ${
-              isPro
-                ? "bg-amber-400/15 text-amber-300 border-amber-400/30"
-                : "bg-white/8 text-white/40 border-white/10"
-            }`}>
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 ${
+                isPro
+                  ? "bg-amber-400/15 text-amber-300 border-amber-400/30"
+                  : "bg-white/8 text-white/40 border-white/10"
+              }`}
+            >
               {isPro
                 ? r.proLabel.replace("{n}", String(PRO_LIMIT))
-                : r.freeLabel.replace("{n}", String(FREE_LIMIT))
-              }
+                : r.freeLabel.replace("{n}", String(FREE_LIMIT))}
             </span>
           )}
         </div>
@@ -240,7 +278,9 @@ export function VideoRecommendations() {
               className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition disabled:opacity-40"
               title={r.refreshTooltip}
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+              />
               {r.refresh}
             </button>
           )}
@@ -264,7 +304,10 @@ export function VideoRecommendations() {
                 className="flex-1 bg-transparent border-none outline-none text-white text-sm placeholder:text-gray-500 focus:ring-0"
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="text-gray-600 hover:text-white">
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="text-gray-600 hover:text-white"
+                >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -274,7 +317,11 @@ export function VideoRecommendations() {
               disabled={searching || !searchQuery.trim()}
               className="px-5 h-11 rounded-xl bg-gradient-to-r from-[#7c3aed] to-[#6366f1] hover:from-[#6d28d9] hover:to-[#4f46e5] disabled:opacity-40 text-white font-semibold text-sm flex items-center gap-2 transition-all flex-shrink-0"
             >
-              {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              {searching ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Search className="w-4 h-4" />
+              )}
               {searching ? r.searching : r.search}
             </button>
           </div>
@@ -288,7 +335,9 @@ export function VideoRecommendations() {
               >
                 <Sparkles className="w-3 h-3 text-[#a78bfa]" />
                 {r.aiQueries.replace("{n}", String(queriesUsed.length))}
-                <span className="text-[#a78bfa]">{showQueries ? "▲" : "▼"}</span>
+                <span className="text-[#a78bfa]">
+                  {showQueries ? "▲" : "▼"}
+                </span>
               </button>
               {showQueries && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -309,10 +358,14 @@ export function VideoRecommendations() {
           {searching ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-500">
               <Loader2 className="w-7 h-7 animate-spin text-[#a78bfa]" />
-              <p className="text-sm">AI is generating queries and searching YouTube...</p>
+              <p className="text-sm">
+                AI is generating queries and searching YouTube...
+              </p>
             </div>
           ) : searchError ? (
-            <div className="text-center py-10 text-red-400 text-sm">{searchError}</div>
+            <div className="text-center py-10 text-red-400 text-sm">
+              {searchError}
+            </div>
           ) : searchResults.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
               {searchResults.map((video) => (
@@ -328,10 +381,19 @@ export function VideoRecommendations() {
               <Search className="w-10 h-10 mx-auto mb-3 text-[#a78bfa]/30" />
               <p>Enter a topic and AI will find matching videos on YouTube</p>
               <div className="flex flex-wrap gap-2 justify-center mt-4">
-                {["job interview", "IELTS listening", "travel English", "business email", "daily conversation"].map((s) => (
+                {[
+                  "job interview",
+                  "IELTS listening",
+                  "travel English",
+                  "business email",
+                  "daily conversation",
+                ].map((s) => (
                   <button
                     key={s}
-                    onClick={() => { setSearchQuery(s); setTimeout(handleSearch, 50); }}
+                    onClick={() => {
+                      setSearchQuery(s);
+                      setTimeout(handleSearch, 50);
+                    }}
                     className="text-xs px-3 py-1.5 rounded-full bg-[#2D1F47] border border-white/10 text-gray-400 hover:text-[#c4b5fd] hover:border-[#a78bfa]/40 transition-colors"
                   >
                     {s}
@@ -352,10 +414,15 @@ export function VideoRecommendations() {
               <p className="text-sm">AI is finding videos for you...</p>
             </div>
           ) : error ? (
-            <div className="text-center py-10 text-gray-500 text-sm">{error}</div>
+            <div className="text-center py-10 text-gray-500 text-sm">
+              {error}
+            </div>
           ) : videos.length === 0 ? (
             <div className="text-center py-10 text-gray-500 text-sm">
-              <p>No suggestions yet. Complete the onboarding survey to get personalized recommendations.</p>
+              <p>
+                No suggestions yet. Complete the onboarding survey to get
+                personalized recommendations.
+              </p>
             </div>
           ) : (
             <>
@@ -396,4 +463,3 @@ export function VideoRecommendations() {
     </section>
   );
 }
-

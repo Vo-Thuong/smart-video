@@ -1,0 +1,20 @@
+name: Deploy Backend to Render
+
+on:
+  push:
+    branches: [main, dev-rin] # Thay bằng master nếu bạn dùng nhánh master
+    paths:
+      - "backend/**" # Chỉ chạy khi có thay đổi trong thư mục backend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Trigger Render Deploy
+        run: |
+          echo "Kích hoạt Render Deploy Hook cho Backend..."
+          curl -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}"

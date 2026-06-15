@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { GoogleProvider } from "@/components/auth/google-provider";
 import { LanguageProvider } from "@/lib/i18n";
+import './patch-api';
 
 export const metadata: Metadata = {
   title: "Smart Video",

@@ -2,7 +2,14 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, FileVideo, Loader2, CheckCircle2, AlertCircle, BookOpen } from "lucide-react";
+import {
+  Upload,
+  FileVideo,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  BookOpen,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/lib/i18n";
 
@@ -146,7 +153,9 @@ export function UploadVideoCard() {
           <div className="text-center">
             <p className="text-sm font-medium text-white">
               {d.dropText}{" "}
-              <span className="text-[#7C3AED] underline underline-offset-2">{d.browse}</span>
+              <span className="text-[#7C3AED] underline underline-offset-2">
+                {d.browse}
+              </span>
             </p>
             <p className="mt-1 text-xs text-gray-500">{d.supportedFormats}</p>
           </div>
@@ -207,7 +216,7 @@ export function UploadVideoCard() {
           {/* Video preview */}
           <div className="relative w-full aspect-video bg-black">
             <video
-              src={`http://localhost:5000${result.videoUrl}`}
+              src={`http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${result.videoUrl}`}
               className="absolute inset-0 w-full h-full object-contain"
               controls={false}
               muted
@@ -219,7 +228,9 @@ export function UploadVideoCard() {
           {/* Action panel */}
           <div className="p-4 flex items-center gap-4 flex-wrap">
             <div className="flex-1 min-w-0">
-              <p className="text-white font-medium text-sm line-clamp-1">{result.title}</p>
+              <p className="text-white font-medium text-sm line-clamp-1">
+                {result.title}
+              </p>
               {result.transcriptError ? (
                 <p className="text-xs text-yellow-400 mt-0.5 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" /> {result.transcriptError}
@@ -242,7 +253,7 @@ export function UploadVideoCard() {
               <Button
                 onClick={() =>
                   router.push(
-                    `/dashboard/practice/local/${result.id}?title=${encodeURIComponent(result.title)}`
+                    `/dashboard/practice/local/${result.id}?title=${encodeURIComponent(result.title)}`,
                   )
                 }
                 className="rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-white gap-2 h-9 px-5"
