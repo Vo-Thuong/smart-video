@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Users, UserPlus, UserCheck, UserX, Search, Clock } from "lucide-react";
 import { useLang } from "@/lib/i18n";
+import api from "@/lib/api";
 
 const API = "http://localhost:5000/api";
 
@@ -10,7 +11,10 @@ function getToken() {
 }
 
 function authHeaders() {
-  return { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` };
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${getToken()}`,
+  };
 }
 
 interface UserInfo {
@@ -29,14 +33,26 @@ interface FriendRequest {
 
 function Avatar({ user, size = 40 }: { user: UserInfo; size?: number }) {
   const initials = user.fullname?.charAt(0).toUpperCase() || "?";
-  const src = user.avatar?.startsWith("http") ? user.avatar : user.avatar ? `http://localhost:5000${user.avatar}` : null;
+  const src = user.avatar?.startsWith("http")
+    ? user.avatar
+    : user.avatar
+      ? `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
+      : null;
 
   return (
     <div
       style={{ width: size, height: size }}
       className="rounded-full overflow-hidden flex-shrink-0 bg-blue-500 flex items-center justify-center text-white font-bold text-sm border-2 border-border"
     >
-      {src ? <img src={src} alt={user.fullname} className="w-full h-full object-cover" /> : initials}
+      {src ? (
+        <img
+          src={src}
+          alt={user.fullname}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        initials
+      )}
     </div>
   );
 }
@@ -52,7 +68,13 @@ function timeAgo(dateStr: string) {
 }
 
 /* ─────────────── Suggestion Card ─────────────── */
-function SuggestionCard({ user, onSent }: { user: UserInfo; onSent: (id: string) => void }) {
+function SuggestionCard({
+  user,
+  onSent,
+}: {
+  user: UserInfo;
+  onSent: (id: string) => void;
+}) {
   const [state, setState] = useState<"idle" | "loading" | "sent">("idle");
   const { t } = useLang();
   const f = t.friends;
@@ -99,9 +121,13 @@ function SuggestionCard({ user, onSent }: { user: UserInfo; onSent: (id: string)
         {state === "loading" ? (
           <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
         ) : state === "sent" ? (
-          <><UserCheck size={15} /> {f.requestSent}</>
+          <>
+            <UserCheck size={15} /> {f.requestSent}
+          </>
         ) : (
-          <><UserPlus size={15} /> {f.addFriend}</>
+          <>
+            <UserPlus size={15} /> {f.addFriend}
+          </>
         )}
       </button>
     </div>
@@ -146,9 +172,15 @@ function RequestCard({
     <div className="bg-card border border-border rounded-2xl p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
       <Avatar user={request.sender} size={52} />
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-foreground text-sm">{request.sender.fullname}</p>
-        <p className="text-xs text-muted-foreground">@{request.sender.username}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{timeAgo(request.createdAt)}</p>
+        <p className="font-semibold text-foreground text-sm">
+          {request.sender.fullname}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          @{request.sender.username}
+        </p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {timeAgo(request.createdAt)}
+        </p>
       </div>
       <div className="flex gap-2 flex-shrink-0">
         <button
@@ -181,7 +213,13 @@ function RequestCard({
 }
 
 /* ─────────────── Friend Card ─────────────── */
-function FriendCard({ user, onUnfriend }: { user: UserInfo; onUnfriend: (id: string) => void }) {
+function FriendCard({
+  user,
+  onUnfriend,
+}: {
+  user: UserInfo;
+  onUnfriend: (id: string) => void;
+}) {
   const [loading, setLoading] = useState(false);
   const { t } = useLang();
   const f = t.friends;
@@ -189,7 +227,10 @@ function FriendCard({ user, onUnfriend }: { user: UserInfo; onUnfriend: (id: str
   async function unfriend() {
     if (!confirm(f.unfriendConfirm.replace("{name}", user.fullname))) return;
     setLoading(true);
-    await fetch(`${API}/friends/${user._id}`, { method: "DELETE", headers: authHeaders() });
+    await fetch(`${API}/friends/${user._id}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
     onUnfriend(user._id);
     setLoading(false);
   }
@@ -214,7 +255,9 @@ function FriendCard({ user, onUnfriend }: { user: UserInfo; onUnfriend: (id: str
 
 /* ─────────────── Main Page ─────────────── */
 export default function FriendsPage() {
-  const [tab, setTab] = useState<"suggestions" | "requests" | "friends">("suggestions");
+  const [tab, setTab] = useState<"suggestions" | "requests" | "friends">(
+    "suggestions",
+  );
   const [suggestions, setSuggestions] = useState<UserInfo[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [friends, setFriends] = useState<UserInfo[]>([]);
@@ -227,9 +270,15 @@ export default function FriendsPage() {
     setLoading(true);
     try {
       const [s, r, f] = await Promise.all([
-        fetch(`${API}/friends/suggestions`, { headers: authHeaders() }).then((x) => x.json()),
-        fetch(`${API}/friends/requests`, { headers: authHeaders() }).then((x) => x.json()),
-        fetch(`${API}/friends/list`, { headers: authHeaders() }).then((x) => x.json()),
+        fetch(`${API}/friends/suggestions`, { headers: authHeaders() }).then(
+          (x) => x.json(),
+        ),
+        fetch(`${API}/friends/requests`, { headers: authHeaders() }).then((x) =>
+          x.json(),
+        ),
+        fetch(`${API}/friends/list`, { headers: authHeaders() }).then((x) =>
+          x.json(),
+        ),
       ]);
       setSuggestions(Array.isArray(s) ? s : []);
       setRequests(Array.isArray(r) ? r : []);
@@ -239,7 +288,9 @@ export default function FriendsPage() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   function removeSuggestion(id: string) {
     setSuggestions((prev) => prev.filter((u) => u._id !== id));
@@ -261,12 +312,22 @@ export default function FriendsPage() {
   const filteredFriends = friends.filter(
     (f) =>
       f.fullname.toLowerCase().includes(search.toLowerCase()) ||
-      f.username.toLowerCase().includes(search.toLowerCase())
+      f.username.toLowerCase().includes(search.toLowerCase()),
   );
 
   const tabs = [
-    { key: "suggestions", label: f.tabSuggestions, icon: UserPlus, count: suggestions.length },
-    { key: "requests", label: f.tabRequests, icon: UserCheck, count: requests.length },
+    {
+      key: "suggestions",
+      label: f.tabSuggestions,
+      icon: UserPlus,
+      count: suggestions.length,
+    },
+    {
+      key: "requests",
+      label: f.tabRequests,
+      icon: UserCheck,
+      count: requests.length,
+    },
     { key: "friends", label: f.tabFriends, icon: Users, count: friends.length },
   ] as const;
 
@@ -300,7 +361,9 @@ export default function FriendsPage() {
             {count > 0 && (
               <span
                 className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${
-                  key === "requests" ? "bg-red-500 text-white" : "bg-secondary text-muted-foreground"
+                  key === "requests"
+                    ? "bg-red-500 text-white"
+                    : "bg-secondary text-muted-foreground"
                 }`}
               >
                 {count}
@@ -328,7 +391,11 @@ export default function FriendsPage() {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {suggestions.map((user) => (
-                    <SuggestionCard key={user._id} user={user} onSent={removeSuggestion} />
+                    <SuggestionCard
+                      key={user._id}
+                      user={user}
+                      onSent={removeSuggestion}
+                    />
                   ))}
                 </div>
               )}
@@ -374,7 +441,9 @@ export default function FriendsPage() {
               {filteredFriends.length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                  <p className="font-medium">{friends.length === 0 ? f.noFriends : f.noResults}</p>
+                  <p className="font-medium">
+                    {friends.length === 0 ? f.noFriends : f.noResults}
+                  </p>
                   <p className="text-sm mt-1">
                     {friends.length === 0 ? f.noFriendsHint : f.noResultsHint}
                   </p>
@@ -390,7 +459,11 @@ export default function FriendsPage() {
               ) : (
                 <div className="space-y-3">
                   {filteredFriends.map((user) => (
-                    <FriendCard key={user._id} user={user} onUnfriend={handleUnfriend} />
+                    <FriendCard
+                      key={user._id}
+                      user={user}
+                      onUnfriend={handleUnfriend}
+                    />
                   ))}
                 </div>
               )}

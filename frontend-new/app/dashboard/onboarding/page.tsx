@@ -8,11 +8,31 @@ import { ChevronRight, ChevronLeft, Check, Loader2 } from "lucide-react";
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const ENGLISH_LEVELS = [
-  { value: "beginner", label: "Mới bắt đầu", desc: "Chưa biết gì hoặc biết rất ít" },
-  { value: "elementary", label: "Cơ bản", desc: "Biết một số từ và câu đơn giản" },
-  { value: "intermediate", label: "Trung cấp", desc: "Có thể giao tiếp thông thường" },
-  { value: "upper-intermediate", label: "Trên trung cấp", desc: "Khá tự tin khi giao tiếp" },
-  { value: "advanced", label: "Nâng cao", desc: "Giao tiếp tốt, muốn hoàn thiện hơn" },
+  {
+    value: "beginner",
+    label: "Mới bắt đầu",
+    desc: "Chưa biết gì hoặc biết rất ít",
+  },
+  {
+    value: "elementary",
+    label: "Cơ bản",
+    desc: "Biết một số từ và câu đơn giản",
+  },
+  {
+    value: "intermediate",
+    label: "Trung cấp",
+    desc: "Có thể giao tiếp thông thường",
+  },
+  {
+    value: "upper-intermediate",
+    label: "Trên trung cấp",
+    desc: "Khá tự tin khi giao tiếp",
+  },
+  {
+    value: "advanced",
+    label: "Nâng cao",
+    desc: "Giao tiếp tốt, muốn hoàn thiện hơn",
+  },
 ];
 
 const GOALS = [
@@ -170,12 +190,18 @@ export default function OnboardingPage() {
 
   const handleSubmit = async () => {
     const token = localStorage.getItem("token");
-    if (!token) { router.push("/auth/signin"); return; }
+    if (!token) {
+      router.push("/auth/signin");
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch("http://localhost:5000/api/auth/survey", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           age: Number(age),
           englishLevel,
@@ -191,7 +217,10 @@ export default function OnboardingPage() {
         const stored = localStorage.getItem("user");
         if (stored) {
           const u = JSON.parse(stored);
-          localStorage.setItem("user", JSON.stringify({ ...u, onboardingCompleted: true }));
+          localStorage.setItem(
+            "user",
+            JSON.stringify({ ...u, onboardingCompleted: true }),
+          );
         }
         router.push("/dashboard");
       }
@@ -208,8 +237,12 @@ export default function OnboardingPage() {
         {/* Progress */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">Bước {step + 1} / {STEPS.length}</span>
-            <span className="text-sm text-[#00E5FF]">{Math.round(((step + 1) / STEPS.length) * 100)}%</span>
+            <span className="text-sm text-gray-400">
+              Bước {step + 1} / {STEPS.length}
+            </span>
+            <span className="text-sm text-[#00E5FF]">
+              {Math.round(((step + 1) / STEPS.length) * 100)}%
+            </span>
           </div>
           <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
             <motion.div
@@ -240,8 +273,12 @@ export default function OnboardingPage() {
               exit={{ opacity: 0, x: -30 }}
               transition={{ duration: 0.25 }}
             >
-              <h2 className="text-2xl font-bold text-white mb-1">{currentStep.title}</h2>
-              <p className="text-gray-400 text-sm mb-6">{currentStep.subtitle}</p>
+              <h2 className="text-2xl font-bold text-white mb-1">
+                {currentStep.title}
+              </h2>
+              <p className="text-gray-400 text-sm mb-6">
+                {currentStep.subtitle}
+              </p>
 
               {/* ── Step 0: Age ── */}
               {step === 0 && (
@@ -276,7 +313,9 @@ export default function OnboardingPage() {
                     >
                       <div>
                         <p className="font-medium">{level.label}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{level.desc}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {level.desc}
+                        </p>
                       </div>
                       {englishLevel === level.value && (
                         <div className="w-5 h-5 rounded-full bg-[#00E5FF] flex items-center justify-center flex-shrink-0">
@@ -290,17 +329,29 @@ export default function OnboardingPage() {
 
               {/* ── Step 2: Goals ── */}
               {step === 2 && (
-                <MultiSelect options={GOALS} selected={goals} onChange={setGoals} />
+                <MultiSelect
+                  options={GOALS}
+                  selected={goals}
+                  onChange={setGoals}
+                />
               )}
 
               {/* ── Step 3: Interests ── */}
               {step === 3 && (
-                <MultiSelect options={INTERESTS} selected={interests} onChange={setInterests} />
+                <MultiSelect
+                  options={INTERESTS}
+                  selected={interests}
+                  onChange={setInterests}
+                />
               )}
 
               {/* ── Step 4: Learning style ── */}
               {step === 4 && (
-                <MultiSelect options={LEARNING_STYLES} selected={learningStyle} onChange={setLearningStyle} />
+                <MultiSelect
+                  options={LEARNING_STYLES}
+                  selected={learningStyle}
+                  onChange={setLearningStyle}
+                />
               )}
 
               {/* ── Step 5: Study time ── */}
@@ -344,11 +395,17 @@ export default function OnboardingPage() {
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#00E5FF] hover:bg-[#00BCCC] text-black font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               {submitting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Đang lưu...</>
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Đang lưu...
+                </>
               ) : isLast ? (
-                <><Check className="w-4 h-4" /> Hoàn thành</>
+                <>
+                  <Check className="w-4 h-4" /> Hoàn thành
+                </>
               ) : (
-                <>Tiếp theo <ChevronRight className="w-4 h-4" /></>
+                <>
+                  Tiếp theo <ChevronRight className="w-4 h-4" />
+                </>
               )}
             </button>
           </div>

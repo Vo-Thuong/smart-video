@@ -20,7 +20,12 @@ import {
   Bell,
 } from "lucide-react";
 
-type NavLink = { name: string; href: string; icon: React.ElementType; highlight?: boolean };
+type NavLink = {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+  highlight?: boolean;
+};
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -45,7 +50,12 @@ export function Sidebar() {
 
   const navLinksWithUpgrade = [
     ...navLinks,
-    { name: s.upgradeProLabel, href: "/dashboard/upgrade", icon: Crown, highlight: true },
+    {
+      name: s.upgradeProLabel,
+      href: "/dashboard/upgrade",
+      icon: Crown,
+      highlight: true,
+    },
   ];
 
   function handleLogout() {
@@ -81,9 +91,15 @@ export function Sidebar() {
         });
         if (!res.ok) return;
         const data = await res.json();
-        const lastSeen = parseInt(localStorage.getItem("notifications_last_seen") || "0", 10);
+        const lastSeen = parseInt(
+          localStorage.getItem("notifications_last_seen") || "0",
+          10,
+        );
         const newCount = Array.isArray(data)
-          ? data.filter((r: { createdAt: string }) => new Date(r.createdAt).getTime() > lastSeen).length
+          ? data.filter(
+              (r: { createdAt: string }) =>
+                new Date(r.createdAt).getTime() > lastSeen,
+            ).length
           : 0;
         setUnreadCount(newCount);
       } catch {}
@@ -117,7 +133,9 @@ export function Sidebar() {
       {/* ── Logo + Toggle ── */}
       <div className="relative flex items-center h-16 px-3 border-b border-white/8">
         {/* Logo — always visible, slides left when collapsed */}
-        <div className={`flex items-center gap-2.5 overflow-hidden transition-all duration-300 ${collapsed ? "w-0 opacity-0" : "w-full opacity-100"}`}>
+        <div
+          className={`flex items-center gap-2.5 overflow-hidden transition-all duration-300 ${collapsed ? "w-0 opacity-0" : "w-full opacity-100"}`}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/assets/image/logo/logo-smart-video.png"
@@ -153,7 +171,9 @@ export function Sidebar() {
       {/* ── Navigation ── */}
       <nav className="flex flex-col gap-0.5 p-2 flex-1 overflow-y-auto overflow-x-hidden scrollbar-none">
         {navLinksWithUpgrade.map(({ name, href, icon: Icon, highlight }) => {
-          const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+          const isActive =
+            pathname === href ||
+            (href !== "/dashboard" && pathname.startsWith(href));
           const isNotifications = href === "/dashboard/notifications";
           return (
             <Link
@@ -164,11 +184,12 @@ export function Sidebar() {
                 group relative flex items-center gap-3 px-2.5 py-2.5 rounded-xl
                 transition-all duration-200 select-none
                 ${collapsed ? "justify-center" : ""}
-                ${highlight && !isActive
-                  ? "text-amber-300 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/20"
-                  : isActive
-                  ? "bg-[#a78bfa]/15 text-[#c4b5fd] shadow-[inset_0_0_0_1px_rgba(167,139,250,0.2)]"
-                  : "text-white/50 hover:text-white hover:bg-white/8"
+                ${
+                  highlight && !isActive
+                    ? "text-amber-300 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/20"
+                    : isActive
+                      ? "bg-[#a78bfa]/15 text-[#c4b5fd] shadow-[inset_0_0_0_1px_rgba(167,139,250,0.2)]"
+                      : "text-white/50 hover:text-white hover:bg-white/8"
                 }
               `}
             >
@@ -221,13 +242,15 @@ export function Sidebar() {
 
               {/* Tooltip when collapsed */}
               {collapsed && (
-                <span className="
+                <span
+                  className="
                   pointer-events-none absolute left-full ml-3 z-50
                   px-2.5 py-1.5 rounded-lg text-xs font-medium
                   bg-[#1e1235] text-white border border-white/10 shadow-xl
                   opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0
                   transition-all duration-150 whitespace-nowrap
-                ">
+                "
+                >
                   {name}
                 </span>
               )}
@@ -260,13 +283,15 @@ export function Sidebar() {
             {s.landingPage}
           </span>
           {collapsed && (
-            <span className="
+            <span
+              className="
               pointer-events-none absolute left-full ml-3 z-50
               px-2.5 py-1.5 rounded-lg text-xs font-medium
               bg-[#1e1235] text-white border border-white/10 shadow-xl
               opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0
               transition-all duration-150 whitespace-nowrap
-            ">
+            "
+            >
               {s.landingPage}
             </span>
           )}
@@ -294,13 +319,15 @@ export function Sidebar() {
             {s.logout}
           </span>
           {collapsed && (
-            <span className="
+            <span
+              className="
               pointer-events-none absolute left-full ml-3 z-50
               px-2.5 py-1.5 rounded-lg text-xs font-medium
               bg-[#1e1235] text-white border border-white/10 shadow-xl
               opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0
               transition-all duration-150 whitespace-nowrap
-            ">
+            "
+            >
               {s.logout}
             </span>
           )}

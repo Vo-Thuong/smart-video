@@ -54,7 +54,12 @@ interface Post {
   thumbnail: string;
   sourceType: "saved" | "favorite" | "practiced";
   // vocab post fields
-  vocabWords?: { word: string; phonetic?: string; translation: string; example?: string }[];
+  vocabWords?: {
+    word: string;
+    phonetic?: string;
+    translation: string;
+    example?: string;
+  }[];
   visibility?: "public" | "friends";
   likesCount: number;
   likedByMe: boolean;
@@ -81,7 +86,10 @@ interface SavedVideo {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function timeAgo(iso: string, t: { justNow: string; mins: string; hrs: string; days: string }) {
+function timeAgo(
+  iso: string,
+  t: { justNow: string; mins: string; hrs: string; days: string },
+) {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return t.justNow;
@@ -93,18 +101,37 @@ function timeAgo(iso: string, t: { justNow: string; mins: string; hrs: string; d
   return new Date(iso).toLocaleDateString("en-US");
 }
 
-function sourceLabel(type: string, t: { liked: string; practiced: string; saved: string }) {
-  if (type === "favorite") return { text: t.liked, cls: "bg-red-500/15 text-red-400 border-red-500/30" };
-  if (type === "practiced") return { text: t.practiced, cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" };
-  return { text: t.saved, cls: "bg-[#00E5FF]/10 text-[#00E5FF] border-[#00E5FF]/30" };
+function sourceLabel(
+  type: string,
+  t: { liked: string; practiced: string; saved: string },
+) {
+  if (type === "favorite")
+    return {
+      text: t.liked,
+      cls: "bg-red-500/15 text-red-400 border-red-500/30",
+    };
+  if (type === "practiced")
+    return {
+      text: t.practiced,
+      cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+    };
+  return {
+    text: t.saved,
+    cls: "bg-[#00E5FF]/10 text-[#00E5FF] border-[#00E5FF]/30",
+  };
 }
 
 function Avatar({ user, size = 10 }: { user: Author; size?: number }) {
-  const initials = user.fullname.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  const initials = user.fullname
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
   const cls = `w-${size} h-${size} rounded-full object-cover flex-shrink-0`;
   if (user.avatar) {
     const src = user.avatar.startsWith("/uploads")
-      ? `http://localhost:5000${user.avatar}`
+      ? `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
       : user.avatar;
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={src} alt={user.fullname} className={cls} />;
@@ -156,7 +183,9 @@ function CommentSection({
     }
   }, [postId, token]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   async function sendComment(e: React.FormEvent) {
     e.preventDefault();
@@ -165,7 +194,10 @@ function CommentSection({
     try {
       const res = await fetch(`${API}/posts/${postId}/comments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ text }),
       });
       const data = await res.json();
@@ -206,7 +238,9 @@ function CommentSection({
       )}
 
       {loaded && comments.length === 0 && (
-        <p className="text-gray-500 text-sm text-center py-1">{p.comments.empty}</p>
+        <p className="text-gray-500 text-sm text-center py-1">
+          {p.comments.empty}
+        </p>
       )}
 
       <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
@@ -215,10 +249,16 @@ function CommentSection({
             <Avatar user={c.userId} size={8} />
             <div className="flex-1 min-w-0">
               <div className="bg-white/5 rounded-2xl px-3 py-2">
-                <p className="text-white text-xs font-semibold">{c.userId.fullname}</p>
-                <p className="text-gray-200 text-sm mt-0.5 break-words">{c.text}</p>
+                <p className="text-white text-xs font-semibold">
+                  {c.userId.fullname}
+                </p>
+                <p className="text-gray-200 text-sm mt-0.5 break-words">
+                  {c.text}
+                </p>
               </div>
-              <p className="text-gray-600 text-xs mt-1 pl-1">{timeAgo(c.createdAt, p.timeAgo)}</p>
+              <p className="text-gray-600 text-xs mt-1 pl-1">
+                {timeAgo(c.createdAt, p.timeAgo)}
+              </p>
             </div>
             {me?._id === c.userId._id && (
               <button
@@ -248,7 +288,11 @@ function CommentSection({
             disabled={!text.trim() || sending}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-[#00E5FF] disabled:opacity-40 hover:text-white transition"
           >
-            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {sending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
           </button>
         </div>
       </form>
@@ -259,12 +303,24 @@ function CommentSection({
 // ─── User Profile Modal ───────────────────────────────────────────────────────
 
 interface PublicUser {
-  _id: string; username: string; fullname: string; avatar?: string;
-  study_streak: number; total_points: number; is_premium: boolean; createdAt: string;
+  _id: string;
+  username: string;
+  fullname: string;
+  avatar?: string;
+  study_streak: number;
+  total_points: number;
+  is_premium: boolean;
+  createdAt: string;
 }
 interface PublicPost {
-  _id: string; postType?: string; caption?: string; title?: string;
-  thumbnail?: string; vocabWords?: unknown[]; likes: string[]; createdAt: string;
+  _id: string;
+  postType?: string;
+  caption?: string;
+  title?: string;
+  thumbnail?: string;
+  vocabWords?: unknown[];
+  likes: string[];
+  createdAt: string;
 }
 
 function timeAgoDays(iso: string) {
@@ -276,34 +332,64 @@ function timeAgoDays(iso: string) {
   return m < 12 ? `${m} tháng trước` : `${Math.floor(m / 12)} năm trước`;
 }
 
-function UserProfileModal({ userId, meId, onClose }: { userId: string; meId: string; onClose: () => void }) {
+function UserProfileModal({
+  userId,
+  meId,
+  onClose,
+}: {
+  userId: string;
+  meId: string;
+  onClose: () => void;
+}) {
   const router = useRouter();
   const [user, setUser] = useState<PublicUser | null>(null);
-  const [stats, setStats] = useState<{ videosCount: number; vocabTotal: number } | null>(null);
+  const [stats, setStats] = useState<{
+    videosCount: number;
+    vocabTotal: number;
+  } | null>(null);
   const [posts, setPosts] = useState<PublicPost[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("token") ?? "";
     setLoading(true);
-    fetch(`${API}/auth/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API}/auth/users/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((r) => r.json())
-      .then((d) => { if (d.success) { setUser(d.user); setStats(d.stats); setPosts(d.posts); } })
+      .then((d) => {
+        if (d.success) {
+          setUser(d.user);
+          setStats(d.stats);
+          setPosts(d.posts);
+        }
+      })
       .finally(() => setLoading(false));
   }, [userId]);
 
   // Close on Escape
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
   const isSelf = userId === meId;
   const avatarSrc = user?.avatar
-    ? user.avatar.startsWith("http") ? user.avatar : `http://localhost:5000${user.avatar}`
+    ? user.avatar.startsWith("http")
+      ? user.avatar
+      : `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
     : null;
-  const initials = user ? user.fullname.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) : "?";
+  const initials = user
+    ? user.fullname
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "?";
 
   return (
     <div
@@ -345,7 +431,11 @@ function UserProfileModal({ userId, meId, onClose }: { userId: string; meId: str
                   <div className="relative">
                     {avatarSrc ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={avatarSrc} alt={user.fullname} className="w-16 h-16 rounded-2xl object-cover ring-4 ring-[#1e1235] shadow-lg" />
+                      <img
+                        src={avatarSrc}
+                        alt={user.fullname}
+                        className="w-16 h-16 rounded-2xl object-cover ring-4 ring-[#1e1235] shadow-lg"
+                      />
                     ) : (
                       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#00E5FF] to-[#7B2FBE] flex items-center justify-center text-white text-xl font-bold ring-4 ring-[#1e1235] shadow-lg">
                         {initials}
@@ -359,28 +449,62 @@ function UserProfileModal({ userId, meId, onClose }: { userId: string; meId: str
                   </div>
                   {isSelf && (
                     <button
-                      onClick={() => { onClose(); router.push("/dashboard/profile"); }}
+                      onClick={() => {
+                        onClose();
+                        router.push("/dashboard/profile");
+                      }}
                       className="flex items-center gap-1.5 text-xs text-purple-300 hover:text-purple-200 bg-purple-500/15 hover:bg-purple-500/25 px-3 py-1.5 rounded-xl transition"
                     >
                       Chỉnh sửa <ArrowRight className="w-3 h-3" />
                     </button>
                   )}
                 </div>
-                <h2 className="text-base font-bold text-white leading-tight">{user.fullname}</h2>
+                <h2 className="text-base font-bold text-white leading-tight">
+                  {user.fullname}
+                </h2>
                 <p className="text-white/40 text-xs mt-0.5">@{user.username}</p>
                 <div className="flex items-center gap-1 text-white/25 text-xs mt-1.5">
                   <Calendar className="w-3 h-3" />
-                  <span>Tham gia {new Date(user.createdAt).toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}</span>
+                  <span>
+                    Tham gia{" "}
+                    {new Date(user.createdAt).toLocaleDateString("vi-VN", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
                 </div>
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-2 mt-4">
                   {[
-                    { icon: VideoIcon, label: "Video", value: stats?.videosCount ?? 0, color: "text-cyan-400" },
-                    { icon: BookOpen, label: "Từ vựng", value: stats?.vocabTotal ?? 0, color: "text-purple-400" },
-                    { icon: Flame, label: "Streak", value: user.study_streak, color: "text-orange-400" },
-                    { icon: Star, label: "Điểm", value: user.total_points, color: "text-yellow-400" },
+                    {
+                      icon: VideoIcon,
+                      label: "Video",
+                      value: stats?.videosCount ?? 0,
+                      color: "text-cyan-400",
+                    },
+                    {
+                      icon: BookOpen,
+                      label: "Từ vựng",
+                      value: stats?.vocabTotal ?? 0,
+                      color: "text-purple-400",
+                    },
+                    {
+                      icon: Flame,
+                      label: "Streak",
+                      value: user.study_streak,
+                      color: "text-orange-400",
+                    },
+                    {
+                      icon: Star,
+                      label: "Điểm",
+                      value: user.total_points,
+                      color: "text-yellow-400",
+                    },
                   ].map(({ icon: Icon, label, value, color }) => (
-                    <div key={label} className="bg-white/5 rounded-xl p-2 text-center border border-white/8">
+                    <div
+                      key={label}
+                      className="bg-white/5 rounded-xl p-2 text-center border border-white/8"
+                    >
                       <Icon className={`w-3.5 h-3.5 mx-auto mb-1 ${color}`} />
                       <p className="text-white font-bold text-sm">{value}</p>
                       <p className="text-white/30 text-[10px]">{label}</p>
@@ -400,34 +524,50 @@ function UserProfileModal({ userId, meId, onClose }: { userId: string; meId: str
                   <PlayCircle className="w-8 h-8 text-white/10" />
                   <p className="text-white/25 text-xs">Chưa có bài đăng nào</p>
                 </div>
-              ) : posts.map((post) => {
-                const isVocab = post.postType === "vocab";
-                return (
-                  <div key={post._id} className="flex items-center gap-3 p-3 bg-white/4 border border-white/8 rounded-xl">
-                    {isVocab ? (
-                      <div className="w-12 h-8 rounded-lg bg-purple-500/20 flex-shrink-0 flex items-center justify-center">
-                        <BookOpen className="w-4 h-4 text-purple-400" />
+              ) : (
+                posts.map((post) => {
+                  const isVocab = post.postType === "vocab";
+                  return (
+                    <div
+                      key={post._id}
+                      className="flex items-center gap-3 p-3 bg-white/4 border border-white/8 rounded-xl"
+                    >
+                      {isVocab ? (
+                        <div className="w-12 h-8 rounded-lg bg-purple-500/20 flex-shrink-0 flex items-center justify-center">
+                          <BookOpen className="w-4 h-4 text-purple-400" />
+                        </div>
+                      ) : post.thumbnail ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={post.thumbnail}
+                          alt=""
+                          className="w-12 h-8 object-cover rounded-lg flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-8 rounded-lg bg-white/8 flex-shrink-0 flex items-center justify-center">
+                          <PlayCircle className="w-4 h-4 text-white/25" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-white/80 truncate">
+                          {isVocab
+                            ? post.caption ||
+                              `${(post.vocabWords as unknown[])?.length ?? 0} từ vựng`
+                            : post.title || post.caption || "—"}
+                        </p>
+                        <p className="text-[10px] text-white/30 mt-0.5">
+                          {timeAgoDays(post.createdAt)}
+                        </p>
                       </div>
-                    ) : post.thumbnail ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={post.thumbnail} alt="" className="w-12 h-8 object-cover rounded-lg flex-shrink-0" />
-                    ) : (
-                      <div className="w-12 h-8 rounded-lg bg-white/8 flex-shrink-0 flex items-center justify-center">
-                        <PlayCircle className="w-4 h-4 text-white/25" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-white/80 truncate">
-                        {isVocab ? (post.caption || `${(post.vocabWords as unknown[])?.length ?? 0} từ vựng`) : (post.title || post.caption || "—")}
-                      </p>
-                      <p className="text-[10px] text-white/30 mt-0.5">{timeAgoDays(post.createdAt)}</p>
+                      {Array.isArray(post.likes) && post.likes.length > 0 && (
+                        <span className="text-[10px] text-pink-400 flex-shrink-0">
+                          {post.likes.length} ❤️
+                        </span>
+                      )}
                     </div>
-                    {Array.isArray(post.likes) && post.likes.length > 0 && (
-                      <span className="text-[10px] text-pink-400 flex-shrink-0">{post.likes.length} ❤️</span>
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </>
         )}
@@ -468,13 +608,19 @@ function PostCard({
   const [favoritedVocab, setFavoritedVocab] = useState(false);
   const isVocab = post.postType === "vocab";
   const badge = isVocab
-    ? { text: p.post.vocabSet.replace("{n}", String(post.vocabWords?.length ?? 0)), cls: "bg-purple-500/15 text-purple-400 border-purple-500/30" }
+    ? {
+        text: p.post.vocabSet.replace(
+          "{n}",
+          String(post.vocabWords?.length ?? 0),
+        ),
+        cls: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+      }
     : sourceLabel(post.sourceType, p.sourceLabel);
 
   async function toggleLike() {
     // Optimistic update
     setLiked((v) => !v);
-    setLikesCount((n) => liked ? n - 1 : n + 1);
+    setLikesCount((n) => (liked ? n - 1 : n + 1));
     try {
       const res = await fetch(`${API}/posts/${post._id}/like`, {
         method: "POST",
@@ -483,11 +629,11 @@ function PostCard({
       const data = await res.json();
       if (!data.success) {
         setLiked((v) => !v);
-        setLikesCount((n) => liked ? n + 1 : n - 1);
+        setLikesCount((n) => (liked ? n + 1 : n - 1));
       }
     } catch {
       setLiked((v) => !v);
-      setLikesCount((n) => liked ? n + 1 : n - 1);
+      setLikesCount((n) => (liked ? n + 1 : n - 1));
     }
   }
 
@@ -524,7 +670,9 @@ function PostCard({
       const data = await res.json();
       if (data.success) {
         setSavedVocab(true);
-        toast.success(p.post.toastVocabSaved.replace("{n}", String(data.count)));
+        toast.success(
+          p.post.toastVocabSaved.replace("{n}", String(data.count)),
+        );
       } else {
         toast.error(data.message || p.post.toastVocabErr);
       }
@@ -546,7 +694,11 @@ function PostCard({
       const data = await res.json();
       if (data.success) {
         setFavorited(true);
-        toast.success(data.alreadyExisted ? p.post.toastFavoriteVideoExisted : p.post.toastFavoriteVideo);
+        toast.success(
+          data.alreadyExisted
+            ? p.post.toastFavoriteVideoExisted
+            : p.post.toastFavoriteVideo,
+        );
       } else {
         toast.error(data.message);
       }
@@ -563,17 +715,27 @@ function PostCard({
     try {
       const res = await fetch(`${API}/posts/${post._id}/save-vocab`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ isFavorite: true }),
       });
       const data = await res.json();
       if (data.success) {
         setFavoritedVocab(true);
-        toast.success(p.post.toastFavoriteVocab.replace("{n}", String(data.count)));
+        toast.success(
+          p.post.toastFavoriteVocab.replace("{n}", String(data.count)),
+        );
       } else {
         // "already exists" is also treated as success for favorite
         setFavoritedVocab(true);
-        toast.success(p.post.toastFavoriteVocab.replace("{n}", String(post.vocabWords?.length ?? 0)));
+        toast.success(
+          p.post.toastFavoriteVocab.replace(
+            "{n}",
+            String(post.vocabWords?.length ?? 0),
+          ),
+        );
       }
     } catch {
       toast.error(p.post.toastVocabErr);
@@ -584,7 +746,9 @@ function PostCard({
 
   function sharePost() {
     const url = `${window.location.origin}/dashboard/feed?post=${post._id}`;
-    navigator.clipboard.writeText(url).then(() => toast.success(p.post.toastCopied));
+    navigator.clipboard
+      .writeText(url)
+      .then(() => toast.success(p.post.toastCopied));
   }
 
   async function deletePost() {
@@ -624,8 +788,14 @@ function PostCard({
             {post.userId.fullname}
           </button>
           <div className="flex items-center gap-2 mt-0.5">
-            <p className="text-gray-500 text-xs">@{post.userId.username} · {timeAgo(post.createdAt, p.timeAgo)}</p>
-            <span className={`text-xs px-2 py-0.5 rounded-full border ${badge.cls}`}>{badge.text}</span>
+            <p className="text-gray-500 text-xs">
+              @{post.userId.username} · {timeAgo(post.createdAt, p.timeAgo)}
+            </p>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full border ${badge.cls}`}
+            >
+              {badge.text}
+            </span>
             {post.visibility === "friends" && (
               <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400">
                 <Users className="w-3 h-3" />
@@ -656,19 +826,31 @@ function PostCard({
       {isVocab && post.vocabWords && post.vocabWords.length > 0 && (
         <div className="mx-4 mb-4 rounded-2xl border border-purple-500/20 bg-purple-500/5 overflow-hidden">
           <div className="px-4 py-2.5 bg-purple-500/10 border-b border-purple-500/15 flex items-center gap-2">
-            <span className="text-purple-400 text-xs font-semibold uppercase tracking-wider">{p.post.vocabSet.replace("{n}", String(post.vocabWords.length))}</span>
+            <span className="text-purple-400 text-xs font-semibold uppercase tracking-wider">
+              {p.post.vocabSet.replace("{n}", String(post.vocabWords.length))}
+            </span>
           </div>
           <div className="divide-y divide-white/5 max-h-72 overflow-y-auto">
             {post.vocabWords.map((w, i) => (
               <div key={i} className="flex items-start gap-3 px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2 flex-wrap">
-                    <span className="text-white font-semibold text-sm">{w.word}</span>
-                    {w.phonetic && <span className="text-gray-500 text-xs">{w.phonetic}</span>}
+                    <span className="text-white font-semibold text-sm">
+                      {w.word}
+                    </span>
+                    {w.phonetic && (
+                      <span className="text-gray-500 text-xs">
+                        {w.phonetic}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-purple-300 text-xs mt-0.5">{w.translation}</p>
+                  <p className="text-purple-300 text-xs mt-0.5">
+                    {w.translation}
+                  </p>
                   {w.example && (
-                    <p className="text-gray-500 text-xs mt-0.5 italic line-clamp-1">&ldquo;{w.example}&rdquo;</p>
+                    <p className="text-gray-500 text-xs mt-0.5 italic line-clamp-1">
+                      &ldquo;{w.example}&rdquo;
+                    </p>
                   )}
                 </div>
               </div>
@@ -682,7 +864,9 @@ function PostCard({
         <div
           className="relative mx-4 mb-4 rounded-xl overflow-hidden cursor-pointer group"
           onClick={() =>
-            router.push(`/dashboard/practice/${post.youtubeId}?title=${encodeURIComponent(post.title)}`)
+            router.push(
+              `/dashboard/practice/${post.youtubeId}?title=${encodeURIComponent(post.title)}`,
+            )
           }
         >
           {post.thumbnail ? (
@@ -704,7 +888,9 @@ function PostCard({
             </div>
           </div>
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-2">
-            <p className="text-white text-sm font-medium line-clamp-2">{post.title}</p>
+            <p className="text-white text-sm font-medium line-clamp-2">
+              {post.title}
+            </p>
           </div>
         </div>
       )}
@@ -729,7 +915,11 @@ function PostCard({
         >
           <MessageCircle className="w-4 h-4" />
           {commentsCount > 0 && <span>{commentsCount}</span>}
-          {showComments ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          {showComments ? (
+            <ChevronUp className="w-3 h-3" />
+          ) : (
+            <ChevronDown className="w-3 h-3" />
+          )}
         </button>
 
         <button
@@ -759,7 +949,9 @@ function PostCard({
             ) : (
               <Star className={`w-4 h-4 ${favorited ? "fill-current" : ""}`} />
             )}
-            <span className="hidden sm:inline">{favorited ? p.post.favoritedVideo : p.post.favoriteVideo}</span>
+            <span className="hidden sm:inline">
+              {favorited ? p.post.favoritedVideo : p.post.favoriteVideo}
+            </span>
           </button>
         )}
 
@@ -778,9 +970,13 @@ function PostCard({
             {favoritingVocab ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Star className={`w-4 h-4 ${favoritedVocab ? "fill-current" : ""}`} />
+              <Star
+                className={`w-4 h-4 ${favoritedVocab ? "fill-current" : ""}`}
+              />
             )}
-            <span className="hidden sm:inline">{favoritedVocab ? p.post.favoritedVocab : p.post.favoriteVocab}</span>
+            <span className="hidden sm:inline">
+              {favoritedVocab ? p.post.favoritedVocab : p.post.favoriteVocab}
+            </span>
           </button>
         )}
 
@@ -795,15 +991,17 @@ function PostCard({
                 : "text-gray-400 hover:text-[#00E5FF] hover:bg-[#00E5FF]/10"
             }`}
             title={p.post.saveTitle}
-        >
-          {saving ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : saved ? (
-            <CheckCircle2 className="w-4 h-4" />
-          ) : (
-            <Bookmark className="w-4 h-4" />
-          )}
-          <span className="hidden sm:inline">{saved ? p.post.saved : p.post.saveVideo}</span>
+          >
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : saved ? (
+              <CheckCircle2 className="w-4 h-4" />
+            ) : (
+              <Bookmark className="w-4 h-4" />
+            )}
+            <span className="hidden sm:inline">
+              {saved ? p.post.saved : p.post.saveVideo}
+            </span>
           </button>
         )}
 
@@ -826,7 +1024,9 @@ function PostCard({
             ) : (
               <Bookmark className="w-4 h-4" />
             )}
-            <span className="hidden sm:inline">{savedVocab ? p.post.savedVocab : p.post.saveVocab}</span>
+            <span className="hidden sm:inline">
+              {savedVocab ? p.post.savedVocab : p.post.saveVocab}
+            </span>
           </button>
         )}
       </div>
@@ -838,7 +1038,9 @@ function PostCard({
           initialCount={commentsCount}
           token={token}
           me={me}
-          onCountChange={(delta) => setCommentsCount((n) => Math.max(0, n + delta))}
+          onCountChange={(delta) =>
+            setCommentsCount((n) => Math.max(0, n + delta))
+          }
         />
       )}
     </div>
@@ -861,7 +1063,9 @@ function CreatePostModal({
   const [caption, setCaption] = useState("");
   const [myVideos, setMyVideos] = useState<SavedVideo[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<SavedVideo | null>(null);
-  const [sourceType, setSourceType] = useState<"saved" | "favorite" | "practiced">("saved");
+  const [sourceType, setSourceType] = useState<
+    "saved" | "favorite" | "practiced"
+  >("saved");
   const [submitting, setSubmitting] = useState(false);
   const [videosLoading, setVideosLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -878,17 +1082,23 @@ function CreatePostModal({
   }, [token]);
 
   const filtered = myVideos.filter((v) =>
-    v.title.toLowerCase().includes(search.toLowerCase())
+    v.title.toLowerCase().includes(search.toLowerCase()),
   );
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedVideo) { toast.error(p.createModal.selectErr); return; }
+    if (!selectedVideo) {
+      toast.error(p.createModal.selectErr);
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch(`${API}/posts`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           caption,
           youtubeId: selectedVideo.youtubeId,
@@ -918,13 +1128,21 @@ function CreatePostModal({
       <div className="bg-[#1C1132] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">
-          <h2 className="text-white font-semibold text-base">{p.createModal.title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition">
+          <h2 className="text-white font-semibold text-base">
+            {p.createModal.title}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={submit} className="flex flex-col flex-1 overflow-hidden">
+        <form
+          onSubmit={submit}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
             {/* Caption */}
             <textarea
@@ -938,13 +1156,17 @@ function CreatePostModal({
 
             {/* Source type */}
             <div className="space-y-1.5">
-              <p className="text-xs text-gray-500 uppercase tracking-wide">{p.createModal.shareType}</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wide">
+                {p.createModal.shareType}
+              </p>
               <div className="flex gap-2 flex-wrap">
-                {([
-                  { v: "saved", label: p.createModal.labelSaved },
-                  { v: "favorite", label: p.createModal.labelFav },
-                  { v: "practiced", label: p.createModal.labelPracticed },
-                ] as const).map(({ v, label }) => (
+                {(
+                  [
+                    { v: "saved", label: p.createModal.labelSaved },
+                    { v: "favorite", label: p.createModal.labelFav },
+                    { v: "practiced", label: p.createModal.labelPracticed },
+                  ] as const
+                ).map(({ v, label }) => (
                   <button
                     key={v}
                     type="button"
@@ -963,7 +1185,9 @@ function CreatePostModal({
 
             {/* Video picker */}
             <div className="space-y-2">
-              <p className="text-xs text-gray-500 uppercase tracking-wide">{p.createModal.chooseVideo}</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wide">
+                {p.createModal.chooseVideo}
+              </p>
               <input
                 type="text"
                 value={search}
@@ -977,7 +1201,9 @@ function CreatePostModal({
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="text-center py-4">
-                  <p className="text-gray-500 text-sm">{p.createModal.noVideos}</p>
+                  <p className="text-gray-500 text-sm">
+                    {p.createModal.noVideos}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
@@ -994,15 +1220,25 @@ function CreatePostModal({
                     >
                       {v.thumbnail ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={v.thumbnail} alt={v.title} className="w-16 h-10 object-cover rounded-lg flex-shrink-0" />
+                        <img
+                          src={v.thumbnail}
+                          alt={v.title}
+                          className="w-16 h-10 object-cover rounded-lg flex-shrink-0"
+                        />
                       ) : (
                         <div className="w-16 h-10 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
                           <VideoIcon className="w-4 h-4 text-gray-600" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-white text-xs font-medium line-clamp-2">{v.title}</p>
-                {v.isFavorite && <span className="text-xs text-red-400">{p.createModal.favBadge}</span>}
+                        <p className="text-white text-xs font-medium line-clamp-2">
+                          {v.title}
+                        </p>
+                        {v.isFavorite && (
+                          <span className="text-xs text-red-400">
+                            {p.createModal.favBadge}
+                          </span>
+                        )}
                       </div>
                       {selectedVideo?._id === v._id && (
                         <CheckCircle2 className="w-4 h-4 text-[#00E5FF] flex-shrink-0" />
@@ -1028,7 +1264,11 @@ function CreatePostModal({
               disabled={submitting || !selectedVideo}
               className="flex-1 bg-[#00E5FF] hover:bg-[#00BCCC] disabled:opacity-50 text-black font-semibold text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2"
             >
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {submitting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
               {submitting ? p.createModal.submitting : p.createModal.submit}
             </button>
           </div>
@@ -1069,7 +1309,11 @@ export default function FeedPage() {
   }, []);
 
   const loadPosts = useCallback(async (pageNum: number, replace = false) => {
-    if (!token.current) { setError(p.notLoggedIn); setLoading(false); return; }
+    if (!token.current) {
+      setError(p.notLoggedIn);
+      setLoading(false);
+      return;
+    }
     if (pageNum === 1) setLoading(true);
     else setLoadingMore(true);
     try {
@@ -1077,8 +1321,11 @@ export default function FeedPage() {
         headers: { Authorization: `Bearer ${token.current}` },
       });
       const data = await res.json();
-      if (!data.success) { setError(data.message); return; }
-      setPosts((prev) => replace ? data.posts : [...prev, ...data.posts]);
+      if (!data.success) {
+        setError(data.message);
+        return;
+      }
+      setPosts((prev) => (replace ? data.posts : [...prev, ...data.posts]));
       setHasMore(pageNum < data.pages);
     } catch {
       setError(p.loadError);
@@ -1088,7 +1335,9 @@ export default function FeedPage() {
     }
   }, []);
 
-  useEffect(() => { loadPosts(1, true); }, [loadPosts]);
+  useEffect(() => {
+    loadPosts(1, true);
+  }, [loadPosts]);
 
   function loadMore() {
     const next = page + 1;
@@ -1158,16 +1407,17 @@ export default function FeedPage() {
       )}
 
       {/* Posts */}
-      {!loading && posts.map((post) => (
-        <PostCard
-          key={post._id}
-          post={post}
-          token={token.current}
-          me={me}
-          onDelete={handleDelete}
-          onViewProfile={setProfileUserId}
-        />
-      ))}
+      {!loading &&
+        posts.map((post) => (
+          <PostCard
+            key={post._id}
+            post={post}
+            token={token.current}
+            me={me}
+            onDelete={handleDelete}
+            onViewProfile={setProfileUserId}
+          />
+        ))}
 
       {/* Load more */}
       {!loading && hasMore && (
@@ -1177,7 +1427,11 @@ export default function FeedPage() {
             disabled={loadingMore}
             className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm px-5 py-2.5 border border-white/15 rounded-xl hover:border-white/30 transition disabled:opacity-50"
           >
-            {loadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}
+            {loadingMore ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
             {loadingMore ? p.loadingMore : p.loadMore}
           </button>
         </div>

@@ -10,14 +10,20 @@ import { useRouter } from "next/navigation";
 export const Navbar = () => {
   const { lang, setLang, t } = useLang();
   const router = useRouter();
-  const [user, setUser] = useState<{ name?: string; avatar?: string } | null>(null);
+  const [user, setUser] = useState<{ name?: string; avatar?: string } | null>(
+    null,
+  );
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const raw = localStorage.getItem("user");
     if (raw) {
-      try { setUser(JSON.parse(raw)); } catch { /* ignore */ }
+      try {
+        setUser(JSON.parse(raw));
+      } catch {
+        /* ignore */
+      }
     }
   }, []);
 
@@ -122,12 +128,18 @@ export const Navbar = () => {
                 <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-blue-500 cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all flex items-center justify-center bg-blue-600 text-white font-bold text-sm">
                   {user.avatar ? (
                     <img
-                      src={user.avatar.startsWith("/uploads") ? `http://localhost:5000${user.avatar}` : user.avatar}
+                      src={
+                        user.avatar.startsWith("/uploads")
+                          ? `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.avatar}`
+                          : user.avatar
+                      }
                       alt="avatar"
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span>{user.name ? user.name.charAt(0).toUpperCase() : "U"}</span>
+                    <span>
+                      {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                    </span>
                   )}
                 </div>
               </Link>

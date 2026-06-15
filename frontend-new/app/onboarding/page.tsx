@@ -8,11 +8,31 @@ import { ChevronRight, ChevronLeft, Check, Loader2 } from "lucide-react";
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const ENGLISH_LEVELS = [
-  { value: "beginner", label: "Mới bắt đầu", desc: "Chưa biết gì hoặc biết rất ít" },
-  { value: "elementary", label: "Cơ bản", desc: "Biết một số từ và câu đơn giản" },
-  { value: "intermediate", label: "Trung cấp", desc: "Có thể giao tiếp thông thường" },
-  { value: "upper-intermediate", label: "Trên trung cấp", desc: "Khá tự tin khi giao tiếp" },
-  { value: "advanced", label: "Nâng cao", desc: "Giao tiếp tốt, muốn hoàn thiện hơn" },
+  {
+    value: "beginner",
+    label: "Mới bắt đầu",
+    desc: "Chưa biết gì hoặc biết rất ít",
+  },
+  {
+    value: "elementary",
+    label: "Cơ bản",
+    desc: "Biết một số từ và câu đơn giản",
+  },
+  {
+    value: "intermediate",
+    label: "Trung cấp",
+    desc: "Có thể giao tiếp thông thường",
+  },
+  {
+    value: "upper-intermediate",
+    label: "Trên trung cấp",
+    desc: "Khá tự tin khi giao tiếp",
+  },
+  {
+    value: "advanced",
+    label: "Nâng cao",
+    desc: "Giao tiếp tốt, muốn hoàn thiện hơn",
+  },
 ];
 
 const GOALS = [
@@ -118,12 +138,36 @@ export default function OnboardingPage() {
   const [studyTimeMinutes, setStudyTimeMinutes] = useState<number | null>(null);
 
   const STEPS = [
-    { title: "Bạn bao nhiêu tuổi?", subtitle: "Giúp chúng tôi đề xuất nội dung phù hợp.", valid: () => !!age && Number(age) >= 5 && Number(age) <= 100 },
-    { title: "Trình độ tiếng Anh?", subtitle: "Chọn mức gần nhất với bạn hiện tại.", valid: () => !!englishLevel },
-    { title: "Mục tiêu học tiếng Anh?", subtitle: "Chọn một hoặc nhiều mục tiêu bạn hướng tới.", valid: () => goals.length > 0 },
-    { title: "Sở thích cá nhân?", subtitle: "Chúng tôi sẽ gợi ý video theo chủ đề bạn yêu thích.", valid: () => interests.length > 0 },
-    { title: "Phong cách học tập?", subtitle: "Bạn thích học qua hình thức nào?", valid: () => learningStyle.length > 0 },
-    { title: "Mỗi ngày bạn học bao lâu?", subtitle: "Giúp chúng tôi lập kế hoạch phù hợp.", valid: () => studyTimeMinutes !== null },
+    {
+      title: "Bạn bao nhiêu tuổi?",
+      subtitle: "Giúp chúng tôi đề xuất nội dung phù hợp.",
+      valid: () => !!age && Number(age) >= 5 && Number(age) <= 100,
+    },
+    {
+      title: "Trình độ tiếng Anh?",
+      subtitle: "Chọn mức gần nhất với bạn hiện tại.",
+      valid: () => !!englishLevel,
+    },
+    {
+      title: "Mục tiêu học tiếng Anh?",
+      subtitle: "Chọn một hoặc nhiều mục tiêu bạn hướng tới.",
+      valid: () => goals.length > 0,
+    },
+    {
+      title: "Sở thích cá nhân?",
+      subtitle: "Chúng tôi sẽ gợi ý video theo chủ đề bạn yêu thích.",
+      valid: () => interests.length > 0,
+    },
+    {
+      title: "Phong cách học tập?",
+      subtitle: "Bạn thích học qua hình thức nào?",
+      valid: () => learningStyle.length > 0,
+    },
+    {
+      title: "Mỗi ngày bạn học bao lâu?",
+      subtitle: "Giúp chúng tôi lập kế hoạch phù hợp.",
+      valid: () => studyTimeMinutes !== null,
+    },
   ];
 
   const isLast = step === STEPS.length - 1;
@@ -137,18 +181,38 @@ export default function OnboardingPage() {
 
   const handleSubmit = async () => {
     const token = localStorage.getItem("token");
-    if (!token) { router.push("/auth/signin"); return; }
+    if (!token) {
+      router.push("/auth/signin");
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch("http://localhost:5000/api/auth/survey", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ age: Number(age), englishLevel, goals, interests, learningStyle, studyTimeMinutes }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          age: Number(age),
+          englishLevel,
+          goals,
+          interests,
+          learningStyle,
+          studyTimeMinutes,
+        }),
       });
       const data = await res.json();
       if (data.success) {
         const stored = localStorage.getItem("user");
-        if (stored) localStorage.setItem("user", JSON.stringify({ ...JSON.parse(stored), onboardingCompleted: true }));
+        if (stored)
+          localStorage.setItem(
+            "user",
+            JSON.stringify({
+              ...JSON.parse(stored),
+              onboardingCompleted: true,
+            }),
+          );
         router.push("/dashboard");
       }
     } catch {
@@ -162,24 +226,37 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-[#0E0A1F] flex flex-col items-center justify-center p-4">
       {/* Logo + title */}
       <div className="mb-8 text-center">
-        <p className="text-[#00E5FF] text-sm font-semibold tracking-widest uppercase mb-1">SmartVideo</p>
-        <h1 className="text-white text-2xl font-bold">Hãy cho chúng tôi biết về bạn 👋</h1>
-        <p className="text-gray-500 text-sm mt-1">Chỉ mất khoảng 1 phút để cá nhân hoá trải nghiệm học của bạn.</p>
+        <p className="text-[#00E5FF] text-sm font-semibold tracking-widest uppercase mb-1">
+          SmartVideo
+        </p>
+        <h1 className="text-white text-2xl font-bold">
+          Hãy cho chúng tôi biết về bạn 👋
+        </h1>
+        <p className="text-gray-500 text-sm mt-1">
+          Chỉ mất khoảng 1 phút để cá nhân hoá trải nghiệm học của bạn.
+        </p>
       </div>
 
       <div className="w-full max-w-lg">
         {/* Progress bar */}
         <div className="mb-6">
           <div className="flex justify-between text-xs text-gray-500 mb-1.5">
-            <span>Bước {step + 1} / {STEPS.length}</span>
-            <span className="text-[#00E5FF]">{Math.round(((step + 1) / STEPS.length) * 100)}%</span>
+            <span>
+              Bước {step + 1} / {STEPS.length}
+            </span>
+            <span className="text-[#00E5FF]">
+              {Math.round(((step + 1) / STEPS.length) * 100)}%
+            </span>
           </div>
           <div className="flex gap-1">
             {STEPS.map((_, i) => (
               <motion.div
                 key={i}
                 className="h-1.5 flex-1 rounded-full"
-                animate={{ backgroundColor: i <= step ? "#00E5FF" : "rgba(255,255,255,0.1)" }}
+                animate={{
+                  backgroundColor:
+                    i <= step ? "#00E5FF" : "rgba(255,255,255,0.1)",
+                }}
                 transition={{ duration: 0.3 }}
               />
             ))}
@@ -198,8 +275,12 @@ export default function OnboardingPage() {
               className="space-y-5"
             >
               <div>
-                <h2 className="text-xl font-bold text-white">{STEPS[step].title}</h2>
-                <p className="text-gray-400 text-sm mt-0.5">{STEPS[step].subtitle}</p>
+                <h2 className="text-xl font-bold text-white">
+                  {STEPS[step].title}
+                </h2>
+                <p className="text-gray-400 text-sm mt-0.5">
+                  {STEPS[step].subtitle}
+                </p>
               </div>
 
               {step === 0 && (
@@ -231,7 +312,9 @@ export default function OnboardingPage() {
                     >
                       <div>
                         <p className="font-medium text-sm">{lv.label}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{lv.desc}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {lv.desc}
+                        </p>
                       </div>
                       {englishLevel === lv.value && (
                         <div className="w-5 h-5 rounded-full bg-[#00E5FF] flex items-center justify-center flex-shrink-0">
@@ -243,9 +326,27 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              {step === 2 && <MultiSelect options={GOALS} selected={goals} onChange={setGoals} />}
-              {step === 3 && <MultiSelect options={INTERESTS} selected={interests} onChange={setInterests} />}
-              {step === 4 && <MultiSelect options={LEARNING_STYLES} selected={learningStyle} onChange={setLearningStyle} />}
+              {step === 2 && (
+                <MultiSelect
+                  options={GOALS}
+                  selected={goals}
+                  onChange={setGoals}
+                />
+              )}
+              {step === 3 && (
+                <MultiSelect
+                  options={INTERESTS}
+                  selected={interests}
+                  onChange={setInterests}
+                />
+              )}
+              {step === 4 && (
+                <MultiSelect
+                  options={LEARNING_STYLES}
+                  selected={learningStyle}
+                  onChange={setLearningStyle}
+                />
+              )}
 
               {step === 5 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -284,11 +385,17 @@ export default function OnboardingPage() {
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#00E5FF] hover:bg-[#00BCCC] text-black font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               {submitting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Đang lưu...</>
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Đang lưu...
+                </>
               ) : isLast ? (
-                <><Check className="w-4 h-4" /> Bắt đầu học!</>
+                <>
+                  <Check className="w-4 h-4" /> Bắt đầu học!
+                </>
               ) : (
-                <>Tiếp theo <ChevronRight className="w-4 h-4" /></>
+                <>
+                  Tiếp theo <ChevronRight className="w-4 h-4" />
+                </>
               )}
             </button>
           </div>
