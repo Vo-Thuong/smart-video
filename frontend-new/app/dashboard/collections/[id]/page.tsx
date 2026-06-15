@@ -518,7 +518,7 @@ export default function CollectionDetailPage() {
                 <CollectionVocabCard
                   key={v._id}
                   item={v}
-                  onShare={openShareVocab}
+                  onShare={openShareVocab as any}
                   onDelete={deleteVocab}
                 />
               ))}

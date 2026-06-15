@@ -39,15 +39,21 @@ export const SignUpForm = () => {
       setIsGoogleLoading(true);
       setError(null);
       try {
-        const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        });
+        const userInfoRes = await fetch(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          {
+            headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+          },
+        );
         const userInfo = await userInfoRes.json();
 
         const res = await fetch("http://localhost:5000/api/auth/google", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ credential: tokenResponse.access_token, userInfo }),
+          body: JSON.stringify({
+            credential: tokenResponse.access_token,
+            userInfo,
+          }),
         });
         const data = await res.json();
 
@@ -78,7 +84,9 @@ export const SignUpForm = () => {
       }
     },
     onError: () => {
-      toast.error("Đăng ký Google thất bại", { description: "Vui lòng thử lại." });
+      toast.error("Đăng ký Google thất bại", {
+        description: "Vui lòng thử lại.",
+      });
     },
   });
 
@@ -146,7 +154,7 @@ export const SignUpForm = () => {
       {/* Header Form */}
       <div className="flex flex-col items-center mb-8">
         <Link href="/" className="group flex flex-col items-center gap-3">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(37,99,235,0.4)] group-hover:rotate-6 transition-transform duration-500 overflow-hidden p-2 bg-blue-600">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(37,99,235,0.4)] group-hover:rotate-6 transition-transform duration-500 overflow-hidden p-2">
             <Image
               src="/assets/image/logo/logo-smart-video.png"
               alt="Logo"
