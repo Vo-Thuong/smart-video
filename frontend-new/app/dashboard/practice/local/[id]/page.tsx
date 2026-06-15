@@ -739,7 +739,10 @@ export default function LocalPracticePage() {
       .then((r) => r.json())
       .then((data) => {
         if (data.success) {
-          setVideoInfo({ title: data.title, videoUrl: data.videoUrl });
+          const fullVideoUrl = data.videoUrl.startsWith('http') 
+            ? data.videoUrl 
+            : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${data.videoUrl}`;
+          setVideoInfo({ title: data.title, videoUrl: fullVideoUrl });
           if (data.transcript?.length > 0) {
             setTranscript(data.transcript);
           } else {

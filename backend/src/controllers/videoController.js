@@ -3,9 +3,13 @@ const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
 const ffmpeg = require("fluent-ffmpeg");
+const ffmpegPath = require("ffmpeg-static");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { GoogleAIFileManager } = require("@google/generative-ai/server");
 const Video = require("../models/Video");
+
+// Configure ffmpeg path
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 const YOUTUBE_REGEX = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
 
@@ -337,7 +341,7 @@ const getLocalVideo = async (req, res) => {
       success: true,
       id: video._id,
       title: video.title,
-      videoUrl: `http://${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${video.youtubeUrl}`,
+      videoUrl: video.youtubeUrl,
       transcript: video.transcript,
     });
   } catch (err) {

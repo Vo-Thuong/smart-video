@@ -670,8 +670,14 @@ function DictationPanel({
   };
 
   const handleWordClick = (word: string) => {
-    const normalized = word.toLowerCase().replace(/[^a-z'-]/g, "");
-    if (!normalized) return;
+    // Only strip quotes/brackets if any remain, but keep all unicode letters
+    const normalized = word.toLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "").trim();
+    console.log("handleWordClick triggered. Original word:", word, "| Normalized:", normalized);
+    if (!normalized) {
+      console.log("Word is empty after normalization. Returning early.");
+      return;
+    }
+    console.log("Setting wordDetail loading state...");
     setWordDetail({
       word: normalized,
       phonetic: null,
@@ -680,12 +686,15 @@ function DictationPanel({
       loading: true,
       error: null,
     });
-    fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/dictionary/lookup?word=${encodeURIComponent(normalized)}`,
-    )
+    const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/dictionary/lookup?word=${encodeURIComponent(normalized)}`;
+    console.log("Fetching dictionary from:", url);
+    
+    fetch(url)
       .then((r) => r.json())
       .then((data) => {
+        console.log("Dictionary API response:", data);
         if (!data.success) {
+          console.log("API returned success: false");
           setWordDetail({
             word: normalized,
             phonetic: null,
@@ -709,7 +718,8 @@ function DictationPanel({
           error: null,
         });
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Dictionary API fetch error:", err);
         setWordDetail({
           word: normalized,
           phonetic: null,

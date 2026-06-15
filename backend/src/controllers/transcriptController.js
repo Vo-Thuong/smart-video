@@ -18,8 +18,14 @@ exports.getTranscript = async (req, res) => {
       return res.json({ success: true, transcript: video.transcript, cached: true });
     }
 
-    // 2. Lấy từ YouTube captions API
-    const items = await YoutubeTranscript.fetchTranscript(youtubeId);
+    // 2. Lấy từ YouTube captions API (ép lấy tiếng Anh)
+    let items;
+    try {
+      items = await YoutubeTranscript.fetchTranscript(youtubeId, { lang: 'en' });
+    } catch (e) {
+      // Nếu không có tiếng Anh chuẩn, lấy đại cái mặc định
+      items = await YoutubeTranscript.fetchTranscript(youtubeId);
+    }
 
     const transcript = items.map((item) => ({
       time: formatTime(item.offset),
@@ -47,7 +53,12 @@ exports.fetchAndCacheTranscript = async (youtubeId) => {
     const existing = await Video.findOne({ youtubeId, "transcript.0": { $exists: true } });
     if (existing) return; // đã có, bỏ qua
 
-    const items = await YoutubeTranscript.fetchTranscript(youtubeId);
+    let items;
+    try {
+      items = await YoutubeTranscript.fetchTranscript(youtubeId, { lang: 'en' });
+    } catch (e) {
+      items = await YoutubeTranscript.fetchTranscript(youtubeId);
+    }
     const transcript = items.map((item) => ({
       time: formatTime(item.offset),
       text: item.text.replace(/\n/g, " ").trim(),
